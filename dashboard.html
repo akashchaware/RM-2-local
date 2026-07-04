@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard – RepairMaster Support Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Theme Styling Config -->
+    <script src="style.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        body {
+            background: #0A0F1D;
+            color: #E8EDF5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+        .container-custom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .text-teal {
+            color: #14B8A6;
+        }
+        .btn-teal {
+            background: linear-gradient(135deg, #0D9488, #14B8A6);
+            color: #0A0F1D;
+            font-weight: 700;
+            padding: 10px 24px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-align: center;
+            text-decoration: none;
+            box-shadow: 0 4px 16px rgba(13, 148, 136, 0.2);
+        }
+        .btn-teal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(13, 148, 136, 0.35);
+        }
+        .rm-logo {
+            background: linear-gradient(135deg, #0D9488, #14B8A6);
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 22px;
+            color: #0A0F1D;
+            box-shadow: 0 8px 30px rgba(13, 148, 136, 0.3);
+            flex-shrink: 0;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.65);
+            transition: all 0.3s;
+            text-decoration: none;
+            padding: 6px 0;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover,
+        .nav-link.active {
+            color: #14B8A6;
+            border-bottom-color: #14B8A6;
+        }
+        .mobile-menu {
+            display: none;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-block;
+        }
+        .status-Pending { background: rgba(245, 158, 11, 0.12); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .status-Technician-Assigned { background: rgba(59, 130, 246, 0.12); color: #3B82F6; border: 1px solid rgba(59, 130, 246, 0.2); }
+        .status-Pickup-Pending { background: rgba(14, 165, 233, 0.12); color: #0EA5E9; border: 1px solid rgba(14, 165, 233, 0.2); }
+        .status-With-RepairMaster { background: rgba(139, 92, 246, 0.12); color: #8B5CF6; border: 1px solid rgba(139, 92, 246, 0.2); }
+        .status-Quotation-Sent { background: rgba(245, 158, 11, 0.12); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.2); }
+        .status-Confirmed { background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .status-Completed { background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-Rejected { background: rgba(239, 68, 68, 0.12); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        .action-btn {
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 700;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin: 2px;
+        }
+        .btn-assign { background: #F59E0B; color: #0A0F1D; }
+        .btn-pickup { background: #0D9488; color: #fff; }
+        .btn-verify { background: #14B8A6; color: #0A0F1D; }
+        .btn-diagnose { background: #8B5CF6; color: #fff; }
+        .btn-part { background: #EC4899; color: #fff; }
+        .btn-quote { background: #F59E0B; color: #0A0F1D; }
+        .btn-confirm { background: #10B981; color: #0A0F1D; }
+        .btn-reject { background: #EF4444; color: #fff; }
+
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+            .desktop-nav {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- HEADER -->
+    <header class="container-custom py-5 flex items-center justify-between flex-wrap gap-4 bg-[#0A0F1D]/80 backdrop-blur-md border-b border-white/5">
+        <div class="flex items-center gap-4 cursor-pointer" onclick="window.location.href='index.html'">
+            <div class="rm-logo">RM</div>
+            <div>
+                <span class="font-display text-2xl md:text-3xl font-black tracking-tight">
+                    <span class="text-white">Repair</span><span class="text-teal">Master</span>
+                </span>
+                <span class="block text-[8px] font-semibold tracking-[0.2em] text-emerald-400 uppercase -mt-1">Direct To Consumer</span>
+            </div>
+        </div>
+
+        <nav class="desktop-nav flex items-center gap-8 text-sm font-medium">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="request.html" class="nav-link">Repair Request</a>
+            <a href="app.html" class="nav-link">Download</a>
+            <a href="dashboard.html" class="nav-link active">Dashboard</a>
+            <a href="login.html" class="nav-link" id="navLogin">Login</a>
+            <a href="signup.html" class="nav-link" id="navSignup">Sign Up</a>
+            <span id="navUserInfo" class="hidden flex items-center gap-4">
+                <span class="text-sm text-gray-300 font-bold" id="navUserName">User</span>
+                <button onclick="logoutUser()" class="text-sm text-red-400 hover:text-red-300 transition font-bold">Logout</button>
+            </span>
+        </nav>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button class="mobile-menu text-white text-2xl" onclick="toggleMobileMenu()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div id="mobileNav" class="hidden absolute top-full left-0 w-full bg-[#0A0F1D]/95 backdrop-blur-md p-6 flex flex-col gap-4 text-center border-b border-white/5 z-50">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="request.html" class="nav-link">Repair Request</a>
+            <a href="app.html" class="nav-link">Download</a>
+            <a href="dashboard.html" class="nav-link active">Dashboard</a>
+            <a href="login.html" class="nav-link" id="mobileNavLogin">Login</a>
+            <a href="signup.html" class="nav-link" id="mobileNavSignup">Sign Up</a>
+        </div>
+    </header>
+
+    <!-- MAIN DASHBOARD HUB -->
+    <main class="py-12 container-custom flex-1">
+        <div class="flex flex-wrap items-center justify-between mb-10 gap-4 border-b border-white/5 pb-6">
+            <div>
+                <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
+                    <i class="fa-solid fa-chart-simple mr-1"></i> Wardha Hub Hub-Console
+                </span>
+                <h2 class="text-4xl font-bold text-white mt-2 font-display">DTC Tech Support Dashboard</h2>
+                <p class="text-gray-400 text-sm">Review, track or finalize real-time estimates, spare parts surveys and ticket assignments.</p>
+            </div>
+            <div id="userRoleBadge" class="hidden">
+                <span class="role-badge text-sm px-4 py-2 bg-teal-500/10 text-teal-400 rounded-full border border-teal-500/20">
+                    <i class="fa-regular fa-user mr-2 text-teal"></i> Active Role: <strong id="roleDisplay">Customer</strong>
+                </span>
+            </div>
+        </div>
+
+        <!-- Metric Stat Cards -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
+                <div class="text-3xl font-black text-teal" id="statTotal">0</div>
+                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Total Tickets</div>
+            </div>
+            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
+                <div class="text-3xl font-black text-amber-400" id="statPending">0</div>
+                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Pending Assignment</div>
+            </div>
+            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
+                <div class="text-3xl font-black text-blue-400" id="statInProgress">0</div>
+                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Active Handover</div>
+            </div>
+            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
+                <div class="text-3xl font-black text-emerald-400" id="statCompleted">0</div>
+                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Completed &amp; Fixed</div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left: Orders / Tickets Section -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
+                        <i class="fa-solid fa-ticket text-teal"></i> Assigned Doorstep Tickets
+                    </h3>
+                    <span class="text-xs text-gray-500">Auto-synced with Supabase</span>
+                </div>
+
+                <div id="dashboardContent" class="space-y-4">
+                    <div class="text-center text-gray-400 py-12 bg-navyBG/20 border border-grayBorder rounded-2xl">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing synchronized ticket session...
+                    </div>
+                </div>
+
+                <!-- Collapsible Supabase SQL console for direct data acquisition (Coordinator / Admin Only) -->
+                <div class="bg-navyBG/30 border border-grayBorder/40 rounded-2xl p-6 mt-12">
+                    <button onclick="document.getElementById('sqlRunnerBlock').classList.toggle('hidden')" class="w-full flex items-center justify-between text-left outline-none">
+                        <div class="flex items-center gap-3">
+                            <i class="fa-solid fa-database text-amberAccent text-xl"></i>
+                            <div>
+                                <h4 class="text-sm font-bold text-white uppercase tracking-wider">Supabase Data Acquisition Console</h4>
+                                <p class="text-xs text-gray-500">Run this SQL code in your Supabase Editor to setup remaining dashboard queries &amp; profiles tables.</p>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-gray-400"></i>
+                    </button>
+                    
+                    <div id="sqlRunnerBlock" class="hidden mt-6 space-y-4 border-t border-grayBorder/40 pt-6">
+                        <p class="text-xs text-gray-400">Below is the optimized SQL command script to construct the profiles table, user role linkages, parts catalogs, and set up Row Level Security policies automatically:</p>
+                        <pre class="bg-slate-900/80 p-4 rounded-xl border border-grayBorder text-[10px] text-tealAccent font-mono overflow-x-auto max-h-64 leading-relaxed">
+-- 1. Create Profiles Table (user schema mirroring)
+CREATE TABLE IF NOT EXISTS public.profiles (
+    id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+    email TEXT UNIQUE NOT NULL,
+    name TEXT,
+    phone TEXT,
+    roles TEXT[] DEFAULT '{customer}',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. Create Roles Master Reference
+CREATE TABLE IF NOT EXISTS public.roles (
+    id SERIAL PRIMARY KEY,
+    name TEXT UNIQUE NOT NULL
+);
+
+INSERT INTO public.roles (id, name) VALUES
+(1, 'admin'), (2, 'coordinator'), (3, 'technician'), (4, 'repairmaster'), (5, 'customer')
+ON CONFLICT (id) DO NOTHING;
+
+-- 3. Create user_roles junction
+CREATE TABLE IF NOT EXISTS public.user_roles (
+    id SERIAL PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    role_id INT REFERENCES public.roles(id) ON DELETE CASCADE,
+    UNIQUE(user_id, role_id)
+);
+
+-- 4. Enable RLS and insert Security Policies
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public select" ON public.profiles FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated insert" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Allow user self update" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+                        </pre>
+                        <button onclick="navigator.clipboard.writeText(document.querySelector('#sqlRunnerBlock pre').textContent); showToast('📋 SQL Code copied to clipboard!', 'success');" class="btn-teal text-xs py-2 px-4 rounded-lg">
+                            <i class="fa-regular fa-copy mr-1"></i> Copy Schema SQL
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Profile Section -->
+            <div class="space-y-6">
+                <div class="bg-navyBG/40 border border-grayBorder/40 rounded-2xl p-6 sticky top-24">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-regular fa-address-card text-teal"></i> User Profile Details
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="text-[10px] text-grayText font-bold uppercase tracking-wider block mb-1">Full Member Name</label>
+                            <input type="text" id="profileName" class="w-full bg-slate-900 border border-grayBorder/40 rounded-xl px-4 py-2.5 text-white text-sm focus:border-teal outline-none transition" placeholder="Your Name">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-grayText font-bold uppercase tracking-wider block mb-1">Mobile Contact No</label>
+                            <input type="tel" id="profilePhone" class="w-full bg-slate-900 border border-grayBorder/40 rounded-xl px-4 py-2.5 text-white text-sm focus:border-teal outline-none transition" placeholder="+91 99999 99999">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-grayText font-bold uppercase tracking-wider block mb-1">Doorstep Location Address</label>
+                            <input type="text" id="profileAddress" class="w-full bg-slate-900 border border-grayBorder/40 rounded-xl px-4 py-2.5 text-white text-sm focus:border-teal outline-none transition" placeholder="Flat, Street, Wardha area">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-grayText font-bold uppercase tracking-wider block mb-1">Hub Location</label>
+                            <select id="profileCity" class="w-full bg-slate-900 border border-grayBorder/40 rounded-xl px-4 py-2.5 text-white text-sm focus:border-teal outline-none transition">
+                                <option value="Wardha">Wardha Hub (Active)</option>
+                                <option value="Nagpur" disabled>Nagpur Hub (Coming soon)</option>
+                                <option value="Amravati" disabled>Amravati Hub (Coming soon)</option>
+                            </select>
+                        </div>
+                        <button onclick="updateProfile()" class="w-full btn-teal text-sm py-3 font-bold mt-2">
+                            <i class="fa-regular fa-circle-check mr-1"></i> Save Profile Settings
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-white/5 bg-[#080D1A] py-6 text-center text-xs text-gray-600">
+        <p>© 2026 RepairMaster Direct To Consumer Support. Wardha Hub. All rights reserved.</p>
+    </footer>
+
+    <!-- Toast Container -->
+    <div id="toast" class="fixed bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500"></div>
+
+    <!-- Supabase Client & Multi-Page script -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>

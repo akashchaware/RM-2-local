@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RepairMaster – Premium Doorstep & Lab Repairs</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Custom Theme Styling Config -->
+    <script src="style.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        body {
+            background: #0A0F1D;
+            color: #E8EDF5;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+        .container-custom {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+        .text-teal {
+            color: #14B8A6;
+        }
+        .bg-teal-gradient {
+            background: linear-gradient(135deg, #0D9488, #14B8A6);
+        }
+        .bg-dark-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .shadow-glow {
+            box-shadow: 0 8px 40px rgba(13, 148, 136, 0.15);
+        }
+        .shadow-glow:hover {
+            box-shadow: 0 12px 50px rgba(13, 148, 136, 0.25);
+            transform: translateY(-4px);
+        }
+        .transition-smooth {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .btn-teal {
+            background: linear-gradient(135deg, #0D9488, #14B8A6);
+            color: #0A0F1D;
+            font-weight: 700;
+            padding: 14px 32px;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-align: center;
+            text-decoration: none;
+            box-shadow: 0 4px 24px rgba(13, 148, 136, 0.3);
+        }
+        .btn-teal:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 36px rgba(13, 148, 136, 0.45);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-block;
+            text-decoration: none;
+        }
+        .btn-outline:hover {
+            border-color: #14B8A6;
+            background: rgba(13, 148, 136, 0.08);
+        }
+        .rm-logo {
+            background: linear-gradient(135deg, #0D9488, #14B8A6);
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 22px;
+            color: #0A0F1D;
+            box-shadow: 0 8px 30px rgba(13, 148, 136, 0.3);
+            flex-shrink: 0;
+        }
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 80vh;
+            min-height: 480px;
+            overflow: hidden;
+        }
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 1.2s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            padding: 0 8%;
+        }
+        .carousel-slide.active {
+            opacity: 1;
+            z-index: 2;
+        }
+        .carousel-slide::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(10, 15, 29, 0.9) 25%, rgba(10, 15, 29, 0.3) 80%);
+            z-index: 1;
+        }
+        .carousel-content {
+            position: relative;
+            z-index: 3;
+            max-width: 620px;
+            color: #fff;
+        }
+        .carousel-content h1 {
+            font-size: clamp(2.6rem, 6vw, 4.8rem);
+            font-weight: 800;
+            line-height: 1.08;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+        }
+        .carousel-content p {
+            font-size: 1.15rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 2rem;
+            max-width: 480px;
+            line-height: 1.6;
+        }
+        .carousel-dots {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 5;
+            display: flex;
+            gap: 12px;
+        }
+        .carousel-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .carousel-dot.active {
+            background: #14B8A6;
+            width: 24px;
+            border-radius: 10px;
+        }
+        .nav-link {
+            color: rgba(255, 255, 255, 0.65);
+            transition: all 0.3s;
+            cursor: pointer;
+            text-decoration: none;
+            padding: 6px 0;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-link:hover,
+        .nav-link.active {
+            color: #14B8A6;
+            border-bottom-color: #14B8A6;
+        }
+        .mobile-menu {
+            display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+            .desktop-nav {
+                display: none;
+            }
+            .carousel-slide {
+                padding: 0 5%;
+            }
+            .carousel-content h1 {
+                font-size: 2.2rem;
+            }
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 24px;
+            padding: 28px 32px;
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            border-color: rgba(13, 148, 136, 0.25);
+            transform: translateY(-2px);
+        }
+        .calc-container {
+            max-width: 980px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 36px 40px;
+            border-radius: 28px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(4px);
+        }
+        select {
+            width: 100%;
+            padding: 14px 16px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 14px;
+            color: #fff;
+            font-size: 15px;
+            outline: none;
+            transition: all 0.3s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.4)' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
+        }
+        select:focus {
+            border-color: rgba(13, 148, 136, 0.5);
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
+        }
+        select option {
+            background: #121B33;
+            color: #fff;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.45);
+            margin-bottom: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+        .part-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            margin-bottom: 6px;
+        }
+        .part-name {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 13px;
+        }
+        .part-price {
+            color: #14B8A6;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 14px;
+        }
+        .total-row {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding-top: 14px;
+            margin-top: 6px;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .offer-toggle {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(245, 158, 11, 0.06);
+            border: 1px solid rgba(245, 158, 11, 0.12);
+            padding: 12px 20px;
+            border-radius: 16px;
+        }
+        .offer-toggle input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #F59E0B;
+            cursor: pointer;
+        }
+        .offer-toggle label {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .offer-toggle .offer-badge {
+            background: #F59E0B;
+            color: #0A0F1D;
+            padding: 2px 14px;
+            border-radius: 40px;
+            font-size: 10px;
+            font-weight: 700;
+        }
+        .release-strip {
+            background: linear-gradient(90deg, #F59E0B, #FCD34D);
+            color: #0A0F1D;
+            font-weight: 700;
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 0.85rem;
+            position: relative;
+            z-index: 60;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .release-strip .close-strip {
+            background: rgba(0, 0, 0, 0.12);
+            border: none;
+            color: #0A0F1D;
+            cursor: pointer;
+            padding: 2px 12px;
+            border-radius: 30px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+        .release-strip .close-strip:hover {
+            background: rgba(0, 0, 0, 0.22);
+        }
+        .offer-card {
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 24px;
+        }
+        .offer-card:hover {
+            transform: translateY(-6px);
+            border-color: #F59E0B;
+            box-shadow: 0 12px 40px rgba(245, 158, 11, 0.06);
+        }
+        .city-notice {
+            background: rgba(245, 158, 11, 0.08);
+            border: 1px solid rgba(245, 158, 11, 0.15);
+            color: #fbbf24;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .maintenance-banner {
+            background: rgba(13, 148, 136, 0.06);
+            border: 1px solid rgba(13, 148, 136, 0.15);
+            border-left: 4px solid #14B8A6;
+            padding: 14px 20px;
+            border-radius: 16px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            backdrop-filter: blur(4px);
+        }
+        @media (max-width: 640px) {
+            .container-custom {
+                padding: 0 16px;
+            }
+            .calc-container {
+                padding: 20px;
+            }
+            .glass-card {
+                padding: 20px;
+            }
+            .carousel-container {
+                height: 70vh;
+                min-height: 400px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!--  RELEASE STRIP                                      -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <div id="releaseStrip" class="release-strip">
+        <span class="inline-block bg-amber-800 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">🚀 New Release</span>
+        <span>RepairMaster App version v3.0 coming soon!</span>
+        <button class="close-strip" onclick="document.getElementById('releaseStrip').style.display='none'">✕</button>
+    </div>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!--  HEADER                                             -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <header class="container-custom py-5 flex items-center justify-between flex-wrap gap-4 sticky top-0 z-40 bg-[#0A0F1D]/80 backdrop-blur-md border-b border-white/5">
+        <div class="flex items-center gap-4 cursor-pointer" onclick="window.location.href='index.html'">
+            <div class="rm-logo">RM</div>
+            <div>
+                <span class="font-display text-2xl md:text-3xl font-black tracking-tight">
+                    <span class="text-white">Repair</span><span class="text-teal">Master</span>
+                </span>
+                <span class="block text-[8px] font-semibold tracking-[0.2em] text-emerald-400 uppercase -mt-1">Direct To Consumer</span>
+                <span class="text-[8px] text-gray-500 italic">powered by cm2us.com</span>
+            </div>
+        </div>
+
+        <!-- Desktop Navigation tabs -->
+        <nav class="desktop-nav flex items-center gap-8 text-sm font-medium" id="mainNav">
+            <a href="index.html" class="nav-link active">Home</a>
+            <a href="request.html" class="nav-link">Repair Request</a>
+            <a href="app.html" class="nav-link">Download</a>
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="login.html" class="nav-link" id="navLogin">Login</a>
+            <a href="signup.html" class="nav-link" id="navSignup">Sign Up</a>
+            <span id="navUserInfo" class="hidden flex items-center gap-4">
+                <span class="text-sm text-gray-300 font-bold" id="navUserName">User</span>
+                <button onclick="logoutUser()" class="text-sm text-red-400 hover:text-red-300 transition font-bold">Logout</button>
+            </span>
+        </nav>
+
+        <!-- Mobile Menu Toggle Button -->
+        <button class="mobile-menu text-white text-2xl" onclick="toggleMobileMenu()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div id="mobileNav" class="hidden absolute top-full left-0 w-full bg-[#0A0F1D]/95 backdrop-blur-md p-6 flex flex-col gap-4 text-center border-b border-white/5 z-50">
+            <a href="index.html" class="nav-link active">Home</a>
+            <a href="request.html" class="nav-link">Repair Request</a>
+            <a href="app.html" class="nav-link">Download</a>
+            <a href="dashboard.html" class="nav-link">Dashboard</a>
+            <a href="login.html" class="nav-link" id="mobileNavLogin">Login</a>
+            <a href="signup.html" class="nav-link" id="mobileNavSignup">Sign Up</a>
+            <span id="mobileNavUserInfo" class="hidden text-sm text-gray-300">
+                <span id="mobileNavUserName" class="font-bold">User</span>
+                <button onclick="logoutUser(); toggleMobileMenu();" class="text-red-400 ml-2 font-bold">Logout</button>
+            </span>
+        </div>
+    </header>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!--  PAGE: HOME                                         -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <main>
+        <!-- Carousel Slider -->
+        <div class="carousel-container relative">
+            <div class="carousel-slide active" style="background-image: url('repo-image-folder/technician-device-1.png');">
+                <div class="carousel-content">
+                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">🔥 Welcome</span>
+                    <h1>Repair<span class="text-teal">Master</span></h1>
+                    <p class="text-2xl font-bold text-teal">Direct To Consumer</p>
+                    <p>Smart, Fast &amp; Reliable Repairs — powered by cm2us.com</p>
+                    <div class="flex flex-wrap gap-4 mt-6">
+                        <a href="#calculator-section" class="btn-teal">Get Estimate</a>
+                        <a href="request.html" class="btn-outline">Request Repair</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-scooty.png');">
+                <div class="carousel-content">
+                    <span class="inline-block bg-teal-500/20 text-teal-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Doorstep Service</span>
+                    <h1>We Come To You</h1>
+                    <p>Real-time GPS tracking • OTP verified handover • Certified technicians in Wardha</p>
+                    <div class="flex flex-wrap gap-4 mt-6">
+                        <a href="request.html" class="btn-teal">Schedule Pickup</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-slide" style="background-image: url('repo-image-folder/device-generic.png');">
+                <div class="carousel-content">
+                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Genuine Parts</span>
+                    <h1>State-of-the-Art Workshop</h1>
+                    <p>Advanced inventory management • Screens • Batteries • Charging Ports &amp; more</p>
+                    <div class="flex flex-wrap gap-4 mt-6">
+                        <a href="#calculator-section" class="btn-teal">Explore Parts</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-device-2.png');">
+                <div class="carousel-content">
+                    <span class="inline-block bg-teal-500/20 text-teal-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Easy Booking</span>
+                    <h1>Seamless Customer App</h1>
+                    <p>🔒 Maintenance Mode active • Privacy Lock enabled</p>
+                    <div class="flex flex-wrap gap-4 mt-6">
+                        <a href="app.html" class="btn-teal">Download App</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-device-1.png');">
+                <div class="carousel-content">
+                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Expanding Network</span>
+                    <h1>Serving Wardha</h1>
+                    <p class="text-xl font-bold text-amber-400">Nagpur &amp; Amravati — Coming Soon!</p>
+                    <div class="flex flex-wrap gap-4 mt-6">
+                        <a href="request.html" class="btn-teal">Visit Hub</a>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-dots">
+                <button class="carousel-dot active" onclick="goToSlide(0)"></button>
+                <button class="carousel-dot" onclick="goToSlide(1)"></button>
+                <button class="carousel-dot" onclick="goToSlide(2)"></button>
+                <button class="carousel-dot" onclick="goToSlide(3)"></button>
+                <button class="carousel-dot" onclick="goToSlide(4)"></button>
+            </div>
+        </div>
+
+        <!-- City Notice & Maintenance Block -->
+        <div class="container-custom -mt-12 relative z-10 mb-12">
+            <div class="city-notice mb-4">
+                <i class="fa-solid fa-location-dot"></i>
+                <span><strong>Currently serving Wardha</strong> — Nagpur &amp; Amravati coming soon!</span>
+            </div>
+            <div class="maintenance-banner">
+                <div class="flex-shrink-0 text-2xl text-teal"><i class="fa-solid fa-shield-halved"></i></div>
+                <div>
+                    <strong>🔒 Maintenance Mode Active</strong> — Your data privacy is our priority.
+                    <span class="text-amber-400 font-medium font-display">Check Point at Pick-up:</span>
+                    All devices (except <strong>Dead Phone</strong> &amp; <strong>Blank Screen</strong>) will be placed in <strong>Maintenance Mode</strong> to protect your personal information.
+                    <span class="text-teal-400 text-xs block mt-1"><i class="fa-regular fa-circle-check mr-1"></i> OTP Verified Handover • Privacy Lock Enabled</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warranty badges info -->
+        <div class="container-custom mt-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="glass-card flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-2xl text-teal flex-shrink-0">
+                        <i class="fa-solid fa-medal"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-white">90 Days Warranty</div>
+                        <div class="text-xs text-gray-400">On all parts &amp; labour — guaranteed</div>
+                    </div>
+                </div>
+                <div class="glass-card flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-2xl text-amber-400 flex-shrink-0">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-white">🔒 Maintenance Mode</div>
+                        <div class="text-xs text-gray-400">Pick-up checkpoint active — <span class="text-amber-400">except Dead Phone &amp; Blank Screen</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Offers Feed -->
+        <div class="container-custom py-16">
+            <div class="text-center space-y-3 mb-12">
+                <span class="inline-block bg-amber-500/10 text-amber-400 text-xs px-4 py-1 rounded-full font-bold">
+                    <i class="fa-solid fa-fire mr-1"></i> Hot Deals
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold text-white font-display">Limited Time Offers</h2>
+                <p class="text-gray-400 text-sm max-w-xl mx-auto">Grab these exclusive discounts before they expire.</p>
+            </div>
+            <div id="offersContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center text-gray-400 py-8 col-span-3"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading offers…</div>
+            </div>
+        </div>
+
+        <!-- Dynamic Estimation Calculator Widget -->
+        <div id="calculator-section" class="container-custom py-12">
+            <div class="text-center space-y-3 mb-12">
+                <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
+                    <i class="fa-solid fa-calculator mr-1"></i> Smart Repair Calculator
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold text-white font-display">Get Your Accurate Estimate</h2>
+                <p class="text-gray-400 text-sm max-w-2xl mx-auto">Select brand, model, repair type &amp; parts quality – transparent pricing.</p>
+                <p class="text-xs text-amber-400"><i class="fa-solid fa-tag mr-1"></i> All prices include 10% discount</p>
+            </div>
+            <div class="calc-container">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Dropdowns / Options -->
+                    <div class="space-y-6">
+                        <div class="form-group">
+                            <label>1. Select Brand</label>
+                            <select id="brandSelect" onchange="updateModels()">
+                                <option value="">— Select Brand —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>2. Choose Model</label>
+                            <select id="modelSelect" onchange="updateRepairTypes()">
+                                <option value="">— Select Model —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>3. Select Repair Action</label>
+                            <select id="repairTypeSelect" onchange="updatePartsSurvey()">
+                                <option value="">— Select Repair —</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>4. Component Quality Grade</label>
+                            <select id="qualitySelect" onchange="updatePartsSurvey()">
+                                <option value="standard">Standard Grade Spares (Affordable &amp; Durable)</option>
+                                <option value="premium">Premium Grade Spares (OEM Equivalent Glass/OLED)</option>
+                            </select>
+                        </div>
+                        <div class="offer-toggle">
+                            <input type="checkbox" id="offerToggle" onchange="updatePartsSurvey()">
+                            <label for="offerToggle">
+                                Apply claim voucher? <span class="offer-badge">50% Off Service Fee</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Live Breakdown Display -->
+                    <div class="bg-navyBG/40 border border-grayBorder/40 rounded-2xl p-6 flex flex-col justify-between">
+                        <div>
+                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-teal"></i> Estimate Summary</h3>
+                            
+                            <!-- Dynamic Parts Breakdown list -->
+                            <div id="partsSurveyContainer" class="mb-6">
+                                <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 text-center text-grayText/50">
+                                    Select options to preview component breakdown.
+                                </div>
+                            </div>
+
+                            <!-- Cost rows -->
+                            <div class="space-y-2 border-t border-grayBorder/40 pt-4">
+                                <div class="price-row">
+                                    <span class="text-grayText">Discounted Parts:</span>
+                                    <span id="partsTotalDisplay" class="text-white font-medium">₹0.00</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="text-grayText">Service Charge (15%):</span>
+                                    <span id="serviceFeeDisplay" class="text-white font-medium">₹0.00</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="text-grayText">Diagnostic Visit Fee:</span>
+                                    <span id="diagnosisChargeDisplay" class="text-white font-medium">₹250.00</span>
+                                </div>
+                                <div class="price-row total-row text-tealAccent">
+                                    <span>Total Estimate (INR):</span>
+                                    <span id="totalPriceDisplay" class="text-xl font-black text-teal">₹250.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 flex gap-4">
+                            <button id="bookServiceBtn" onclick="createOrder()" class="flex-1 btn-teal text-center py-3.5 rounded-xl font-extrabold hover:scale-[1.02] transition-all">
+                                <i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ════════════════════════════════════════════════════ -->
+    <!--  FOOTER                                             -->
+    <!-- ════════════════════════════════════════════════════ -->
+    <footer class="border-t border-white/5 bg-[#080D1A] py-12 mt-20 text-sm text-grayText">
+        <div class="container-custom grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="space-y-3">
+                <div class="flex items-center gap-3">
+                    <div class="rm-logo w-10 h-10 text-lg">RM</div>
+                    <span class="font-bold text-white text-lg font-display">RepairMaster</span>
+                </div>
+                <p class="text-xs text-gray-500">Premium Doorstep &amp; Laboratory Repairs for Nagpur, Wardha &amp; Amravati regions. Fast, reliable, and secure.</p>
+                <p class="text-[10px] text-gray-600">© 2026 RepairMaster. All rights reserved.</p>
+            </div>
+            <div>
+                <h4 class="font-bold text-white mb-4">Service Locations</h4>
+                <ul class="space-y-2 text-xs">
+                    <li><span class="text-teal"><i class="fa-solid fa-location-dot mr-1"></i> Wardha Hub</span> (Fully Active)</li>
+                    <li class="text-gray-600"><i class="fa-solid fa-location-dot mr-1"></i> Nagpur Hub</li>
+                    <li class="text-gray-600"><i class="fa-solid fa-location-dot mr-1"></i> Amravati Hub</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-white mb-4">Quick Links</h4>
+                <ul class="space-y-2 text-xs">
+                    <li><a href="request.html" class="hover:text-teal transition">Submit Repair Request</a></li>
+                    <li><a href="app.html" class="hover:text-teal transition">Download Mobile App</a></li>
+                    <li><a href="dashboard.html" class="hover:text-teal transition">Customer Portal Dashboard</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-white mb-4">Contact &amp; Support</h4>
+                <p class="text-xs text-gray-500">Have questions or need manual assistance? Connect with our helpdesk.</p>
+                <p class="text-sm font-bold text-white mt-2"><i class="fa-solid fa-phone text-teal mr-2"></i> +91 99999 99999</p>
+                <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-envelope text-teal mr-2"></i> support@cm2us.com</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500"></div>
+
+    <!-- Supabase SDK JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <!-- Multi-Page App Logic Controller -->
+    <script src="main.js"></script>
+
+</body>
+</html>
