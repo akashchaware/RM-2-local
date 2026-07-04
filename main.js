@@ -158,6 +158,257 @@ function useComprehensiveFallback() {
     console.log('📦 Loaded fallbacks with generated coverage.');
 }
 
+function getDeviceName(deviceId) {
+    if (!deviceId) return 'Generic Device';
+    const dev = allDevices.find(d => String(d.id) === String(deviceId));
+    return dev ? dev.name : 'Device';
+}
+window.getDeviceName = getDeviceName;
+
+function getRepairLabel(repairTypeId) {
+    if (!repairTypeId) return 'Device Repair';
+    const rt = allRepairTypes.find(r => String(r.id) === String(repairTypeId));
+    return rt ? rt.label : 'Repair';
+}
+window.getRepairLabel = getRepairLabel;
+
+function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, isGuestMode = false, isMatched = true) {
+    const status = o.status || 'Pending';
+    const statusClass = 'status-' + status.replace(/\s/g, '-');
+    const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
+    const repairLabel = getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
+
+    let actions = '';
+    if (!isGuestMode) {
+        if (isAdmin || isCoordinator) {
+            if (status === 'Pending') {
+                actions += `
+                    <button onclick="assignOrderRoles('${o.id}', prompt('Technician user ID:'), prompt('RepairMaster user ID:'))" class="action-btn btn-assign">Assign Staff</button>
+                `;
+            }
+            if (isCoordinator) {
+                if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
+                    actions += `
+                        <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
+                        <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
+                    `;
+                }
+            }
+            if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
+                actions += `
+                    <button onclick="sendQuotation('${o.id}')" class="action-btn btn-quote">Manage Price</button>
+                `;
+            }
+        }
+
+        if (isTechnician && o.technician_id === currentUser?.id) {
+            if (status === 'Technician Assigned') {
+                actions += `<button onclick="initiatePickup('${o.id}')" class="action-btn btn-pickup">Start Pickup</button>`;
+            } else if (status === 'Pickup-Pending') {
+                actions += `
+                    <div class="flex items-center gap-1 mt-1">
+                        <input type="text" id="otp-${o.id}" placeholder="Pickup OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
+                        <button onclick="verifyPickup('${o.id}', document.getElementById('otp-${o.id}').value)" class="action-btn btn-verify">Verify Handover</button>
+                    </div>
+                `;
+            } else if (status === 'Ready-For-Delivery') {
+                actions += `
+                    <div class="flex items-center gap-1 mt-1">
+                        <input type="text" id="delivery-otp-${o.id}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
+                        <button onclick="closeTicket('${o.id}', document.getElementById('delivery-otp-${o.id}').value)" class="action-btn btn-verify">Verify Delivery</button>
+                    </div>
+                `;
+            }
+        }
+
+        if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
+            if (status === 'With-RepairMaster') {
+                actions += `
+                    <button onclick="updateDiagnosis('${o.id}', prompt('Diagnosis notes:'))" class="action-btn btn-diagnose">Diagnose Logs</button>
+                    <button onclick="requestAdditionalParts('${o.id}', prompt('Part Name:'), parseFloat(prompt('Price:')))" class="action-btn btn-part">+ Add Part</button>
+                `;
+            } else if (status === 'Confirmed') {
+                actions += `
+                    <div class="flex flex-col gap-1 items-end">
+                        <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
+                        <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
+                    </div>
+                `;
+            }
+        }
+    }
+
+    // Customer & Guest Actions
+    const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
+    if (isClient) {
+        if (status === 'Quotation-Sent') {
+            actions += `
+                <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
+                <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
+            `;
+        } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
+            const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
+            actions += `
+                <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
+            `;
+        } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
+            // If they have not left a rating yet, allow writing a review!
+            if (!o.customer_rating) {
+                actions += `
+                    <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left max-w-sm w-full">
+                        <p class="text-xs font-bold text-white mb-2"><i class="fa-regular fa-star text-tealAccent mr-1"></i> Rate Your Doorstep Experience</p>
+                        <div class="flex gap-1 mb-2">
+                            ${[1, 2, 3, 4, 5].map(star => `
+                                <button onclick="this.parentElement.setAttribute('data-rating', '${star}'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < ${star} ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                            `).join('')}
+                        </div>
+                        <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
+                        <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
+                    </div>
+                `;
+            } else {
+                actions += `
+                    <div class="mt-2 text-xs text-amber-400 font-medium">
+                        <span>Your Rating: ${'⭐'.repeat(o.customer_rating)}</span>
+                        ${o.customer_review ? `<p class="text-gray-400 italic mt-1">"${o.customer_review}"</p>` : ''}
+                    </div>
+                `;
+            }
+        }
+    }
+
+    let otpNoticeHtml = '';
+    if (isClient) {
+        if (status === 'Pickup-Pending' && o.pickup_otp) {
+            otpNoticeHtml = `
+                <div class="mt-3 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
+                    <span>🔑 Pickup Handover Code: <span class="text-gray-400 italic">(Show to Technician)</span></span>
+                    <strong class="text-sm text-white tracking-widest bg-teal-900/60 px-3 py-1 rounded border border-teal-500/30">${o.pickup_otp}</strong>
+                </div>
+            `;
+        } else if (status === 'Ready-For-Delivery' && o.pickup_otp && o.pickup_otp !== 'VERIFIED') {
+            otpNoticeHtml = `
+                <div class="mt-3 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
+                    <span>🔑 Delivery Handover Code: <span class="text-gray-400 italic">(Share with Technician)</span></span>
+                    <strong class="text-sm text-white tracking-widest bg-teal-900/60 px-3 py-1 rounded border border-teal-500/30">${o.pickup_otp}</strong>
+                </div>
+            `;
+        }
+    }
+
+    let quotationHtml = '';
+    if (status === 'Quotation-Sent' || o.total_price) {
+        quotationHtml = `
+            <div class="quotation-box mt-3 text-xs text-amberAccent bg-amberAccent/5 border border-amberAccent/20 p-3 rounded-lg">
+                <p class="font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-receipt mr-1"></i> Finalized Quotation Summary</p>
+                <p class="text-grayText">Estimation finalized: <strong>₹${(o.total_price || 0).toLocaleString('en-IN')}</strong> ${status === 'Quotation-Sent' ? '<span class="text-amber-400">(Awaiting your acceptance)</span>' : ''}</p>
+                <div class="flex gap-4 text-[10px] text-gray-400 mt-1">
+                    <span>🩺 Diagnosis: ₹${o.diagnosis_charge || 250}</span>
+                    <span>🔧 Service/Workmanship: ₹${o.service_fee || 100}</span>
+                    <span>🛠️ Parts: ₹${o.parts_total || 0}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    // Live Workflow Tracking Indicator
+    let workflowHtml = '';
+    if (isClient) {
+        const steps = [
+            { name: 'Placed', active: true },
+            { name: 'Assigned', active: ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+            { name: 'Pickup', active: ['Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+            { name: 'Lab Diagnosed', active: ['With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+            { name: 'Quoted', active: ['Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+            { name: 'Repairing', active: ['Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+            { name: 'Paid', active: ['Ready-For-Delivery', 'Completed'].includes(status) },
+            { name: 'Delivered', active: ['Completed'].includes(status) }
+        ];
+        workflowHtml = `
+            <div class="mt-4 border-t border-grayBorder pt-3">
+                <p class="text-[10px] text-grayText font-bold uppercase tracking-widest mb-2"><i class="fa-solid fa-route mr-1 text-tealAccent"></i> Live Tracking Workflow</p>
+                <div class="flex items-center justify-between text-[10px] text-center gap-1">
+                    ${steps.map(s => `
+                        <div class="flex-1">
+                            <div class="h-1.5 w-full rounded-full mb-1 ${s.active ? 'bg-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800'}"></div>
+                            <span class="${s.active ? 'text-teal-400 font-bold' : 'text-gray-600'} text-[9px] block leading-tight">${s.name}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+
+    // Role-Based Customer Metadata Panel (Access Control - Protect Customer Data)
+    let metadataPanel = '';
+    if (!isClient) {
+        if (isAdmin || isCoordinator || isTechnician) {
+            metadataPanel = `
+                <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
+                    <p class="font-bold text-white mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1 font-display">
+                        <i class="fa-regular fa-user-circle text-teal"></i> DTC Customer Contact Details
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+                        <div>👤 <strong>Name:</strong> ${o.customer_name || 'N/A'}</div>
+                        <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
+                        <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
+                        <div>📍 <strong>Address:</strong> ${o.address || 'N/A'}</div>
+                        <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
+                    </div>
+                </div>
+            `;
+        } else if (isRepairMaster) {
+            metadataPanel = `
+                <div class="mt-3 p-3.5 bg-slate-950/60 border border-amber-500/10 rounded-xl text-xs text-gray-400">
+                    <p class="font-bold text-amber-400 mb-1.5 uppercase tracking-wider text-[9px] flex items-center gap-1 font-display">
+                        <i class="fa-solid fa-user-shield text-amber-500"></i> Customer Info Masked (Bench Protection)
+                    </p>
+                    <p class="text-[11px] leading-relaxed text-gray-500">
+                        To ensure platform security and client privacy, customer direct identifiers and contact information are masked for Bench RepairMaster roles. Please coordinate logistics or customer approvals with the regional Hub Coordinator.
+                    </p>
+                </div>
+            `;
+        }
+    }
+
+    const opacityClass = isMatched ? '' : 'opacity-40 hover:opacity-100 transition-opacity duration-300';
+    const borderClass = isMatched ? 'border-teal-500/20' : 'border-grayBorder/40';
+
+    return `
+        <div class="order-card bg-navyBG/40 border ${borderClass} rounded-xl p-5 hover:border-teal-500/30 transition-all ${opacityClass}">
+            <div class="flex flex-wrap items-start justify-between gap-3">
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span class="text-lg font-bold text-white">${deviceName}</span>
+                        <span class="text-sm text-grayText">—</span>
+                        <span class="text-sm text-tealAccent font-medium">${repairLabel}</span>
+                        <span class="status-badge ${statusClass} text-xs">${status}</span>
+                        ${!isMatched ? `<span class="inline-block bg-slate-800 text-gray-400 text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-full">Older Log</span>` : ''}
+                    </div>
+                    <div class="text-xs text-grayText mt-1">
+                        <span>ID: ${o.order_number}</span>
+                        <span class="mx-2">•</span>
+                        <span>📅 ${new Date(o.created_at).toLocaleDateString()}</span>
+                        ${o.address ? `<span class="mx-2">•</span><span>📍 ${o.address}</span>` : ''}
+                    </div>
+                    ${o.photo_url ? `<img src="${o.photo_url}" class="mt-3 max-h-24 rounded-lg border border-grayBorder" />` : ''}
+                    ${o.diagnosis_notes ? `<p class="mt-2 text-xs text-grayText italic bg-navyBG/20 p-2 rounded border border-grayBorder">Lab Diagnosis Logs: ${o.diagnosis_notes}</p>` : ''}
+                    ${o.custom_quote_parts ? `<p class="mt-2 text-xs text-amber-300 italic bg-navyBG/20 p-2 rounded border border-grayBorder">Requested Spare Parts: ${o.custom_quote_parts}</p>` : ''}
+                    ${metadataPanel}
+                    ${quotationHtml}
+                    ${otpNoticeHtml}
+                    ${workflowHtml}
+                </div>
+                <div class="flex flex-col items-end gap-2">
+                    <span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>
+                    <div class="flex flex-wrap gap-1 justify-end">${actions}</div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+window.buildSingleOrderCardHtml = buildSingleOrderCardHtml;
+
 // ─── 2. ACTIVE PROMO OFFERS ───
 async function fetchOffers() {
     const container = document.getElementById('offersContainer');
@@ -855,253 +1106,6 @@ async function loadDashboard() {
     window.allFetchedOrders = orders;
     renderFilteredOrders();
 
-    function getDeviceName(deviceId) {
-        if (!deviceId) return 'Generic Device';
-        const dev = allDevices.find(d => String(d.id) === String(deviceId));
-        return dev ? dev.name : 'Device';
-    }
-    window.getDeviceName = getDeviceName;
-
-    function getRepairLabel(repairTypeId) {
-        if (!repairTypeId) return 'Device Repair';
-        const rt = allRepairTypes.find(r => String(r.id) === String(repairTypeId));
-        return rt ? rt.label : 'Repair';
-    }
-    window.getRepairLabel = getRepairLabel;
-
-    function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, isGuestMode = false) {
-        const status = o.status || 'Pending';
-        const statusClass = 'status-' + status.replace(/\s/g, '-');
-        const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
-        const repairLabel = getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
-
-        let actions = '';
-        if (!isGuestMode) {
-            if (isAdmin || isCoordinator) {
-                if (status === 'Pending') {
-                    actions += `
-                        <button onclick="assignOrderRoles('${o.id}', prompt('Technician user ID:'), prompt('RepairMaster user ID:'))" class="action-btn btn-assign">Assign Staff</button>
-                    `;
-                }
-                if (isCoordinator) {
-                    if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
-                        actions += `
-                            <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
-                            <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
-                        `;
-                    }
-                }
-                if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
-                    actions += `
-                        <button onclick="sendQuotation('${o.id}')" class="action-btn btn-quote">Manage Price</button>
-                    `;
-                }
-            }
-
-            if (isTechnician && o.technician_id === currentUser?.id) {
-                if (status === 'Technician Assigned') {
-                    actions += `<button onclick="initiatePickup('${o.id}')" class="action-btn btn-pickup">Start Pickup</button>`;
-                } else if (status === 'Pickup-Pending') {
-                    actions += `
-                        <div class="flex items-center gap-1 mt-1">
-                            <input type="text" id="otp-${o.id}" placeholder="Pickup OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                            <button onclick="verifyPickup('${o.id}', document.getElementById('otp-${o.id}').value)" class="action-btn btn-verify">Verify Handover</button>
-                        </div>
-                    `;
-                } else if (status === 'Ready-For-Delivery') {
-                    actions += `
-                        <div class="flex items-center gap-1 mt-1">
-                            <input type="text" id="delivery-otp-${o.id}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                            <button onclick="closeTicket('${o.id}', document.getElementById('delivery-otp-${o.id}').value)" class="action-btn btn-verify">Verify Delivery</button>
-                        </div>
-                    `;
-                }
-            }
-
-            if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
-                if (status === 'With-RepairMaster') {
-                    actions += `
-                        <button onclick="updateDiagnosis('${o.id}', prompt('Diagnosis notes:'))" class="action-btn btn-diagnose">Diagnose Logs</button>
-                        <button onclick="requestAdditionalParts('${o.id}', prompt('Part Name:'), parseFloat(prompt('Price:')))" class="action-btn btn-part">+ Add Part</button>
-                    `;
-                } else if (status === 'Confirmed') {
-                    actions += `
-                        <div class="flex flex-col gap-1 items-end">
-                            <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
-                            <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        // Customer & Guest Actions
-        const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
-        if (isClient) {
-            if (status === 'Quotation-Sent') {
-                actions += `
-                    <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
-                    <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
-                `;
-            } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
-                const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
-                actions += `
-                    <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
-                `;
-            } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
-                // If they have not left a rating yet, allow writing a review!
-                if (!o.customer_rating) {
-                    actions += `
-                        <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left max-w-sm w-full">
-                            <p class="text-xs font-bold text-white mb-2"><i class="fa-regular fa-star text-tealAccent mr-1"></i> Rate Your Doorstep Experience</p>
-                            <div class="flex gap-1 mb-2">
-                                ${[1, 2, 3, 4, 5].map(star => `
-                                    <button onclick="this.parentElement.setAttribute('data-rating', '${star}'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < ${star} ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                                `).join('')}
-                            </div>
-                            <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
-                            <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
-                        </div>
-                    `;
-                } else {
-                    actions += `
-                        <div class="mt-2 text-xs text-amber-400 font-medium">
-                            <span>Your Rating: ${'⭐'.repeat(o.customer_rating)}</span>
-                            ${o.customer_review ? `<p class="text-gray-400 italic mt-1">"${o.customer_review}"</p>` : ''}
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        let otpNoticeHtml = '';
-        if (isClient) {
-            if (status === 'Pickup-Pending' && o.pickup_otp) {
-                otpNoticeHtml = `
-                    <div class="mt-3 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
-                        <span>🔑 Pickup Handover Code: <span class="text-gray-400 italic">(Show to Technician)</span></span>
-                        <strong class="text-sm text-white tracking-widest bg-teal-900/60 px-3 py-1 rounded border border-teal-500/30">${o.pickup_otp}</strong>
-                    </div>
-                `;
-            } else if (status === 'Ready-For-Delivery' && o.pickup_otp && o.pickup_otp !== 'VERIFIED') {
-                otpNoticeHtml = `
-                    <div class="mt-3 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
-                        <span>🔑 Delivery Handover Code: <span class="text-gray-400 italic">(Share with Technician)</span></span>
-                        <strong class="text-sm text-white tracking-widest bg-teal-900/60 px-3 py-1 rounded border border-teal-500/30">${o.pickup_otp}</strong>
-                    </div>
-                `;
-            }
-        }
-
-        let quotationHtml = '';
-        if (status === 'Quotation-Sent' || o.total_price) {
-            quotationHtml = `
-                <div class="quotation-box mt-3 text-xs text-amberAccent bg-amberAccent/5 border border-amberAccent/20 p-3 rounded-lg">
-                    <p class="font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-receipt mr-1"></i> Finalized Quotation Summary</p>
-                    <p class="text-grayText">Estimation finalized: <strong>₹${(o.total_price || 0).toLocaleString('en-IN')}</strong> ${status === 'Quotation-Sent' ? '<span class="text-amber-400">(Awaiting your acceptance)</span>' : ''}</p>
-                    <div class="flex gap-4 text-[10px] text-gray-400 mt-1">
-                        <span>🩺 Diagnosis: ₹${o.diagnosis_charge || 250}</span>
-                        <span>🔧 Service/Workmanship: ₹${o.service_fee || 100}</span>
-                        <span>🛠️ Parts: ₹${o.parts_total || 0}</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Live Workflow Tracking Indicator
-        let workflowHtml = '';
-        if (isClient) {
-            const steps = [
-                { name: 'Placed', active: true },
-                { name: 'Assigned', active: ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Pickup', active: ['Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Lab Diagnosed', active: ['With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Quoted', active: ['Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Repairing', active: ['Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Paid', active: ['Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Delivered', active: ['Completed'].includes(status) }
-            ];
-            workflowHtml = `
-                <div class="mt-4 border-t border-grayBorder pt-3">
-                    <p class="text-[10px] text-grayText font-bold uppercase tracking-widest mb-2"><i class="fa-solid fa-route mr-1 text-tealAccent"></i> Live Tracking Workflow</p>
-                    <div class="flex items-center justify-between text-[10px] text-center gap-1">
-                        ${steps.map(s => `
-                            <div class="flex-1">
-                                <div class="h-1.5 w-full rounded-full mb-1 ${s.active ? 'bg-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800'}"></div>
-                                <span class="${s.active ? 'text-teal-400 font-bold' : 'text-gray-600'} text-[9px] block leading-tight">${s.name}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Role-Based Customer Metadata Panel (Access Control - Protect Customer Data)
-        let metadataPanel = '';
-        if (!isClient) {
-            if (isAdmin || isCoordinator || isTechnician) {
-                metadataPanel = `
-                    <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
-                        <p class="font-bold text-white mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1 font-display">
-                            <i class="fa-regular fa-user-circle text-teal"></i> DTC Customer Contact Details
-                        </p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
-                            <div>👤 <strong>Name:</strong> ${o.customer_name || 'N/A'}</div>
-                            <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
-                            <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
-                            <div>📍 <strong>Address:</strong> ${o.address || 'N/A'}</div>
-                            <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
-                        </div>
-                    </div>
-                `;
-            } else if (isRepairMaster) {
-                metadataPanel = `
-                    <div class="mt-3 p-3.5 bg-slate-950/60 border border-amber-500/10 rounded-xl text-xs text-gray-400">
-                        <p class="font-bold text-amber-400 mb-1.5 uppercase tracking-wider text-[9px] flex items-center gap-1 font-display">
-                            <i class="fa-solid fa-user-shield text-amber-500"></i> Customer Info Masked (Bench Protection)
-                        </p>
-                        <p class="text-[11px] leading-relaxed text-gray-500">
-                            To ensure platform security and client privacy, customer direct identifiers and contact information are masked for Bench RepairMaster roles. Please coordinate logistics or customer approvals with the regional Hub Coordinator.
-                        </p>
-                    </div>
-                `;
-            }
-        }
-
-        return `
-            <div class="order-card bg-navyBG/40 border border-grayBorder rounded-xl p-5 hover:border-teal-500/30 transition-all">
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3 flex-wrap">
-                            <span class="text-lg font-bold text-white">${deviceName}</span>
-                            <span class="text-sm text-grayText">—</span>
-                            <span class="text-sm text-tealAccent font-medium">${repairLabel}</span>
-                            <span class="status-badge ${statusClass} text-xs">${status}</span>
-                        </div>
-                        <div class="text-xs text-grayText mt-1">
-                            <span>ID: ${o.order_number}</span>
-                            <span class="mx-2">•</span>
-                            <span>📅 ${new Date(o.created_at).toLocaleDateString()}</span>
-                            ${o.address ? `<span class="mx-2">•</span><span>📍 ${o.address}</span>` : ''}
-                        </div>
-                        ${o.photo_url ? `<img src="${o.photo_url}" class="mt-3 max-h-24 rounded-lg border border-grayBorder" />` : ''}
-                        ${o.diagnosis_notes ? `<p class="mt-2 text-xs text-grayText italic bg-navyBG/20 p-2 rounded border border-grayBorder">Lab Diagnosis Logs: ${o.diagnosis_notes}</p>` : ''}
-                        ${o.custom_quote_parts ? `<p class="mt-2 text-xs text-amber-300 italic bg-navyBG/20 p-2 rounded border border-grayBorder">Requested Spare Parts: ${o.custom_quote_parts}</p>` : ''}
-                        ${metadataPanel}
-                        ${quotationHtml}
-                        ${otpNoticeHtml}
-                        ${workflowHtml}
-                    </div>
-                    <div class="flex flex-col items-end gap-2">
-                        <span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>
-                        <div class="flex flex-wrap gap-1 justify-end">${actions}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    window.buildSingleOrderCardHtml = buildSingleOrderCardHtml;
-
     // Filter Apply Logic
     let allFetchedOrders = [];
     window.allFetchedOrders = allFetchedOrders;
@@ -1130,59 +1134,86 @@ async function loadDashboard() {
         const selectedHub = document.getElementById('filterHub')?.value || 'All';
         const selectedStatus = document.getElementById('filterStatus')?.value || 'All';
 
-        let filtered = [...window.allFetchedOrders];
+        const hasActiveFilter = !!(searchQuery || selectedHub !== 'All' || selectedStatus !== 'All');
 
-        // Filter by search query (Client name, phone, order number)
-        if (searchQuery) {
-            filtered = filtered.filter(o => 
-                (o.order_number || '').toLowerCase().includes(searchQuery) ||
-                (o.customer_name || '').toLowerCase().includes(searchQuery) ||
-                (o.customer_phone || '').toLowerCase().includes(searchQuery)
-            );
-        }
+        function isOrderMatching(o) {
+            if (!hasActiveFilter) return true;
 
-        // Filter by Hub City
-        if (selectedHub !== 'All') {
-            filtered = filtered.filter(o => (o.address || '').toLowerCase().includes(selectedHub.toLowerCase()));
-        }
-
-        // Filter by Status Group
-        if (selectedStatus !== 'All') {
-            if (selectedStatus === 'Pending') {
-                filtered = filtered.filter(o => o.status === 'Pending');
-            } else if (selectedStatus === 'Pickup') {
-                filtered = filtered.filter(o => ['Technician Assigned', 'Pickup-Pending'].includes(o.status));
-            } else if (selectedStatus === 'Lab') {
-                filtered = filtered.filter(o => o.status === 'With-RepairMaster');
-            } else if (selectedStatus === 'Quotation') {
-                filtered = filtered.filter(o => o.status === 'Quotation-Sent');
-            } else if (selectedStatus === 'Repairing') {
-                filtered = filtered.filter(o => o.status === 'Confirmed');
-            } else if (selectedStatus === 'Payment') {
-                filtered = filtered.filter(o => o.status === 'Awaiting-Payment');
-            } else if (selectedStatus === 'Delivery') {
-                filtered = filtered.filter(o => o.status === 'Ready-For-Delivery');
-            } else if (selectedStatus === 'Completed') {
-                filtered = filtered.filter(o => o.status === 'Completed');
-            } else if (selectedStatus === 'Rejected') {
-                filtered = filtered.filter(o => o.status === 'Rejected');
+            let matchesSearch = true;
+            if (searchQuery) {
+                matchesSearch = (o.order_number || '').toLowerCase().includes(searchQuery) ||
+                    (o.customer_name || '').toLowerCase().includes(searchQuery) ||
+                    (o.customer_phone || '').toLowerCase().includes(searchQuery);
             }
+
+            let matchesHub = true;
+            if (selectedHub !== 'All') {
+                matchesHub = (o.address || '').toLowerCase().includes(selectedHub.toLowerCase());
+            }
+
+            let matchesStatus = true;
+            if (selectedStatus !== 'All') {
+                if (selectedStatus === 'Pending') {
+                    matchesStatus = o.status === 'Pending';
+                } else if (selectedStatus === 'Pickup') {
+                    matchesStatus = ['Technician Assigned', 'Pickup-Pending'].includes(o.status);
+                } else if (selectedStatus === 'Lab') {
+                    matchesStatus = o.status === 'With-RepairMaster';
+                } else if (selectedStatus === 'Quotation') {
+                    matchesStatus = o.status === 'Quotation-Sent';
+                } else if (selectedStatus === 'Repairing') {
+                    matchesStatus = o.status === 'Confirmed';
+                } else if (selectedStatus === 'Payment') {
+                    matchesStatus = o.status === 'Awaiting-Payment';
+                } else if (selectedStatus === 'Delivery') {
+                    matchesStatus = o.status === 'Ready-For-Delivery';
+                } else if (selectedStatus === 'Completed') {
+                    matchesStatus = o.status === 'Completed';
+                } else if (selectedStatus === 'Rejected') {
+                    matchesStatus = o.status === 'Rejected';
+                }
+            }
+
+            return matchesSearch && matchesHub && matchesStatus;
         }
 
-        if (filtered.length === 0) {
+        let ordersToRender = [...window.allFetchedOrders];
+
+        // Sort so matched orders are placed at the top, and unmatched "old logs" are kept at the bottom
+        ordersToRender.sort((a, b) => {
+            const matchA = isOrderMatching(a);
+            const matchB = isOrderMatching(b);
+            if (matchA && !matchB) return -1;
+            if (!matchA && matchB) return 1;
+            return new Date(b.created_at || 0) - new Date(a.created_at || 0);
+        });
+
+        if (ordersToRender.length === 0) {
             container.innerHTML = `
                 <div class="text-center text-grayText/60 py-12">
                     <i class="fa-regular fa-folder-open text-5xl mb-3 text-tealAccent"></i>
-                    <p class="text-base font-semibold text-white">No Matching Tickets</p>
-                    <p class="text-xs text-grayText">No tickets match the active filter criteria.</p>
+                    <p class="text-base font-semibold text-white">No Tickets Available</p>
+                    <p class="text-xs text-grayText">You do not have any active or historical tickets recorded on the platform.</p>
                 </div>
             `;
             return;
         }
 
-        let html = `<div class="grid grid-cols-1 gap-4">`;
-        filtered.forEach(o => {
-            html += buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster);
+        let hasMatchedCount = ordersToRender.filter(isOrderMatching).length;
+        let matchAlertHtml = '';
+        if (hasActiveFilter && hasMatchedCount === 0) {
+            matchAlertHtml = `
+                <div class="bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs rounded-xl p-3 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation text-amber-400"></i>
+                    <span>No exact matches found. All historic/older logs are shown below.</span>
+                </div>
+            `;
+        }
+
+        let html = matchAlertHtml + `<div class="grid grid-cols-1 gap-4">`;
+        ordersToRender.forEach(o => {
+            const matched = isOrderMatching(o);
+            html += buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, false, matched);
         });
         html += `</div>`;
         container.innerHTML = html;
