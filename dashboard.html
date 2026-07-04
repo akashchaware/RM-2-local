@@ -265,15 +265,15 @@
                     </button>
                     
                     <div id="sqlRunnerBlock" class="hidden mt-6 space-y-4 border-t border-grayBorder/40 pt-6">
-                        <p class="text-xs text-gray-400">Below is the optimized SQL command script to construct the profiles table, user role linkages, parts catalogs, and set up Row Level Security policies automatically:</p>
+                        <p class="text-xs text-gray-400">Below is the optimized SQL command script to construct the users table, user role linkages, parts catalogs, Row Level Security policies, and the user creation mirror trigger automatically:</p>
                         <pre class="bg-slate-900/80 p-4 rounded-xl border border-grayBorder text-[10px] text-tealAccent font-mono overflow-x-auto max-h-64 leading-relaxed">
--- 1. Create Profiles Table (user schema mirroring)
-CREATE TABLE IF NOT EXISTS public.profiles (
+-- 1. Create Users Table (user schema mirroring)
+CREATE TABLE IF NOT EXISTS public.users (
     id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     name TEXT,
     phone TEXT,
-    roles TEXT[] DEFAULT '{customer}',
+    address TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -296,11 +296,45 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
 );
 
 -- 4. Enable RLS and insert Security Policies
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow public select" ON public.profiles FOR SELECT USING (true);
-CREATE POLICY "Allow authenticated insert" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Allow user self update" ON public.profiles FOR UPDATE USING (auth.uid() = id);
+DROP POLICY IF EXISTS "Allow public select" ON public.users;
+DROP POLICY IF EXISTS "Allow authenticated insert" ON public.users;
+DROP POLICY IF EXISTS "Allow user self update" ON public.users;
+
+CREATE POLICY "Allow public select" ON public.users FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated insert" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
+CREATE POLICY "Allow user self update" ON public.users FOR UPDATE USING (auth.uid() = id);
+
+-- 5. Auto-mirror new Auth users to Public Users and User Roles
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO public.users (id, email, name, phone, address)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', ''),
+    COALESCE(NEW.raw_user_meta_data->>'phone', ''),
+    COALESCE(NEW.raw_user_meta_data->>'city', 'Wardha')
+  )
+  ON CONFLICT (id) DO UPDATE SET
+    email = EXCLUDED.email,
+    name = COALESCE(EXCLUDED.name, public.users.name),
+    phone = COALESCE(EXCLUDED.phone, public.users.phone);
+
+  INSERT INTO public.user_roles (user_id, role_id)
+  VALUES (NEW.id, 5) -- Default Role is 'customer'
+  ON CONFLICT (user_id, role_id) DO NOTHING;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
                         </pre>
                         <button onclick="navigator.clipboard.writeText(document.querySelector('#sqlRunnerBlock pre').textContent); showToast('📋 SQL Code copied to clipboard!', 'success');" class="btn-teal text-xs py-2 px-4 rounded-lg">
                             <i class="fa-regular fa-copy mr-1"></i> Copy Schema SQL

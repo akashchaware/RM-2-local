@@ -1820,25 +1820,26 @@ async function signupUser(e) {
     const email = document.getElementById('signupEmail').value.trim();
     const phone = document.getElementById('signupPhone').value.trim();
     const password = document.getElementById('signupPassword').value;
+    const city = document.getElementById('signupCity')?.value || 'Wardha';
     const selectedRole = document.getElementById('signupRole')?.value || '5';
 
     try {
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
-            options: { data: { full_name: name, phone: phone } }
+            options: { data: { full_name: name, phone: phone, city: city } }
         });
         if (error) throw error;
         if (data.user) {
-            // Wait for profile insert
-            await supabase.from('users').insert([{
+            // Wait for profile upsert (robust, avoids duplicate trigger crash)
+            await supabase.from('users').upsert([{
                 id: data.user.id,
                 email: email,
                 name: name,
                 phone: phone,
-                address: 'Wardha'
+                address: city
             }]);
-            await supabase.from('user_roles').insert([{
+            await supabase.from('user_roles').upsert([{
                 user_id: data.user.id,
                 role_id: parseInt(selectedRole)
             }]);
