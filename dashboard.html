@@ -196,8 +196,8 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <!-- Left: Orders / Tickets Section -->
-            <div class="lg:col-span-2 space-y-6">
+            <!-- Left: Orders / Tickets Section (Expanded to Full Width) -->
+            <div class="lg:col-span-3 space-y-6">
                 <div class="flex items-center justify-between">
                     <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
                         <i class="fa-solid fa-ticket text-teal"></i> Assigned Doorstep Tickets
@@ -304,40 +304,6 @@ CREATE POLICY "Allow user self update" ON public.profiles FOR UPDATE USING (auth
                         </pre>
                         <button onclick="navigator.clipboard.writeText(document.querySelector('#sqlRunnerBlock pre').textContent); showToast('📋 SQL Code copied to clipboard!', 'success');" class="btn-teal text-xs py-2 px-4 rounded-lg">
                             <i class="fa-regular fa-copy mr-1"></i> Copy Schema SQL
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Right: Profile Section -->
-            <div class="space-y-6">
-                <div class="bg-navyBG/40 border border-grayBorder/40 rounded-2xl p-6 sticky top-24">
-                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                        <i class="fa-regular fa-address-card text-teal"></i> User Profile Details
-                    </h3>
-                    <div class="space-y-4">
-                        <div>
-                            <label class="text-[10px] text-grayText font-bold uppercase tracking-wider block mb-1">Full Member Name</label>
-                            <input type="text" id="profileName" class="w-full bg-slate-900 border border-grayBorder/40 rounded-xl px-4 py-2.5 text-white text-sm focus:border-teal outline-none transition" placeholder="Your Name">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-grayText font-bold uppercase tracking-wider block mb-1">Mobile Contact No</label>
-                            <input type="tel" id="profilePhone" class="w-full bg-slate-900 border border-grayBorder/40 rounded-xl px-4 py-2.5 text-white text-sm focus:border-teal outline-none transition" placeholder="+91 99999 99999">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-grayText font-bold uppercase tracking-wider block mb-1">Doorstep Location Address</label>
-                            <input type="text" id="profileAddress" class="w-full bg-slate-900 border border-grayBorder/40 rounded-xl px-4 py-2.5 text-white text-sm focus:border-teal outline-none transition" placeholder="Flat, Street, Wardha area">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-grayText font-bold uppercase tracking-wider block mb-1">Hub Location</label>
-                            <select id="profileCity" class="w-full bg-slate-900 border border-grayBorder/40 rounded-xl px-4 py-2.5 text-white text-sm focus:border-teal outline-none transition">
-                                <option value="Wardha">Wardha Hub (Active)</option>
-                                <option value="Nagpur" disabled>Nagpur Hub (Coming soon)</option>
-                                <option value="Amravati" disabled>Amravati Hub (Coming soon)</option>
-                            </select>
-                        </div>
-                        <button onclick="updateProfile()" class="w-full btn-teal text-sm py-3 font-bold mt-2">
-                            <i class="fa-regular fa-circle-check mr-1"></i> Save Profile Settings
                         </button>
                     </div>
                 </div>

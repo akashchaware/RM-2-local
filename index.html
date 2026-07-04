@@ -551,76 +551,6 @@
             </div>
         </div>
 
-        <!-- GUEST QUICK STATUS TRACKER -->
-        <section class="container-custom mb-16 relative z-20">
-            <div class="bg-slate-900/90 border border-teal-500/20 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-                <div class="absolute -right-20 -top-20 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="max-w-xl relative z-10">
-                    <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-3 py-1 rounded-full font-bold mb-3">
-                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Instant Guest Tracker (No Password Needed)
-                    </span>
-                    <h3 class="text-xl md:text-2xl font-bold text-white font-display mb-2">Track Your Repair Request Instantly</h3>
-                    <p class="text-xs md:text-sm text-gray-400 mb-6">Submitted a request without logging in? Enter your Reference ID (e.g., #RM-REQ-...) and registered phone number to view live status, accept/reject quotations, make escrow payments, view OTPs, or rate us.</p>
-                </div>
-                <form id="guestTrackForm" onsubmit="trackOrderGuest(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Reference ID / Ticket No</label>
-                        <input type="text" id="trackOrderId" placeholder="e.g. RM-REQ-JXK3D9" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Registered Mobile Number</label>
-                        <input type="tel" id="trackPhone" placeholder="e.g. 9876543210" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold p-3.5 rounded-xl transition duration-300 text-sm shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-route"></i> Search &amp; Track Live
-                        </button>
-                    </div>
-                </form>
-                
-                <!-- Track Result Display Area -->
-                <div id="guestTrackResult" class="hidden mt-8 border-t border-slate-800 pt-6"></div>
-            </div>
-        </section>
-
-        <!-- Warranty badges info -->
-        <div class="container-custom mt-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div class="glass-card flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-2xl text-teal flex-shrink-0">
-                        <i class="fa-solid fa-medal"></i>
-                    </div>
-                    <div>
-                        <div class="text-sm font-bold text-white">90 Days Warranty</div>
-                        <div class="text-xs text-gray-400">On all parts &amp; labour — guaranteed</div>
-                    </div>
-                </div>
-                <div class="glass-card flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-2xl text-amber-400 flex-shrink-0">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div>
-                        <div class="text-sm font-bold text-white">🔒 Maintenance Mode</div>
-                        <div class="text-xs text-gray-400">Pick-up checkpoint active — <span class="text-amber-400">except Dead Phone &amp; Blank Screen</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dynamic Offers Feed -->
-        <div class="container-custom py-16">
-            <div class="text-center space-y-3 mb-12">
-                <span class="inline-block bg-amber-500/10 text-amber-400 text-xs px-4 py-1 rounded-full font-bold">
-                    <i class="fa-solid fa-fire mr-1"></i> Hot Deals
-                </span>
-                <h2 class="text-4xl md:text-5xl font-bold text-white font-display">Limited Time Offers</h2>
-                <p class="text-gray-400 text-sm max-w-xl mx-auto">Grab these exclusive discounts before they expire.</p>
-            </div>
-            <div id="offersContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="text-center text-gray-400 py-8 col-span-3"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading offers…</div>
-            </div>
-        </div>
-
         <!-- Dynamic Estimation Calculator Widget -->
         <div id="calculator-section" class="container-custom py-12">
             <div class="text-center space-y-3 mb-12">
@@ -708,6 +638,76 @@
                         </div>
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- GUEST QUICK STATUS TRACKER -->
+        <section class="container-custom mb-16 relative z-20">
+            <div class="bg-slate-900/90 border border-teal-500/20 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                <div class="absolute -right-20 -top-20 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="max-w-xl relative z-10">
+                    <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-3 py-1 rounded-full font-bold mb-3">
+                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Instant Guest Tracker (No Password Needed)
+                    </span>
+                    <h3 class="text-xl md:text-2xl font-bold text-white font-display mb-2">Track Your Repair Request Instantly</h3>
+                    <p class="text-xs md:text-sm text-gray-400 mb-6">Submitted a request without logging in? Enter your Reference ID (e.g., #RM-REQ-...) and registered phone number to view live status, accept/reject quotations, make escrow payments, view OTPs, or rate us.</p>
+                </div>
+                <form id="guestTrackForm" onsubmit="trackOrderGuest(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Reference ID / Ticket No</label>
+                        <input type="text" id="trackOrderId" placeholder="e.g. RM-REQ-JXK3D9" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Registered Mobile Number</label>
+                        <input type="tel" id="trackPhone" placeholder="e.g. 9876543210" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold p-3.5 rounded-xl transition duration-300 text-sm shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
+                            <i class="fa-solid fa-route"></i> Search &amp; Track Live
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Track Result Display Area -->
+                <div id="guestTrackResult" class="hidden mt-8 border-t border-slate-800 pt-6"></div>
+            </div>
+        </section>
+
+        <!-- Warranty badges info -->
+        <div class="container-custom mt-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                <div class="glass-card flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-2xl text-teal flex-shrink-0">
+                        <i class="fa-solid fa-medal"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-white">90 Days Warranty</div>
+                        <div class="text-xs text-gray-400">On all parts &amp; labour — guaranteed</div>
+                    </div>
+                </div>
+                <div class="glass-card flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-2xl text-amber-400 flex-shrink-0">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-white">🔒 Maintenance Mode</div>
+                        <div class="text-xs text-gray-400">Pick-up checkpoint active — <span class="text-amber-400">except Dead Phone &amp; Blank Screen</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Offers Feed -->
+        <div class="container-custom py-16">
+            <div class="text-center space-y-3 mb-12">
+                <span class="inline-block bg-amber-500/10 text-amber-400 text-xs px-4 py-1 rounded-full font-bold">
+                    <i class="fa-solid fa-fire mr-1"></i> Hot Deals
+                </span>
+                <h2 class="text-4xl md:text-5xl font-bold text-white font-display">Limited Time Offers</h2>
+                <p class="text-gray-400 text-sm max-w-xl mx-auto">Grab these exclusive discounts before they expire.</p>
+            </div>
+            <div id="offersContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="text-center text-gray-400 py-8 col-span-3"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading offers…</div>
             </div>
         </div>
     </main>

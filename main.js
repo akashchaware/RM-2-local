@@ -1036,23 +1036,36 @@ async function loadDashboard() {
             `;
         }
 
-        // Role-Based Customer Metadata Panel (Requirement 4)
+        // Role-Based Customer Metadata Panel (Access Control - Protect Customer Data)
         let metadataPanel = '';
-        if (!isClient && (isAdmin || isCoordinator || isTechnician || isRepairMaster)) {
-            metadataPanel = `
-                <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
-                    <p class="font-bold text-white mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1">
-                        <i class="fa-regular fa-user-circle text-teal"></i> DTC Customer Information
-                    </p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
-                        <div>👤 <strong>Name:</strong> ${o.customer_name || 'N/A'}</div>
-                        <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
-                        <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
-                        <div>📍 <strong>Address:</strong> ${o.address || 'N/A'}</div>
-                        <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
+        if (!isClient) {
+            if (isAdmin || isCoordinator || isTechnician) {
+                metadataPanel = `
+                    <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
+                        <p class="font-bold text-white mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1 font-display">
+                            <i class="fa-regular fa-user-circle text-teal"></i> DTC Customer Contact Details
+                        </p>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+                            <div>👤 <strong>Name:</strong> ${o.customer_name || 'N/A'}</div>
+                            <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
+                            <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
+                            <div>📍 <strong>Address:</strong> ${o.address || 'N/A'}</div>
+                            <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else if (isRepairMaster) {
+                metadataPanel = `
+                    <div class="mt-3 p-3.5 bg-slate-950/60 border border-amber-500/10 rounded-xl text-xs text-gray-400">
+                        <p class="font-bold text-amber-400 mb-1.5 uppercase tracking-wider text-[9px] flex items-center gap-1 font-display">
+                            <i class="fa-solid fa-user-shield text-amber-500"></i> Customer Info Masked (Bench Protection)
+                        </p>
+                        <p class="text-[11px] leading-relaxed text-gray-500">
+                            To ensure platform security and client privacy, customer direct identifiers and contact information are masked for Bench RepairMaster roles. Please coordinate logistics or customer approvals with the regional Hub Coordinator.
+                        </p>
+                    </div>
+                `;
+            }
         }
 
         return `
@@ -1182,28 +1195,294 @@ async function loadDashboard() {
     window.applyDashboardFilters = applyDashboardFilters;
 }
 
-// ─── 10. AUTH STATUS UPDATE ───
+// ─── 10. AUTH STATUS UPDATE & CUSTOM DRAWER/BELL CONTROLLERS ───
+
+// Global Drawer toggle function
+function toggleProfileDrawer() {
+    const drawer = document.getElementById('profileSidebarDrawer');
+    if (!drawer) return;
+    drawer.classList.toggle('hidden');
+}
+window.toggleProfileDrawer = toggleProfileDrawer;
+
+function enableDrawerEditMode() {
+    const ro = document.getElementById('drawerReadOnlyView');
+    const ed = document.getElementById('drawerEditableForm');
+    if (ro) ro.classList.add('hidden');
+    if (ed) ed.classList.remove('hidden');
+}
+window.enableDrawerEditMode = enableDrawerEditMode;
+
+function disableDrawerEditMode() {
+    const ro = document.getElementById('drawerReadOnlyView');
+    const ed = document.getElementById('drawerEditableForm');
+    if (ro) ro.classList.remove('hidden');
+    if (ed) ed.classList.add('hidden');
+}
+window.disableDrawerEditMode = disableDrawerEditMode;
+
+function toggleNotificationDropdown(event) {
+    if (event) event.stopPropagation();
+    const dropdown = document.getElementById('notificationDropdown');
+    if (dropdown) dropdown.classList.toggle('hidden');
+}
+window.toggleNotificationDropdown = toggleNotificationDropdown;
+
+function clearNotifications() {
+    const badge = document.getElementById('navNotificationBadge');
+    if (badge) badge.classList.add('hidden');
+    showToast('Activity notifications marked as read.', 'success');
+}
+window.clearNotifications = clearNotifications;
+
+// Listen for clicks outside dropdown to close it
+document.addEventListener('click', function(e) {
+    const dropdown = document.getElementById('notificationDropdown');
+    const bellContainer = document.getElementById('notificationDropdownContainer');
+    if (dropdown && !dropdown.classList.contains('hidden') && bellContainer && !bellContainer.contains(e.target)) {
+        dropdown.classList.add('hidden');
+    }
+});
+
+// Function to check and populate the track dropdown if user is logged in
+async function checkAndPopulateTracker() {
+    const trackOrderIdInput = document.getElementById('trackOrderId');
+    const trackPhoneInput = document.getElementById('trackPhone');
+    if (!supabase || !currentUser || !trackOrderIdInput || !trackPhoneInput) return;
+
+    try {
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('user_id', currentUser.id)
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        const { data: uData } = await supabase
+            .from('users')
+            .select('phone')
+            .eq('id', currentUser.id)
+            .single();
+
+        if (uData && uData.phone) {
+            trackPhoneInput.value = uData.phone;
+        }
+
+        if (orders && orders.length > 0) {
+            const selectEl = document.createElement('select');
+            selectEl.id = 'trackOrderId';
+            selectEl.className = 'w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none cursor-pointer';
+            selectEl.required = true;
+
+            orders.forEach(o => {
+                const opt = document.createElement('option');
+                opt.value = o.order_number;
+                opt.textContent = `#${o.order_number} (${o.status || 'Pending'})`;
+                selectEl.appendChild(opt);
+            });
+
+            const manualOpt = document.createElement('option');
+            manualOpt.value = 'MANUAL';
+            manualOpt.textContent = '✏️ Search another ticket...';
+            selectEl.appendChild(manualOpt);
+
+            const parentNode = trackOrderIdInput.parentNode;
+            parentNode.replaceChild(selectEl, trackOrderIdInput);
+
+            selectEl.onchange = function() {
+                if (this.value === 'MANUAL') {
+                    const txtInput = document.createElement('input');
+                    txtInput.type = 'text';
+                    txtInput.id = 'trackOrderId';
+                    txtInput.placeholder = 'e.g. RM-REQ-JXK3D9';
+                    txtInput.required = true;
+                    txtInput.className = 'w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none';
+                    parentNode.replaceChild(txtInput, selectEl);
+                }
+            };
+        }
+    } catch (e) {
+        console.warn("Tracker populating warning:", e);
+    }
+}
+window.checkAndPopulateTracker = checkAndPopulateTracker;
+
 async function updateNavForAuth(user) {
     const navLogin = document.getElementById('navLogin');
     const navSignup = document.getElementById('navSignup');
     const navUserInfo = document.getElementById('navUserInfo');
-    const navUserName = document.getElementById('navUserName');
     
     const mNavLogin = document.getElementById('mobileNavLogin');
     const mNavSignup = document.getElementById('mobileNavSignup');
     const mNavUserInfo = document.getElementById('mobileNavUserInfo');
-    const mNavUserName = document.getElementById('mobileNavUserName');
 
     if (user) {
         if (navLogin) navLogin.style.display = 'none';
         if (navSignup) navSignup.style.display = 'none';
-        if (navUserInfo) navUserInfo.classList.remove('hidden');
-        if (navUserName) navUserName.textContent = user.user_metadata?.full_name || user.email;
+        
+        const username = user.user_metadata?.full_name || user.email.split('@')[0];
+        const initials = username.substring(0, 2).toUpperCase();
+
+        if (navUserInfo) {
+            navUserInfo.classList.remove('hidden');
+            navUserInfo.className = "flex items-center gap-4 flex-wrap";
+            navUserInfo.innerHTML = `
+                <!-- Dynamic Notification Bell -->
+                <div class="relative inline-block text-left" id="notificationDropdownContainer">
+                    <button onclick="toggleNotificationDropdown(event)" class="relative p-2 rounded-full text-gray-400 hover:text-white hover:bg-slate-800/40 focus:outline-none transition">
+                        <i class="fa-regular fa-bell text-lg"></i>
+                        <span id="navNotificationBadge" class="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[8px] font-black leading-none text-white bg-red-500 rounded-full">3</span>
+                    </button>
+                    <!-- Notification Dropdown -->
+                    <div id="notificationDropdown" class="hidden absolute right-0 mt-3 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl z-50 py-3 text-left">
+                        <div class="px-4 py-2 border-b border-slate-800 flex justify-between items-center">
+                            <span class="text-xs font-bold text-white uppercase tracking-wider">Activity Log Notifications</span>
+                            <button onclick="clearNotifications()" class="text-[10px] text-teal-400 hover:underline">Mark read</button>
+                        </div>
+                        <div class="max-h-64 overflow-y-auto divide-y divide-slate-800/60" id="notificationList">
+                            <div class="p-3 hover:bg-slate-800/30 transition text-xs">
+                                <p class="text-white font-medium">📋 System Online</p>
+                                <p class="text-[10px] text-gray-500 mt-0.5">Secure DTC connection initialized in Wardha Hub.</p>
+                            </div>
+                            <div class="p-3 hover:bg-slate-800/30 transition text-xs">
+                                <p class="text-white font-medium">🔒 Privacy Checkpoint Active</p>
+                                <p class="text-[10px] text-gray-500 mt-0.5">Device diagnostics verify maintenance logs safe.</p>
+                            </div>
+                            <div class="p-3 hover:bg-slate-800/30 transition text-xs">
+                                <p class="text-white font-medium">✨ Account Verified</p>
+                                <p class="text-[10px] text-gray-500 mt-0.5">Welcome to your dedicated dashboard.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Avatar Menu trigger -->
+                <div onclick="toggleProfileDrawer()" class="flex items-center gap-2.5 cursor-pointer hover:opacity-90 transition-all select-none">
+                    <div class="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-bold text-xs flex items-center justify-center shadow-lg shadow-teal-500/5">
+                        ${initials}
+                    </div>
+                    <span class="text-sm text-gray-300 font-bold hover:text-teal transition" id="navUserName">${username}</span>
+                </div>
+            `;
+        }
 
         if (mNavLogin) mNavLogin.style.display = 'none';
         if (mNavSignup) mNavSignup.style.display = 'none';
-        if (mNavUserInfo) mNavUserInfo.classList.remove('hidden');
-        if (mNavUserName) mNavUserName.textContent = user.user_metadata?.full_name || user.email;
+        if (mNavUserInfo) {
+            mNavUserInfo.classList.remove('hidden');
+            mNavUserInfo.innerHTML = `
+                <div class="mt-2 flex flex-col gap-2 items-center justify-center">
+                    <button onclick="toggleProfileDrawer()" class="bg-slate-900 border border-slate-800 py-2 px-4 rounded-xl text-xs text-white font-bold">
+                        👤 View &amp; Edit Profile
+                    </button>
+                </div>
+            `;
+        }
+
+        // Setup dynamic profile sidebar drawer container
+        let drawer = document.getElementById('profileSidebarDrawer');
+        if (!drawer) {
+            drawer = document.createElement('div');
+            drawer.id = 'profileSidebarDrawer';
+            drawer.className = 'fixed inset-y-0 right-0 w-96 bg-slate-900/95 border-l border-slate-800 shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out p-6 flex flex-col justify-between hidden';
+            document.body.appendChild(drawer);
+        }
+
+        // Fetch user metadata/profile table to populate drawer dynamically
+        let userDbData = { name: username, phone: user.user_metadata?.phone || 'N/A', address: 'Wardha, Maharashtra' };
+        try {
+            const { data: dbUser } = await supabase.from('users').select('*').eq('id', user.id).single();
+            if (dbUser) {
+                userDbData = dbUser;
+            }
+        } catch (e) {
+            console.warn("Could not fetch database user profile:", e);
+        }
+
+        drawer.innerHTML = `
+            <div>
+                <!-- Header -->
+                <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-6">
+                    <h3 class="text-base font-bold text-white flex items-center gap-2 font-display">
+                        <i class="fa-regular fa-address-card text-teal"></i> Account Profile
+                    </h3>
+                    <button onclick="toggleProfileDrawer()" class="text-gray-400 hover:text-white text-base font-bold">✕</button>
+                </div>
+
+                <!-- Avatar Section -->
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-2xl font-black mx-auto mb-2 shadow-lg shadow-teal-500/5">
+                        ${initials}
+                    </div>
+                    <h4 class="text-sm font-bold text-white" id="drawerProfileEmail">${user.email}</h4>
+                    <span class="inline-block bg-teal-500/10 text-teal-400 text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-full mt-1.5">DTC Registered Member</span>
+                </div>
+
+                <!-- Profile Data Fields -->
+                <div class="space-y-4">
+                    <!-- Read Only View -->
+                    <div id="drawerReadOnlyView" class="space-y-4">
+                        <div class="bg-slate-950/40 p-3.5 rounded-xl border border-slate-800/60 text-left">
+                            <span class="text-[9px] text-gray-500 uppercase font-black tracking-wider block">Full Name</span>
+                            <p class="text-xs text-white font-medium mt-0.5" id="drawerLabelName">${userDbData.name}</p>
+                        </div>
+                        <div class="bg-slate-950/40 p-3.5 rounded-xl border border-slate-800/60 text-left">
+                            <span class="text-[9px] text-gray-500 uppercase font-black tracking-wider block">Mobile Number</span>
+                            <p class="text-xs text-white font-medium mt-0.5" id="drawerLabelPhone">${userDbData.phone}</p>
+                        </div>
+                        <div class="bg-slate-950/40 p-3.5 rounded-xl border border-slate-800/60 text-left">
+                            <span class="text-[9px] text-gray-500 uppercase font-black tracking-wider block">Doorstep Address</span>
+                            <p class="text-xs text-white font-medium mt-0.5" id="drawerLabelAddress">${userDbData.address}</p>
+                        </div>
+                        <div class="bg-slate-950/40 p-3.5 rounded-xl border border-slate-800/60 text-left">
+                            <span class="text-[9px] text-gray-500 uppercase font-black tracking-wider block">Assigned Hub</span>
+                            <p class="text-xs text-teal-400 font-bold mt-0.5"><i class="fa-solid fa-location-dot text-[10px] mr-1"></i> Wardha Hub (Active)</p>
+                        </div>
+                        <button onclick="enableDrawerEditMode()" class="w-full bg-slate-800/60 hover:bg-slate-800 text-teal-400 hover:text-teal-300 text-xs font-bold py-3 rounded-xl border border-teal-500/10 mt-3 transition flex items-center justify-center gap-1.5">
+                            <i class="fa-regular fa-edit"></i> Edit Profile Details
+                        </button>
+                    </div>
+
+                    <!-- Edit Form (Hidden by default) -->
+                    <div id="drawerEditableForm" class="hidden space-y-4">
+                        <div class="text-left">
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Full Name</label>
+                            <input type="text" id="profileName" value="${userDbData.name}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-teal outline-none transition">
+                        </div>
+                        <div class="text-left">
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Mobile Number</label>
+                            <input type="tel" id="profilePhone" value="${userDbData.phone}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-teal outline-none transition">
+                        </div>
+                        <div class="text-left">
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Doorstep Address</label>
+                            <input type="text" id="profileAddress" value="${userDbData.address}" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-teal outline-none transition">
+                        </div>
+                        <div class="text-left">
+                            <label class="text-[10px] text-gray-400 uppercase font-bold tracking-wider block mb-1">Hub Location</label>
+                            <select id="profileCity" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:border-teal outline-none transition cursor-pointer">
+                                <option value="Wardha">Wardha Hub (Active)</option>
+                                <option value="Nagpur" disabled>Nagpur Hub (Coming soon)</option>
+                                <option value="Amravati" disabled>Amravati Hub (Coming soon)</option>
+                            </select>
+                        </div>
+                        <div class="flex gap-2 pt-2">
+                            <button onclick="updateProfile()" class="flex-1 bg-teal-600 hover:bg-teal-500 text-slate-950 text-xs font-bold py-2.5 rounded-xl transition flex items-center justify-center gap-1">
+                                <i class="fa-regular fa-circle-check"></i> Save
+                            </button>
+                            <button onclick="disableDrawerEditMode()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2.5 rounded-xl border border-slate-700 transition">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Section -->
+            <button onclick="logoutUser()" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 text-xs font-bold py-3 rounded-xl border border-red-500/20 transition mt-6 flex items-center justify-center gap-2">
+                <i class="fa-solid fa-power-off"></i> Log Out Account
+            </button>
+        `;
 
         try {
             const roles = await getUserRoles(user.id);
@@ -1219,6 +1498,9 @@ async function updateNavForAuth(user) {
                 localStorage.setItem('activeRole', activeRole);
             }
             renderRoleSelector(roles, activeRole);
+            
+            // Populate check/track widgets elegantly
+            await checkAndPopulateTracker();
         } catch (e) {
             console.warn("Could not load roles for nav update:", e);
         }
@@ -1246,8 +1528,7 @@ function renderRoleSelector(roles, activeRole) {
         switcher = document.createElement('div');
         switcher.id = 'navRoleSwitcher';
         switcher.className = 'flex items-center gap-2 bg-slate-900/80 border border-teal-500/30 px-3 py-1.5 rounded-xl text-xs text-white';
-        const logoutBtn = navUserInfo.querySelector('button');
-        navUserInfo.insertBefore(switcher, logoutBtn);
+        navUserInfo.appendChild(switcher);
     }
 
     if (roles.length > 1) {
@@ -1668,7 +1949,10 @@ document.addEventListener('DOMContentLoaded', async function() {
 async function trackOrderGuest(e) {
     e.preventDefault();
     if (!supabase) return showToast('Supabase Client disconnected', 'error');
-    const orderId = document.getElementById('trackOrderId').value.trim();
+    let orderId = document.getElementById('trackOrderId').value.trim();
+    if (orderId.startsWith('#')) {
+        orderId = orderId.substring(1).trim();
+    }
     let phone = document.getElementById('trackPhone').value.trim();
 
     // Standardize phone search by stripping any non-numeric characters
