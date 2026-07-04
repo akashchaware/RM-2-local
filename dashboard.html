@@ -205,6 +205,46 @@
                     <span class="text-xs text-gray-500">Auto-synced with Supabase</span>
                 </div>
 
+                <!-- COORDINATOR / STAFF FILTERS & GROUPING PANEL -->
+                <div id="coordinatorFiltersPanel" class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 mb-4 space-y-4">
+                    <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-filter"></i> Coordinator Control Console
+                        </span>
+                        <span class="text-[10px] text-gray-400 font-bold bg-teal-500/10 px-2.5 py-0.5 rounded-full">Group requests by hub or status</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Search Client / Order No</label>
+                            <input type="text" id="filterSearch" oninput="applyDashboardFilters()" placeholder="Search Name, Phone, ID..." class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Filter by City Hub</label>
+                            <select id="filterHub" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                                <option value="All">All Hubs (Wardha, Nagpur, Amravati)</option>
+                                <option value="Wardha">Wardha Hub Only</option>
+                                <option value="Nagpur">Nagpur Hub Only</option>
+                                <option value="Amravati">Amravati Hub Only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Group by Workflow Status</label>
+                            <select id="filterStatus" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                                <option value="All">All Tickets</option>
+                                <option value="Pending">Pending Action</option>
+                                <option value="Pickup">Pickup &amp; Handover</option>
+                                <option value="Lab">With RepairMaster (Lab)</option>
+                                <option value="Quotation">Quotation Awaiting Approval</option>
+                                <option value="Repairing">Under Repairing</option>
+                                <option value="Payment">Awaiting Payment</option>
+                                <option value="Delivery">Ready for Delivery</option>
+                                <option value="Completed">Completed &amp; Closed</option>
+                                <option value="Rejected">Rejected / Minimum Service Fee</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="dashboardContent" class="space-y-4">
                     <div class="text-center text-gray-400 py-12 bg-navyBG/20 border border-grayBorder rounded-2xl">
                         <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing synchronized ticket session...

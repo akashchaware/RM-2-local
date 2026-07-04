@@ -25,15 +25,39 @@ tailwind.config = {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("RepairMaster Visual Styling Initialized");
 
-    // Inject brand logo image into rm-logo elements
+    // Inject a global stylesheet style rule for .rm-logo to be absolutely reliable
+    const styleEl = document.createElement('style');
+    styleEl.id = 'global-brand-logo-styles';
+    styleEl.innerHTML = `
+        .rm-logo {
+            background-image: url('repo-image-folder/brand-logo-circular.jpg') !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-color: transparent !important;
+            color: transparent !important;
+            text-shadow: none !important;
+            overflow: hidden !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: 0 8px 30px rgba(13, 148, 136, 0.5) !important;
+            border: 1px solid rgba(20, 184, 166, 0.4) !important;
+        }
+        
+        /* Make sure slides render background images perfectly with high fidelity and proper parallax positioning */
+        .carousel-slide {
+            background-size: cover !important;
+            background-position: center center !important;
+            background-repeat: no-repeat !important;
+            transition: opacity 1.2s ease-in-out !important;
+        }
+    `;
+    document.head.appendChild(styleEl);
+
+    // Also double-secure existing elements
     const logoElements = document.querySelectorAll('.rm-logo');
     logoElements.forEach(el => {
         el.innerHTML = '';
-        el.style.backgroundImage = "url('repo-image-folder/brand-logo-circular.jpg')";
-        el.style.backgroundSize = "cover";
-        el.style.backgroundPosition = "center";
-        el.style.backgroundColor = "transparent";
-        el.style.boxShadow = "0 8px 30px rgba(13, 148, 136, 0.4)";
-        el.style.border = "1px solid rgba(20, 184, 166, 0.3)";
     });
 });

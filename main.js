@@ -852,111 +852,130 @@ async function loadDashboard() {
     if (document.getElementById('statInProgress')) document.getElementById('statInProgress').textContent = inProgress;
     if (document.getElementById('statCompleted')) document.getElementById('statCompleted').textContent = completed;
 
-    if (orders.length === 0) {
-        container.innerHTML = `
-            <div class="text-center text-grayText/60 py-12">
-                <i class="fa-regular fa-folder-open text-5xl mb-3 text-tealAccent"></i>
-                <p class="text-base font-semibold text-white">No Tickets Found</p>
-                <p class="text-xs text-grayText">You don't have any active doorstep support tickets currently.</p>
-            </div>
-        `;
-        return;
-    }
+    window.allFetchedOrders = orders;
+    renderFilteredOrders();
 
     function getDeviceName(deviceId) {
         if (!deviceId) return 'Generic Device';
         const dev = allDevices.find(d => String(d.id) === String(deviceId));
         return dev ? dev.name : 'Device';
     }
+    window.getDeviceName = getDeviceName;
 
     function getRepairLabel(repairTypeId) {
         if (!repairTypeId) return 'Device Repair';
         const rt = allRepairTypes.find(r => String(r.id) === String(repairTypeId));
         return rt ? rt.label : 'Repair';
     }
+    window.getRepairLabel = getRepairLabel;
 
-    let html = `<div class="grid grid-cols-1 gap-4">`;
-    orders.forEach(o => {
+    function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, isGuestMode = false) {
         const status = o.status || 'Pending';
         const statusClass = 'status-' + status.replace(/\s/g, '-');
-        const deviceName = o.device_id ? getDeviceName(o.device_id) : (o.device_other || 'Device');
-        const repairLabel = o.repair_type_id ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
+        const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
+        const repairLabel = getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
 
         let actions = '';
-        if (isAdmin || isCoordinator) {
-            if (status === 'Pending') {
-                actions += `
-                    <button onclick="assignOrderRoles('${o.id}', prompt('Technician user ID:'), prompt('RepairMaster user ID:'))" class="action-btn btn-assign">Assign Staff</button>
-                `;
-            }
-            if (isCoordinator) {
-                if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
+        if (!isGuestMode) {
+            if (isAdmin || isCoordinator) {
+                if (status === 'Pending') {
                     actions += `
-                        <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
-                        <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
+                        <button onclick="assignOrderRoles('${o.id}', prompt('Technician user ID:'), prompt('RepairMaster user ID:'))" class="action-btn btn-assign">Assign Staff</button>
+                    `;
+                }
+                if (isCoordinator) {
+                    if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
+                        actions += `
+                            <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
+                            <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
+                        `;
+                    }
+                }
+                if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
+                    actions += `
+                        <button onclick="sendQuotation('${o.id}')" class="action-btn btn-quote">Manage Price</button>
                     `;
                 }
             }
-            if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
-                actions += `
-                    <button onclick="sendQuotation('${o.id}')" class="action-btn btn-quote">Manage Price</button>
-                `;
+
+            if (isTechnician && o.technician_id === currentUser?.id) {
+                if (status === 'Technician Assigned') {
+                    actions += `<button onclick="initiatePickup('${o.id}')" class="action-btn btn-pickup">Start Pickup</button>`;
+                } else if (status === 'Pickup-Pending') {
+                    actions += `
+                        <div class="flex items-center gap-1 mt-1">
+                            <input type="text" id="otp-${o.id}" placeholder="Pickup OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
+                            <button onclick="verifyPickup('${o.id}', document.getElementById('otp-${o.id}').value)" class="action-btn btn-verify">Verify Handover</button>
+                        </div>
+                    `;
+                } else if (status === 'Ready-For-Delivery') {
+                    actions += `
+                        <div class="flex items-center gap-1 mt-1">
+                            <input type="text" id="delivery-otp-${o.id}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
+                            <button onclick="closeTicket('${o.id}', document.getElementById('delivery-otp-${o.id}').value)" class="action-btn btn-verify">Verify Delivery</button>
+                        </div>
+                    `;
+                }
+            }
+
+            if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
+                if (status === 'With-RepairMaster') {
+                    actions += `
+                        <button onclick="updateDiagnosis('${o.id}', prompt('Diagnosis notes:'))" class="action-btn btn-diagnose">Diagnose Logs</button>
+                        <button onclick="requestAdditionalParts('${o.id}', prompt('Part Name:'), parseFloat(prompt('Price:')))" class="action-btn btn-part">+ Add Part</button>
+                    `;
+                } else if (status === 'Confirmed') {
+                    actions += `
+                        <div class="flex flex-col gap-1 items-end">
+                            <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
+                            <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
+                        </div>
+                    `;
+                }
             }
         }
 
-        if (isTechnician && o.technician_id === currentUser.id) {
-            if (status === 'Technician Assigned') {
-                actions += `<button onclick="initiatePickup('${o.id}')" class="action-btn btn-pickup">Start Pickup</button>`;
-            } else if (status === 'Pickup-Pending') {
-                actions += `
-                    <input type="text" id="otp-${o.id}" placeholder="Enter OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                    <button onclick="verifyPickup('${o.id}', document.getElementById('otp-${o.id}').value)" class="action-btn btn-verify">Verify Handover</button>
-                `;
-            } else if (status === 'Completed' && o.pickup_otp && o.pickup_otp !== 'VERIFIED') {
-                actions += `
-                    <div class="flex items-center gap-1">
-                        <input type="text" id="delivery-otp-${o.id}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                        <button onclick="closeTicket('${o.id}', document.getElementById('delivery-otp-${o.id}').value)" class="action-btn btn-verify">Verify Delivery</button>
-                    </div>
-                `;
-            }
-        }
-
-        if (isRepairMaster && o.repairmaster_id === currentUser.id) {
-            if (status === 'With-RepairMaster') {
-                actions += `
-                    <button onclick="updateDiagnosis('${o.id}', prompt('Diagnosis notes:'))" class="action-btn btn-diagnose">Diagnose Logs</button>
-                    <button onclick="requestAdditionalParts('${o.id}', prompt('Part Name:'), parseFloat(prompt('Price:')))" class="action-btn btn-part">+ Add Part</button>
-                `;
-            } else if (status === 'Confirmed') {
-                actions += `
-                    <div class="flex flex-col gap-1 items-end">
-                        <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
-                        <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
-                    </div>
-                `;
-            }
-        }
-
-        if (o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster) {
+        // Customer & Guest Actions
+        const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
+        if (isClient) {
             if (status === 'Quotation-Sent') {
                 actions += `
                     <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
                     <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
                 `;
-            } else if (status === 'Completed' && (!o.pickup_otp || o.pickup_otp === '')) {
+            } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
+                const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
                 actions += `
-                    <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}</button>
+                    <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
                 `;
-            } else if (status === 'Completed' && o.pickup_otp === 'VERIFIED') {
-                actions += `
-                    <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-circle-check mr-1"></i> Delivery Handover Verified</span>
-                `;
+            } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
+                // If they have not left a rating yet, allow writing a review!
+                if (!o.customer_rating) {
+                    actions += `
+                        <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left max-w-sm w-full">
+                            <p class="text-xs font-bold text-white mb-2"><i class="fa-regular fa-star text-tealAccent mr-1"></i> Rate Your Doorstep Experience</p>
+                            <div class="flex gap-1 mb-2">
+                                ${[1, 2, 3, 4, 5].map(star => `
+                                    <button onclick="this.parentElement.setAttribute('data-rating', '${star}'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < ${star} ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                                `).join('')}
+                            </div>
+                            <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
+                            <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
+                        </div>
+                    `;
+                } else {
+                    actions += `
+                        <div class="mt-2 text-xs text-amber-400 font-medium">
+                            <span>Your Rating: ${'⭐'.repeat(o.customer_rating)}</span>
+                            ${o.customer_review ? `<p class="text-gray-400 italic mt-1">"${o.customer_review}"</p>` : ''}
+                        </div>
+                    `;
+                }
             }
         }
 
         let otpNoticeHtml = '';
-        if (o.user_id === currentUser.id) {
+        if (isClient) {
             if (status === 'Pickup-Pending' && o.pickup_otp) {
                 otpNoticeHtml = `
                     <div class="mt-3 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
@@ -964,7 +983,7 @@ async function loadDashboard() {
                         <strong class="text-sm text-white tracking-widest bg-teal-900/60 px-3 py-1 rounded border border-teal-500/30">${o.pickup_otp}</strong>
                     </div>
                 `;
-            } else if (status === 'Completed' && o.pickup_otp && o.pickup_otp !== 'VERIFIED') {
+            } else if (status === 'Ready-For-Delivery' && o.pickup_otp && o.pickup_otp !== 'VERIFIED') {
                 otpNoticeHtml = `
                     <div class="mt-3 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
                         <span>🔑 Delivery Handover Code: <span class="text-gray-400 italic">(Share with Technician)</span></span>
@@ -978,23 +997,29 @@ async function loadDashboard() {
         if (status === 'Quotation-Sent' || o.total_price) {
             quotationHtml = `
                 <div class="quotation-box mt-3 text-xs text-amberAccent bg-amberAccent/5 border border-amberAccent/20 p-3 rounded-lg">
-                    <p class="font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-receipt mr-1"></i> Finalized Quotation</p>
+                    <p class="font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-receipt mr-1"></i> Finalized Quotation Summary</p>
                     <p class="text-grayText">Estimation finalized: <strong>₹${(o.total_price || 0).toLocaleString('en-IN')}</strong> ${status === 'Quotation-Sent' ? '<span class="text-amber-400">(Awaiting your acceptance)</span>' : ''}</p>
+                    <div class="flex gap-4 text-[10px] text-gray-400 mt-1">
+                        <span>🩺 Diagnosis: ₹${o.diagnosis_charge || 250}</span>
+                        <span>🔧 Service/Workmanship: ₹${o.service_fee || 100}</span>
+                        <span>🛠️ Parts: ₹${o.parts_total || 0}</span>
+                    </div>
                 </div>
             `;
         }
 
-        // Active Workflow Indicator for Customers
+        // Live Workflow Tracking Indicator
         let workflowHtml = '';
-        if (o.user_id === currentUser.id) {
+        if (isClient) {
             const steps = [
                 { name: 'Placed', active: true },
-                { name: 'Assigned', active: ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Completed'].includes(status) },
-                { name: 'Pickup', active: ['Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Completed'].includes(status) },
-                { name: 'Lab Lab', active: ['With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Completed'].includes(status) },
-                { name: 'Quoted', active: ['Quotation-Sent', 'Confirmed', 'Completed'].includes(status) },
-                { name: 'Repairing', active: ['Confirmed', 'Completed'].includes(status) },
-                { name: 'Done', active: ['Completed'].includes(status) }
+                { name: 'Assigned', active: ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+                { name: 'Pickup', active: ['Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+                { name: 'Lab Diagnosed', active: ['With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+                { name: 'Quoted', active: ['Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+                { name: 'Repairing', active: ['Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
+                { name: 'Paid', active: ['Ready-For-Delivery', 'Completed'].includes(status) },
+                { name: 'Delivered', active: ['Completed'].includes(status) }
             ];
             workflowHtml = `
                 <div class="mt-4 border-t border-grayBorder pt-3">
@@ -1003,7 +1028,7 @@ async function loadDashboard() {
                         ${steps.map(s => `
                             <div class="flex-1">
                                 <div class="h-1.5 w-full rounded-full mb-1 ${s.active ? 'bg-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800'}"></div>
-                                <span class="${s.active ? 'text-teal-400 font-bold' : 'text-gray-600'}">${s.name}</span>
+                                <span class="${s.active ? 'text-teal-400 font-bold' : 'text-gray-600'} text-[9px] block leading-tight">${s.name}</span>
                             </div>
                         `).join('')}
                     </div>
@@ -1011,7 +1036,26 @@ async function loadDashboard() {
             `;
         }
 
-        html += `
+        // Role-Based Customer Metadata Panel (Requirement 4)
+        let metadataPanel = '';
+        if (!isClient && (isAdmin || isCoordinator || isTechnician || isRepairMaster)) {
+            metadataPanel = `
+                <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
+                    <p class="font-bold text-white mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1">
+                        <i class="fa-regular fa-user-circle text-teal"></i> DTC Customer Information
+                    </p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
+                        <div>👤 <strong>Name:</strong> ${o.customer_name || 'N/A'}</div>
+                        <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
+                        <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
+                        <div>📍 <strong>Address:</strong> ${o.address || 'N/A'}</div>
+                        <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        return `
             <div class="order-card bg-navyBG/40 border border-grayBorder rounded-xl p-5 hover:border-teal-500/30 transition-all">
                 <div class="flex flex-wrap items-start justify-between gap-3">
                     <div class="flex-1 min-w-0">
@@ -1026,11 +1070,11 @@ async function loadDashboard() {
                             <span class="mx-2">•</span>
                             <span>📅 ${new Date(o.created_at).toLocaleDateString()}</span>
                             ${o.address ? `<span class="mx-2">•</span><span>📍 ${o.address}</span>` : ''}
-                            ${o.customer_name ? `<span class="mx-2">•</span><span>👤 ${o.customer_name} (${o.customer_phone})</span>` : ''}
                         </div>
                         ${o.photo_url ? `<img src="${o.photo_url}" class="mt-3 max-h-24 rounded-lg border border-grayBorder" />` : ''}
                         ${o.diagnosis_notes ? `<p class="mt-2 text-xs text-grayText italic bg-navyBG/20 p-2 rounded border border-grayBorder">Lab Diagnosis Logs: ${o.diagnosis_notes}</p>` : ''}
                         ${o.custom_quote_parts ? `<p class="mt-2 text-xs text-amber-300 italic bg-navyBG/20 p-2 rounded border border-grayBorder">Requested Spare Parts: ${o.custom_quote_parts}</p>` : ''}
+                        ${metadataPanel}
                         ${quotationHtml}
                         ${otpNoticeHtml}
                         ${workflowHtml}
@@ -1042,9 +1086,100 @@ async function loadDashboard() {
                 </div>
             </div>
         `;
-    });
-    html += `</div>`;
-    container.innerHTML = html;
+    }
+    window.buildSingleOrderCardHtml = buildSingleOrderCardHtml;
+
+    // Filter Apply Logic
+    let allFetchedOrders = [];
+    window.allFetchedOrders = allFetchedOrders;
+
+    function renderFilteredOrders() {
+        const container = document.getElementById('dashboardContent');
+        if (!container) return;
+
+        const activeRole = localStorage.getItem('activeRole') || 'customer';
+        const isAdmin = activeRole === 'admin';
+        const isCoordinator = activeRole === 'coordinator';
+        const isTechnician = activeRole === 'technician';
+        const isRepairMaster = activeRole === 'repairmaster';
+
+        // Show or hide coordinator filters panel
+        const filterPanel = document.getElementById('coordinatorFiltersPanel');
+        if (filterPanel) {
+            if (isCoordinator || isAdmin) {
+                filterPanel.classList.remove('hidden');
+            } else {
+                filterPanel.classList.add('hidden');
+            }
+        }
+
+        const searchQuery = document.getElementById('filterSearch')?.value.trim().toLowerCase() || '';
+        const selectedHub = document.getElementById('filterHub')?.value || 'All';
+        const selectedStatus = document.getElementById('filterStatus')?.value || 'All';
+
+        let filtered = [...window.allFetchedOrders];
+
+        // Filter by search query (Client name, phone, order number)
+        if (searchQuery) {
+            filtered = filtered.filter(o => 
+                (o.order_number || '').toLowerCase().includes(searchQuery) ||
+                (o.customer_name || '').toLowerCase().includes(searchQuery) ||
+                (o.customer_phone || '').toLowerCase().includes(searchQuery)
+            );
+        }
+
+        // Filter by Hub City
+        if (selectedHub !== 'All') {
+            filtered = filtered.filter(o => (o.address || '').toLowerCase().includes(selectedHub.toLowerCase()));
+        }
+
+        // Filter by Status Group
+        if (selectedStatus !== 'All') {
+            if (selectedStatus === 'Pending') {
+                filtered = filtered.filter(o => o.status === 'Pending');
+            } else if (selectedStatus === 'Pickup') {
+                filtered = filtered.filter(o => ['Technician Assigned', 'Pickup-Pending'].includes(o.status));
+            } else if (selectedStatus === 'Lab') {
+                filtered = filtered.filter(o => o.status === 'With-RepairMaster');
+            } else if (selectedStatus === 'Quotation') {
+                filtered = filtered.filter(o => o.status === 'Quotation-Sent');
+            } else if (selectedStatus === 'Repairing') {
+                filtered = filtered.filter(o => o.status === 'Confirmed');
+            } else if (selectedStatus === 'Payment') {
+                filtered = filtered.filter(o => o.status === 'Awaiting-Payment');
+            } else if (selectedStatus === 'Delivery') {
+                filtered = filtered.filter(o => o.status === 'Ready-For-Delivery');
+            } else if (selectedStatus === 'Completed') {
+                filtered = filtered.filter(o => o.status === 'Completed');
+            } else if (selectedStatus === 'Rejected') {
+                filtered = filtered.filter(o => o.status === 'Rejected');
+            }
+        }
+
+        if (filtered.length === 0) {
+            container.innerHTML = `
+                <div class="text-center text-grayText/60 py-12">
+                    <i class="fa-regular fa-folder-open text-5xl mb-3 text-tealAccent"></i>
+                    <p class="text-base font-semibold text-white">No Matching Tickets</p>
+                    <p class="text-xs text-grayText">No tickets match the active filter criteria.</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = `<div class="grid grid-cols-1 gap-4">`;
+        filtered.forEach(o => {
+            html += buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster);
+        });
+        html += `</div>`;
+        container.innerHTML = html;
+    }
+    window.renderFilteredOrders = renderFilteredOrders;
+
+    function applyDashboardFilters() {
+        renderFilteredOrders();
+    }
+    window.applyDashboardFilters = applyDashboardFilters;
 }
 
 // ─── 10. AUTH STATUS UPDATE ───
@@ -1530,6 +1665,89 @@ document.addEventListener('DOMContentLoaded', async function() {
     }
 });
 
+async function trackOrderGuest(e) {
+    e.preventDefault();
+    if (!supabase) return showToast('Supabase Client disconnected', 'error');
+    const orderId = document.getElementById('trackOrderId').value.trim();
+    let phone = document.getElementById('trackPhone').value.trim();
+
+    // Standardize phone search by stripping any non-numeric characters
+    const cleanPhone = phone.replace(/[^0-9]/g, '');
+
+    const resultDiv = document.getElementById('guestTrackResult');
+    if (!resultDiv) return;
+
+    try {
+        resultDiv.classList.remove('hidden');
+        resultDiv.innerHTML = `<div class="text-center py-4 text-xs text-teal-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Searching for request...</div>`;
+
+        // Fetch from orders
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('order_number', orderId);
+
+        if (error) throw error;
+
+        if (!orders || orders.length === 0) {
+            resultDiv.innerHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-center font-bold text-xs">❌ No order matching reference #${orderId} was found.</div>`;
+            return;
+        }
+
+        const o = orders[0];
+        const dbPhone = (o.customer_phone || '').replace(/[^0-9]/g, '');
+
+        if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) {
+            resultDiv.innerHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-center font-bold text-xs">❌ Phone number mismatch. Authorization failed.</div>`;
+            return;
+        }
+
+        // Render the order card in guest mode!
+        const cardHtml = buildSingleOrderCardHtml(o, false, false, false, false, true); // isGuestMode = true
+        resultDiv.innerHTML = `
+            <div class="p-4 bg-teal-500/5 border border-teal-500/10 rounded-xl mb-4 text-xs text-teal-300 font-bold flex items-center gap-2">
+                <i class="fa-solid fa-circle-check"></i> Request Authorized &amp; Loaded Successfully
+            </div>
+            ${cardHtml}
+        `;
+    } catch (err) {
+        resultDiv.innerHTML = `<div class="p-4 bg-red-500/10 border border-red-500/20 text-red-400 rounded-xl text-center font-bold text-xs">❌ Search failed: ${err.message}</div>`;
+    }
+}
+
+async function submitOrderReview(orderId, rating, reviewText) {
+    if (!supabase) return;
+    try {
+        // Direct rating and review update
+        const { error } = await supabase.from('orders').update({
+            customer_rating: rating,
+            customer_review: reviewText
+        }).eq('id', orderId);
+
+        if (error) {
+            // Fallback: write to notes
+            const { data } = await supabase.from('orders').select('notes').eq('id', orderId).single();
+            const currentNotes = data?.notes || '';
+            const updatedNotes = currentNotes + `\n[REVIEW] Rating: ${rating}/5, Comment: ${reviewText}`;
+            await supabase.from('orders').update({ notes: updatedNotes }).eq('id', orderId);
+        }
+        showToast('⭐ Thank you for your feedback! Review saved successfully.', 'success');
+        
+        if (window.location.href.includes('dashboard.html')) {
+            loadDashboard();
+        } else {
+            // Re-trigger guest tracking search to show the review instantly!
+            const guestTrackForm = document.getElementById('guestTrackForm');
+            if (guestTrackForm) {
+                const submitEvent = new Event('submit');
+                guestTrackForm.dispatchEvent(submitEvent);
+            }
+        }
+    } catch (err) {
+        showToast('Failed to save review: ' + err.message, 'error');
+    }
+}
+
 // ─── 14. EXPOSE ATTACHMENTS FOR HTML HANDLERS ───
 window.signInWithGoogle = signInWithGoogle;
 window.toggleMobileMenu = toggleMobileMenu;
@@ -1564,3 +1782,5 @@ window.completeRepair = completeRepair;
 window.payForRepair = payForRepair;
 window.executePayment = executePayment;
 window.closeTicket = closeTicket;
+window.trackOrderGuest = trackOrderGuest;
+window.submitOrderReview = submitOrderReview;
