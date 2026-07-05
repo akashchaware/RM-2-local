@@ -1217,7 +1217,7 @@ async function loadDashboard() {
             if (isAdmin || isCoordinator) {
                 if (status === 'Pending') {
                     actions += `
-                        <button onclick="assignOrderRoles('${o.id}', prompt('Technician user ID:'), prompt('RepairMaster user ID:'))" class="action-btn btn-assign">Assign Staff</button>
+                        <button onclick="assignOrderRoles('${o.id}')" class="action-btn btn-assign">Assign Staff</button>
                     `;
                 }
                 if (isCoordinator) {
