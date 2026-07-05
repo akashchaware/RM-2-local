@@ -3,797 +3,885 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RepairMaster – Premium Doorstep & Lab Repairs</title>
-    <link rel="icon" type="image/jpg" href="app/src/main/res/drawable/img_maintenance_mode_1782766826537.jpg" />
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Custom Theme Styling Config -->
-    <script src="style.js"></script>
-    <!-- FontAwesome Icons -->
+    <title>RepairMaster – Doorstep Repair</title>
+    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        html {
-            scroll-behavior: smooth;
-        }
+        /* ─── RESET & BASE ─── */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            background: #0A0F1D;
-            color: #E8EDF5;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
-        }
-        .container-custom {
-            max-width: 1280px;
+            background: #f5f7fa;
+            color: #1a2a3a;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            line-height: 1.5;
+            padding: 16px;
+            max-width: 480px;
             margin: 0 auto;
-            padding: 0 24px;
         }
-        .text-teal {
-            color: #14B8A6;
+
+        /* ─── CARDS ─── */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
         }
-        .bg-teal-gradient {
-            background: linear-gradient(135deg, #0D9488, #14B8A6);
-        }
-        .bg-dark-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-        }
-        .shadow-glow {
-            box-shadow: 0 8px 40px rgba(13, 148, 136, 0.15);
-        }
-        .shadow-glow:hover {
-            box-shadow: 0 12px 50px rgba(13, 148, 136, 0.25);
-            transform: translateY(-4px);
-        }
-        .transition-smooth {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .btn-teal {
-            background: linear-gradient(135deg, #0D9488, #14B8A6);
-            color: #0A0F1D;
+        .card-title {
+            font-size: 18px;
             font-weight: 700;
-            padding: 14px 32px;
-            border-radius: 40px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #0b7f7a;
+        }
+
+        /* ─── HEADER ─── */
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding: 0 4px;
+        }
+        .logo {
+            font-size: 22px;
+            font-weight: 900;
+            color: #0b7f7a;
+        }
+        .logo span { color: #1a2a3a; }
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .header-actions button {
+            background: none;
             border: none;
+            font-size: 20px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-block;
-            text-align: center;
-            text-decoration: none;
-            box-shadow: 0 4px 24px rgba(13, 148, 136, 0.3);
+            color: #1a2a3a;
         }
-        .btn-teal:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 36px rgba(13, 148, 136, 0.45);
-        }
-        .btn-outline {
-            background: transparent;
-            border: 2px solid rgba(255, 255, 255, 0.15);
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #0b7f7a;
             color: #fff;
-            padding: 12px 28px;
-            border-radius: 40px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-block;
-            text-decoration: none;
-        }
-        .btn-outline:hover {
-            border-color: #14B8A6;
-            background: rgba(13, 148, 136, 0.08);
-        }
-        .rm-logo {
-            background: linear-gradient(135deg, #0D9488, #14B8A6);
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 900;
-            font-size: 22px;
-            color: #0A0F1D;
-            box-shadow: 0 8px 30px rgba(13, 148, 136, 0.3);
-            flex-shrink: 0;
-        }
-        .carousel-container {
-            position: relative;
-            width: 100%;
-            height: 80vh;
-            min-height: 480px;
-            overflow: hidden;
-        }
-        .carousel-slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transition: opacity 1.2s ease-in-out;
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            padding: 0 8%;
-        }
-        .carousel-slide.active {
-            opacity: 1;
-            z-index: 2;
-        }
-        .carousel-slide::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(10, 15, 29, 0.9) 25%, rgba(10, 15, 29, 0.3) 80%);
-            z-index: 1;
-        }
-        .carousel-content {
-            position: relative;
-            z-index: 3;
-            max-width: 620px;
-            color: #fff;
-        }
-        .carousel-content h1 {
-            font-size: clamp(2.6rem, 6vw, 4.8rem);
-            font-weight: 800;
-            line-height: 1.08;
-            margin-bottom: 0.75rem;
-            letter-spacing: -0.02em;
-        }
-        .carousel-content p {
-            font-size: 1.15rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 2rem;
-            max-width: 480px;
-            line-height: 1.6;
-        }
-        .carousel-dots {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 5;
-            display: flex;
-            gap: 12px;
-        }
-        .carousel-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.3);
-            border: none;
+            font-weight: 700;
+            font-size: 16px;
             cursor: pointer;
-            transition: all 0.3s;
+            border: 2px solid #0b7f7a;
         }
-        .carousel-dot.active {
-            background: #14B8A6;
-            width: 24px;
+
+        /* ─── LOGIN SCREEN ─── */
+        .login-screen { display: block; }
+        .login-screen.hidden { display: none; }
+        .login-screen .card { text-align: center; }
+        .login-screen input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dce1e7;
             border-radius: 10px;
-        }
-        .nav-link {
-            color: rgba(255, 255, 255, 0.65);
-            transition: all 0.3s;
-            cursor: pointer;
-            text-decoration: none;
-            padding: 6px 0;
-            border-bottom: 2px solid transparent;
-        }
-        .nav-link:hover,
-        .nav-link.active {
-            color: #14B8A6;
-            border-bottom-color: #14B8A6;
-        }
-        .mobile-menu {
-            display: none;
-        }
-        @media (max-width: 768px) {
-            .mobile-menu {
-                display: block;
-            }
-            .desktop-nav {
-                display: none;
-            }
-            .carousel-slide {
-                padding: 0 5%;
-            }
-            .carousel-content h1 {
-                font-size: 2.2rem;
-            }
-        }
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 24px;
-            padding: 28px 32px;
-            transition: all 0.3s ease;
-        }
-        .glass-card:hover {
-            border-color: rgba(13, 148, 136, 0.25);
-            transform: translateY(-2px);
-        }
-        .calc-container {
-            max-width: 980px;
-            margin: 0 auto;
-            background: rgba(255, 255, 255, 0.02);
-            padding: 36px 40px;
-            border-radius: 28px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(4px);
-        }
-        select {
-            width: 100%;
-            padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            color: #fff;
             font-size: 15px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+        }
+        .login-screen input:focus {
             outline: none;
-            transition: all 0.3s ease;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.4)' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-            padding-right: 40px;
+            border-color: #0b7f7a;
+            box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
         }
-        select:focus {
-            border-color: rgba(13, 148, 136, 0.5);
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
-        }
-        select option {
-            background: #121B33;
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: #0b7f7a;
             color: #fff;
-        }
-        .form-group {
-            margin-bottom: 20px;
-        }
-        .form-group label {
-            display: block;
-            font-size: 12px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.45);
-            margin-bottom: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.6px;
-        }
-        .part-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 14px;
-            background: rgba(255, 255, 255, 0.03);
+            border: none;
             border-radius: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            margin-bottom: 6px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
         }
-        .part-name {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 13px;
-        }
-        .part-price {
-            color: #14B8A6;
+        .btn-primary:hover { background: #075a57; }
+        .btn-secondary {
+            width: 100%;
+            padding: 12px;
+            background: #e8edf2;
+            color: #1a2a3a;
+            border: none;
+            border-radius: 10px;
+            font-size: 15px;
             font-weight: 600;
-            font-size: 13px;
+            cursor: pointer;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .tab-row {
+            display: flex;
+            gap: 6px;
+            background: #f0f2f5;
+            border-radius: 10px;
+            padding: 4px;
+            margin-bottom: 12px;
+        }
+        .tab-row button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            background: transparent;
+            cursor: pointer;
+            color: #6b7a8a;
+        }
+        .tab-row button.active {
+            background: #fff;
+            color: #0b7f7a;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+
+        /* ─── DASHBOARD ─── */
+        .dashboard { display: none; }
+        .dashboard.active { display: block; }
+
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .stat-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stat-box .num {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0b7f7a;
+        }
+        .stat-box .label {
+            font-size: 12px;
+            color: #6b7a8a;
+            font-weight: 600;
+        }
+
+        /* ─── ESTIMATOR ─── */
+        .estimator select,
+        .estimator input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dce1e7;
+            border-radius: 10px;
+            font-size: 15px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+        }
+        .estimator select:focus,
+        .estimator input:focus {
+            outline: none;
+            border-color: #0b7f7a;
+            box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
+        }
+        .price-breakdown {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 12px;
+            margin: 10px 0;
         }
         .price-row {
             display: flex;
             justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            padding: 6px 0;
             font-size: 14px;
         }
-        .total-row {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding-top: 14px;
-            margin-top: 6px;
-            font-size: 18px;
+        .price-row.total {
+            border-top: 2px solid #dce1e7;
+            padding-top: 10px;
             font-weight: 700;
+            font-size: 18px;
+            color: #0b7f7a;
         }
-        .offer-toggle {
+        .checkbox-row {
             display: flex;
             align-items: center;
-            gap: 14px;
-            background: rgba(245, 158, 11, 0.06);
-            border: 1px solid rgba(245, 158, 11, 0.12);
-            padding: 12px 20px;
-            border-radius: 16px;
+            gap: 8px;
+            font-size: 14px;
+            color: #4a5a6a;
+            margin: 6px 0;
         }
-        .offer-toggle input[type="checkbox"] {
+        .checkbox-row input {
             width: 18px;
             height: 18px;
-            accent-color: #F59E0B;
-            cursor: pointer;
+            accent-color: #0b7f7a;
         }
-        .offer-toggle label {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 13px;
-            cursor: pointer;
+
+        /* ─── ORDERS ─── */
+        .order-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid #0b7f7a;
+        }
+        .order-card .top {
             display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: start;
         }
-        .offer-toggle .offer-badge {
-            background: #F59E0B;
-            color: #0A0F1D;
-            padding: 2px 14px;
-            border-radius: 40px;
-            font-size: 10px;
+        .order-card .device {
             font-weight: 700;
+            font-size: 16px;
         }
-        .release-strip {
-            background: linear-gradient(90deg, #F59E0B, #FCD34D);
-            color: #0A0F1D;
+        .order-card .status {
+            font-size: 12px;
             font-weight: 700;
-            padding: 8px 16px;
-            text-align: center;
-            font-size: 0.85rem;
-            position: relative;
-            z-index: 60;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-        .release-strip .close-strip {
-            background: rgba(0, 0, 0, 0.12);
-            border: none;
-            color: #0A0F1D;
-            cursor: pointer;
-            padding: 2px 12px;
-            border-radius: 30px;
-            font-size: 14px;
-            transition: background 0.2s;
-        }
-        .release-strip .close-strip:hover {
-            background: rgba(0, 0, 0, 0.22);
-        }
-        .offer-card {
-            transition: all 0.3s ease;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 3px 10px;
             border-radius: 20px;
-            padding: 24px;
+            background: #e8edf2;
+            color: #4a5a6a;
         }
-        .offer-card:hover {
-            transform: translateY(-6px);
-            border-color: #F59E0B;
-            box-shadow: 0 12px 40px rgba(245, 158, 11, 0.06);
-        }
-        .city-notice {
-            background: rgba(245, 158, 11, 0.08);
-            border: 1px solid rgba(245, 158, 11, 0.15);
-            color: #fbbf24;
-            padding: 8px 16px;
-            border-radius: 30px;
+        .order-card .status.Pending { background: #fef3cd; color: #856404; }
+        .order-card .status.Confirmed { background: #d4edda; color: #155724; }
+        .order-card .status.Completed { background: #cce5ff; color: #004085; }
+        .order-card .status.Rejected { background: #f8d7da; color: #721c24; }
+        .order-card .meta {
             font-size: 13px;
-            font-weight: 500;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
+            color: #6b7a8a;
+            margin-top: 4px;
         }
-        .maintenance-banner {
-            background: rgba(13, 148, 136, 0.06);
-            border: 1px solid rgba(13, 148, 136, 0.15);
-            border-left: 4px solid #14B8A6;
-            padding: 14px 20px;
-            border-radius: 16px;
+        .order-card .actions {
             display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            backdrop-filter: blur(4px);
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
         }
-        @media (max-width: 640px) {
-            .container-custom {
-                padding: 0 16px;
-            }
-            .calc-container {
-                padding: 20px;
-            }
-            .glass-card {
-                padding: 20px;
-            }
-            .carousel-container {
-                height: 70vh;
-                min-height: 400px;
-            }
+        .order-card .actions button {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-view { background: #e8edf2; color: #1a2a3a; }
+        .btn-accept { background: #0b7f7a; color: #fff; }
+        .btn-decline { background: #e74c3c; color: #fff; }
+        .btn-assign { background: #f39c12; color: #fff; }
+
+        /* ─── PROFILE ─── */
+        .profile input {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dce1e7;
+            border-radius: 10px;
+            font-size: 15px;
+            margin-bottom: 10px;
+            background: #f8fafc;
+        }
+        .profile input:focus {
+            outline: none;
+            border-color: #0b7f7a;
+            box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
+        }
+
+        /* ─── TOAST ─── */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a2a3a;
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            z-index: 9999;
+            max-width: 90%;
+            text-align: center;
+        }
+        .toast.show { opacity: 1; }
+
+        /* ─── RESPONSIVE TWEAKS ─── */
+        @media (max-width: 400px) {
+            body { padding: 10px; }
+            .stats { grid-template-columns: 1fr; }
+            .order-card .top { flex-direction: column; gap: 4px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!--  RELEASE STRIP                                      -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <div id="releaseStrip" class="release-strip">
-        <span class="inline-block bg-amber-800 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">🚀 New Release</span>
-        <span>RepairMaster App version v3.0 coming soon!</span>
-        <button class="close-strip" onclick="document.getElementById('releaseStrip').style.display='none'">✕</button>
+    <!-- ─── TOAST ─── -->
+    <div id="toast" class="toast"></div>
+
+    <!-- ─── LOGIN SCREEN ─── -->
+    <div id="loginScreen" class="login-screen">
+        <div class="header">
+            <div class="logo">Repair<span>Master</span></div>
+            <div style="font-size:12px;color:#6b7a8a;">Direct To Consumer</div>
+        </div>
+
+        <div class="card">
+            <div class="tab-row">
+                <button class="active" data-tab="login">Sign In</button>
+                <button data-tab="signup">Sign Up</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm">
+                <input type="email" id="loginEmail" placeholder="Email" required />
+                <input type="password" id="loginPassword" placeholder="Password" required />
+                <button class="btn-primary" type="submit">Sign In</button>
+            </form>
+
+            <!-- Signup Form -->
+            <form id="signupForm" style="display:none;">
+                <input type="text" id="signupName" placeholder="Full Name" required />
+                <input type="email" id="signupEmail" placeholder="Email" required />
+                <input type="tel" id="signupPhone" placeholder="Phone Number" />
+                <input type="password" id="signupPassword" placeholder="Password" required />
+                <button class="btn-primary" type="submit">Create Account</button>
+            </form>
+
+            <div style="margin-top:12px;text-align:center;font-size:13px;color:#6b7a8a;">
+                <button onclick="signInWithGoogle()" style="background:none;border:none;color:#0b7f7a;font-weight:600;cursor:pointer;">
+                    <i class="fa-brands fa-google"></i> Sign in with Google
+                </button>
+            </div>
+        </div>
     </div>
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!--  HEADER                                             -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <header class="container-custom py-3 md:py-4 flex items-center justify-between gap-2 md:gap-4 sticky top-0 z-40 bg-[#0A0F1D]/85 backdrop-blur-md border-b border-white/5">
-        <div class="flex items-center gap-2 md:gap-4 cursor-pointer select-none" onclick="window.location.href='index.html'">
-            <!-- Logo Icon Container styled to match the mockup perfectly -->
-            <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-12 w-12 md:h-[68px] md:w-[68px] shadow-[0_0_15px_rgba(20,184,166,0.15)] shrink-0 transition-transform duration-300 hover:scale-105">
-                <img src="app/src/main/res/drawable/img_maintenance_mode_1782766826537.jpg" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
-            </div>
-            
-            <!-- Vertical Divider -->
-            <div class="h-10 md:h-[62px] w-[1.5px] bg-teal/60 shrink-0"></div>
-            
-            <!-- Branding Text Block -->
-            <div class="flex flex-col justify-center relative pr-4 md:pr-8">
-                <div class="font-display text-lg sm:text-xl md:text-[30px] font-bold tracking-tight leading-none text-white">
-                    Repair<span class="text-teal">Master</span>
-                </div>
-                <!-- Horizontal Line -->
-                <div class="w-full h-[1.5px] bg-teal/60 my-1 md:my-1.5"></div>
-                <!-- Tagline -->
-                <div class="text-[9px] sm:text-[11px] md:text-[14px] font-semibold text-white leading-none tracking-normal">
-                    Direct To Consumer
-                </div>
-                <!-- Powered By -->
-                <div class="text-[7px] sm:text-[9px] md:text-[11px] text-white/90 italic mt-0.5 md:mt-1 leading-none">
-                    powered by <span class="text-teal font-medium not-italic">cm2us.com</span>
-                </div>
-                
-                <!-- Sparkles Sparkle on the Right of the text -->
-                <div class="absolute right-0 bottom-1 flex flex-col items-center gap-1">
-                    <!-- Large Sparkle -->
-                    <svg class="w-3 h-3 md:w-3.5 md:h-3.5 text-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
-                    </svg>
-                    <!-- Small Sparkle -->
-                    <svg class="w-1.5 h-1.5 md:w-2 md:h-2 text-teal/80 translate-x-1.5 md:translate-x-2 -translate-y-1 animate-pulse" viewBox="0 0 24 24" fill="currentColor" style="animation-delay: 0.5s;">
-                        <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
-                    </svg>
-                </div>
+    <!-- ─── DASHBOARD ─── -->
+    <div id="dashboard" class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">Repair<span>Master</span></div>
+            <div class="header-actions">
+                <span id="userRole" style="font-size:12px;color:#0b7f7a;font-weight:600;">Customer</span>
+                <div class="user-avatar" id="userAvatar" onclick="toggleProfile()">U</div>
             </div>
         </div>
 
-        <!-- Desktop Navigation tabs -->
-        <nav class="desktop-nav flex items-center gap-8 text-sm font-medium" id="mainNav">
-            <a href="index.html" class="nav-link active">Home</a>
-            <a href="request.html" class="nav-link">Repair Request</a>
-            <a href="app.html" class="nav-link">Download</a>
-            <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="login.html" class="nav-link" id="navLogin">Login</a>
-            <a href="signup.html" class="nav-link" id="navSignup">Sign Up</a>
-            <span id="navUserInfo" class="hidden flex items-center gap-4">
-                <span class="text-sm text-gray-300 font-bold" id="navUserName">User</span>
-                <button onclick="logoutUser()" class="text-sm text-red-400 hover:text-red-300 transition font-bold">Logout</button>
-            </span>
-        </nav>
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-box"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
+            <div class="stat-box"><div class="num" id="statPending" style="color:#f39c12;">0</div><div class="label">Pending</div></div>
+            <div class="stat-box"><div class="num" id="statActive" style="color:#3498db;">0</div><div class="label">Active</div></div>
+            <div class="stat-box"><div class="num" id="statCompleted" style="color:#27ae60;">0</div><div class="label">Completed</div></div>
+        </div>
 
-        <!-- Mobile Menu Toggle Button -->
-        <button class="mobile-menu text-white text-2xl" onclick="toggleMobileMenu()">
-            <i class="fa-solid fa-bars"></i>
-        </button>
-    </header>
+        <!-- Hot Deals -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-fire" style="color:#e67e22;"></i> Hot Deals</div>
+            <div id="offersContainer" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
 
-    <!-- ════════════════════════════════════════════════════ -->
-    <!--  PAGE: HOME                                         -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <main>
-        <!-- Carousel Slider -->
-        <div class="carousel-container relative">
-            <div class="carousel-slide active" style="background-image: url('app/src/main/res/drawable/img_hero_banner_doorstep_better_1782737461990.jpg');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">🔥 Welcome</span>
-                    <h1>Repair<span class="text-teal">Master</span></h1>
-                    <p class="text-2xl font-bold text-teal">Direct To Consumer</p>
-                    <p>Smart, Fast &amp; Reliable Repairs — powered by cm2us.com</p>
-                    <div class="flex flex-wrap gap-4 mt-6">
-                        <a href="#calculator-section" class="btn-teal">Get Estimate</a>
-                        <a href="request.html" class="btn-outline">Request Repair</a>
-                    </div>
-                </div>
+        <!-- Estimator -->
+        <div class="card estimator">
+            <div class="card-title"><i class="fa-solid fa-calculator"></i> Estimate</div>
+            <select id="brandSelect"><option value="">— Brand —</option></select>
+            <select id="modelSelect"><option value="">— Model —</option></select>
+            <select id="repairTypeSelect"><option value="">— Repair —</option></select>
+            <select id="qualitySelect">
+                <option value="standard">Standard</option>
+                <option value="premium">Premium</option>
+            </select>
+            <div class="checkbox-row">
+                <input type="checkbox" id="offerToggle" />
+                <label for="offerToggle">Apply 50% service discount</label>
             </div>
-            <div class="carousel-slide" style="background-image: url('app/src/main/res/drawable/img_indian_doorstep_service_1782738015281.jpg');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-teal-500/20 text-teal-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Doorstep Service</span>
-                    <h1>We Come To You</h1>
-                    <p>Real-time GPS tracking • OTP verified handover • Certified technicians in Wardha</p>
-                    <div class="flex flex-wrap gap-4 mt-6">
-                        <a href="request.html" class="btn-teal">Schedule Pickup</a>
-                    </div>
-                </div>
+            <div id="partsSurveyContainer" style="font-size:13px;color:#6b7a8a;margin:6px 0;">Select repair to see parts.</div>
+            <div class="price-breakdown">
+                <div class="price-row"><span>Parts (10% off)</span><strong id="partsTotalDisplay">₹0.00</strong></div>
+                <div class="price-row"><span>Service Fee</span><strong id="serviceFeeDisplay">₹0.00</strong></div>
+                <div class="price-row"><span>Diagnosis</span><strong id="diagnosisChargeDisplay">₹250.00</strong></div>
+                <div class="price-row total"><span>Total</span><strong id="totalPriceDisplay">₹0.00</strong></div>
             </div>
-            <div class="carousel-slide" style="background-image: url('app/src/main/res/drawable/img_indian_service_lab_1782739540576.jpg');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Genuine Parts</span>
-                    <h1>State-of-the-Art Workshop</h1>
-                    <p>Advanced inventory management • Screens • Batteries • Charging Ports &amp; more</p>
-                    <div class="flex flex-wrap gap-4 mt-6">
-                        <a href="#calculator-section" class="btn-teal">Explore Parts</a>
-                    </div>
-                </div>
-            </div>
-            <div class="carousel-slide" style="background-image: url('app/src/main/res/drawable/img_secure_collection_checkpoint_1782767417629.jpg');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-teal-500/20 text-teal-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Easy Booking</span>
-                    <h1>Seamless Customer App</h1>
-                    <p>🔒 Maintenance Mode active • Privacy Lock enabled</p>
-                    <div class="flex flex-wrap gap-4 mt-6">
-                        <a href="app.html" class="btn-teal">Download App</a>
-                    </div>
-                </div>
-            </div>
-            <div class="carousel-slide" style="background-image: url('app/src/main/res/drawable/img_indian_service_scooter_1782739563064.jpg');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Expanding Network</span>
-                    <h1>Serving Wardha</h1>
-                    <p class="text-xl font-bold text-amber-400">Nagpur &amp; Amravati — Coming Soon!</p>
-                    <div class="flex flex-wrap gap-4 mt-6">
-                        <a href="request.html" class="btn-teal">Visit Hub</a>
-                    </div>
-                </div>
-            </div>
-            <div class="carousel-dots">
-                <button class="carousel-dot active" onclick="goToSlide(0)"></button>
-                <button class="carousel-dot" onclick="goToSlide(1)"></button>
-                <button class="carousel-dot" onclick="goToSlide(2)"></button>
-                <button class="carousel-dot" onclick="goToSlide(3)"></button>
-                <button class="carousel-dot" onclick="goToSlide(4)"></button>
+            <button class="btn-primary" id="bookServiceBtn" onclick="createOrder()">
+                <i class="fa-regular fa-calendar-check"></i> Book Service
+            </button>
+        </div>
+
+        <!-- Profile (hidden by default, toggled by avatar) -->
+        <div id="profileSection" style="display:none;">
+            <div class="card profile">
+                <div class="card-title"><i class="fa-regular fa-address-card"></i> Profile</div>
+                <input type="text" id="profileName" placeholder="Full Name" />
+                <input type="tel" id="profilePhone" placeholder="Phone" />
+                <input type="text" id="profileAddress" placeholder="Address" />
+                <select id="profileCity">
+                    <option value="Wardha">Wardha</option>
+                    <option value="Nagpur">Nagpur (coming soon)</option>
+                    <option value="Amravati">Amravati (coming soon)</option>
+                </select>
+                <button class="btn-primary" onclick="updateProfile()">Save Profile</button>
+                <button class="btn-danger" onclick="logoutUser()" style="margin-top:8px;width:100%;">Logout</button>
             </div>
         </div>
 
-        <!-- City Notice & Maintenance Block -->
-        <div class="container-custom -mt-12 relative z-10 mb-12">
-            <div class="city-notice mb-4">
-                <i class="fa-solid fa-location-dot"></i>
-                <span><strong>Currently serving Wardha</strong> — Nagpur &amp; Amravati coming soon!</span>
-            </div>
-            <div class="maintenance-banner">
-                <div class="flex-shrink-0 text-2xl text-teal"><i class="fa-solid fa-shield-halved"></i></div>
-                <div>
-                    <strong>🔒 Maintenance Mode Active</strong> — Your data privacy is our priority.
-                    <span class="text-amber-400 font-medium font-display">Check Point at Pick-up:</span>
-                    All devices (except <strong>Dead Phone</strong> &amp; <strong>Blank Screen</strong>) will be placed in <strong>Maintenance Mode</strong> to protect your personal information.
-                    <span class="text-teal-400 text-xs block mt-1"><i class="fa-regular fa-circle-check mr-1"></i> OTP Verified Handover • Privacy Lock Enabled</span>
-                </div>
+        <!-- Orders -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-ticket"></i> Your Tickets</div>
+            <div id="dashboardContent">
+                <div style="text-align:center;color:#6b7a8a;padding:20px;">Loading...</div>
             </div>
         </div>
 
-        <!-- Dynamic Estimation Calculator Widget -->
-        <div id="calculator-section" class="container-custom py-12">
-            <div class="text-center space-y-3 mb-12">
-                <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
-                    <i class="fa-solid fa-calculator mr-1"></i> Smart Repair Calculator
-                </span>
-                <h2 class="text-4xl md:text-5xl font-bold text-white font-display">Get Your Accurate Estimate</h2>
-                <p class="text-gray-400 text-sm max-w-2xl mx-auto">Select brand, model, repair type &amp; parts quality – transparent pricing.</p>
-                <p class="text-xs text-amber-400"><i class="fa-solid fa-tag mr-1"></i> All prices include 10% discount</p>
-            </div>
-            <div class="calc-container">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Dropdowns / Options -->
-                    <div class="space-y-6">
-                        <div class="form-group">
-                            <label>1. Select Brand</label>
-                            <select id="brandSelect" onchange="updateModels()">
-                                <option value="">— Select Brand —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>2. Choose Model</label>
-                            <select id="modelSelect" onchange="updateRepairTypes()">
-                                <option value="">— Select Model —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>3. Select Repair Action</label>
-                            <select id="repairTypeSelect" onchange="updatePartsSurvey()">
-                                <option value="">— Select Repair —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>4. Component Quality Grade</label>
-                            <select id="qualitySelect" onchange="updatePartsSurvey()">
-                                <option value="standard">Standard Grade Spares (Affordable &amp; Durable)</option>
-                                <option value="premium">Premium Grade Spares (OEM Equivalent Glass/OLED)</option>
-                            </select>
-                        </div>
-                        <div class="offer-toggle">
-                            <input type="checkbox" id="offerToggle" onchange="updatePartsSurvey()">
-                            <label for="offerToggle">
-                                Apply claim voucher? <span class="offer-badge">50% Off Service Fee</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Live Breakdown Display -->
-                    <div class="bg-navyBG/40 border border-grayBorder/40 rounded-2xl p-6 flex flex-col justify-between">
-                        <div>
-                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-teal"></i> Estimate Summary</h3>
-                            
-                            <!-- Dynamic Parts Breakdown list -->
-                            <div id="partsSurveyContainer" class="mb-6">
-                                <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 text-center text-grayText/50">
-                                    Select options to preview component breakdown.
-                                </div>
-                            </div>
-
-                            <!-- Cost rows -->
-                            <div class="space-y-2 border-t border-grayBorder/40 pt-4">
-                                <div class="price-row">
-                                    <span class="text-grayText">Discounted Parts:</span>
-                                    <span id="partsTotalDisplay" class="text-white font-medium">₹0.00</span>
-                                </div>
-                                <div class="price-row">
-                                    <span class="text-grayText">Service Charge (15%):</span>
-                                    <span id="serviceFeeDisplay" class="text-white font-medium">₹0.00</span>
-                                </div>
-                                <div class="price-row">
-                                    <span class="text-grayText">Diagnostic Visit Fee:</span>
-                                    <span id="diagnosisChargeDisplay" class="text-white font-medium">₹250.00</span>
-                                </div>
-                                <div class="price-row total-row text-tealAccent">
-                                    <span>Total Estimate (INR):</span>
-                                    <span id="totalPriceDisplay" class="text-xl font-black text-teal">₹250.00</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex gap-4">
-                            <button id="bookServiceBtn" onclick="createOrder()" class="flex-1 btn-teal text-center py-3.5 rounded-xl font-extrabold hover:scale-[1.02] transition-all">
-                                <i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <!-- Guest Tracking -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Track Order</div>
+            <form id="trackForm" onsubmit="trackOrderGuest(event)">
+                <input type="text" id="trackOrderId" placeholder="Order ID (e.g. RM-REQ-XXXX)" required />
+                <input type="tel" id="trackPhone" placeholder="Phone Number" required />
+                <button class="btn-secondary" type="submit">Track</button>
+            </form>
+            <div id="guestTrackResult" style="margin-top:10px;"></div>
         </div>
-
-        <!-- GUEST QUICK STATUS TRACKER -->
-        <section class="container-custom mb-16 relative z-20">
-            <div class="bg-slate-900/90 border border-teal-500/20 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-                <div class="absolute -right-20 -top-20 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="max-w-xl relative z-10">
-                    <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-3 py-1 rounded-full font-bold mb-3">
-                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Instant Guest Tracker (No Password Needed)
-                    </span>
-                    <h3 class="text-xl md:text-2xl font-bold text-white font-display mb-2">Track Your Repair Request Instantly</h3>
-                    <p class="text-xs md:text-sm text-gray-400 mb-6">Submitted a request without logging in? Enter your Reference ID (e.g., #RM-REQ-...) and registered phone number to view live status, accept/reject quotations, make escrow payments, view OTPs, or rate us.</p>
-                </div>
-                <form id="guestTrackForm" onsubmit="trackOrderGuest(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Reference ID / Ticket No</label>
-                        <input type="text" id="trackOrderId" placeholder="e.g. RM-REQ-JXK3D9" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Registered Mobile Number</label>
-                        <input type="tel" id="trackPhone" placeholder="e.g. 9876543210" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold p-3.5 rounded-xl transition duration-300 text-sm shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-route"></i> Search &amp; Track Live
-                        </button>
-                    </div>
-                </form>
-                
-                <!-- Track Result Display Area -->
-                <div id="guestTrackResult" class="hidden mt-8 border-t border-slate-800 pt-6"></div>
-            </div>
-        </section>
-
-        <!-- Warranty badges info -->
-        <div class="container-custom mt-6">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div class="glass-card flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-2xl text-teal flex-shrink-0">
-                        <i class="fa-solid fa-medal"></i>
-                    </div>
-                    <div>
-                        <div class="text-sm font-bold text-white">90 Days Warranty</div>
-                        <div class="text-xs text-gray-400">On all parts &amp; labour — guaranteed</div>
-                    </div>
-                </div>
-                <div class="glass-card flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-2xl text-amber-400 flex-shrink-0">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div>
-                        <div class="text-sm font-bold text-white">🔒 Maintenance Mode</div>
-                        <div class="text-xs text-gray-400">Pick-up checkpoint active — <span class="text-amber-400">except Dead Phone &amp; Blank Screen</span></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dynamic Offers Feed -->
-        <div class="container-custom py-16">
-            <div class="text-center space-y-3 mb-12">
-                <span class="inline-block bg-amber-500/10 text-amber-400 text-xs px-4 py-1 rounded-full font-bold">
-                    <i class="fa-solid fa-fire mr-1"></i> Hot Deals
-                </span>
-                <h2 class="text-4xl md:text-5xl font-bold text-white font-display">Limited Time Offers</h2>
-                <p class="text-gray-400 text-sm max-w-xl mx-auto">Grab these exclusive discounts before they expire.</p>
-            </div>
-            <div id="offersContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="text-center text-gray-400 py-8 col-span-3"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading offers…</div>
-            </div>
-        </div>
-    </main>
-
-    <!-- ════════════════════════════════════════════════════ -->
-    <!--  FOOTER                                             -->
-    <!-- ════════════════════════════════════════════════════ -->
-    <footer class="border-t border-white/5 bg-[#080D1A] py-12 mt-20 text-sm text-grayText">
-        <div class="container-custom grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div class="space-y-3">
-                <div class="flex items-center gap-3">
-                    <div class="rm-logo w-10 h-10 text-lg">RM</div>
-                    <span class="font-bold text-white text-lg font-display">RepairMaster</span>
-                </div>
-                <p class="text-xs text-gray-500">Premium Doorstep &amp; Laboratory Repairs for Nagpur, Wardha &amp; Amravati regions. Fast, reliable, and secure.</p>
-                <p class="text-[10px] text-gray-600">© 2026 RepairMaster. All rights reserved.</p>
-            </div>
-            <div>
-                <h4 class="font-bold text-white mb-4">Service Locations</h4>
-                <ul class="space-y-2 text-xs">
-                    <li><span class="text-teal"><i class="fa-solid fa-location-dot mr-1"></i> Wardha Hub</span> (Fully Active)</li>
-                    <li class="text-gray-600"><i class="fa-solid fa-location-dot mr-1"></i> Nagpur Hub</li>
-                    <li class="text-gray-600"><i class="fa-solid fa-location-dot mr-1"></i> Amravati Hub</li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="font-bold text-white mb-4">Quick Links</h4>
-                <ul class="space-y-2 text-xs">
-                    <li><a href="request.html" class="hover:text-teal transition">Submit Repair Request</a></li>
-                    <li><a href="app.html" class="hover:text-teal transition">Download Mobile App</a></li>
-                    <li><a href="dashboard.html" class="hover:text-teal transition">Customer Portal Dashboard</a></li>
-                </ul>
-            </div>
-            <div>
-                <h4 class="font-bold text-white mb-4">Contact &amp; Support</h4>
-                <p class="text-xs text-gray-500">Have questions or need manual assistance? Connect with our helpdesk.</p>
-                <p class="text-sm font-bold text-white mt-2"><i class="fa-solid fa-phone text-teal mr-2"></i> +91 99999 99999</p>
-                <p class="text-xs text-gray-400 mt-1"><i class="fa-solid fa-envelope text-teal mr-2"></i> support@cm2us.com</p>
-            </div>
-        </div>
-    </footer>
-
-    <!-- Mobile App Bottom Navigation Bar -->
-    <div class="md:hidden fixed bottom-0 left-0 w-full bg-[#070b14]/95 border-t border-white/10 backdrop-blur-lg flex justify-around py-3 z-50 text-center font-display shadow-2xl">
-        <a href="index.html" class="flex flex-col items-center text-[10px] text-teal">
-            <i class="fa-solid fa-house text-base mb-1"></i>
-            <span>Home</span>
-        </a>
-        <a href="request.html" class="flex flex-col items-center text-[10px] text-gray-400 hover:text-teal transition">
-            <i class="fa-solid fa-screwdriver-wrench text-base mb-1"></i>
-            <span>Request</span>
-        </a>
-        <a href="dashboard.html" class="flex flex-col items-center text-[10px] text-gray-400 hover:text-teal transition">
-            <i class="fa-solid fa-chart-simple text-base mb-1"></i>
-            <span>Hub</span>
-        </a>
-        <a href="app.html" class="flex flex-col items-center text-[10px] text-gray-400 hover:text-teal transition">
-            <i class="fa-solid fa-download text-base mb-1"></i>
-            <span>App</span>
-        </a>
     </div>
 
-    <!-- Toast Notification Container -->
-    <div id="toast" class="fixed bottom-20 md:bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500"></div>
-
-    <!-- Supabase SDK JS -->
+    <!-- ─── SUPABASE + MAIN LOGIC ─── -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-    <!-- Multi-Page App Logic Controller -->
-    <script src="main.js"></script>
+    <script>
+    // ─── SUPABASE ───
+    const SUPABASE_URL = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // ─── STATE ───
+    let currentUser = null;
+    let allBrands = [];
+    let allDevices = [];
+    let allRepairTypes = [];
+    let allParts = [];
+    let allOrders = [];
+
+    // ─── TOAST ───
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+        clearTimeout(t._hide);
+        t._hide = setTimeout(() => t.classList.remove('show'), 3000);
+    }
+
+    // ─── LOGIN / SIGNUP UI ───
+    document.querySelectorAll('.tab-row button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.tab-row button').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('loginForm').style.display = this.dataset.tab === 'login' ? 'block' : 'none';
+            document.getElementById('signupForm').style.display = this.dataset.tab === 'signup' ? 'block' : 'none';
+        });
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) return showToast('Login failed: ' + error.message);
+        currentUser = data.user;
+        showToast('Welcome!');
+        await loadDashboard();
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = document.getElementById('signupName').value;
+        const email = document.getElementById('signupEmail').value;
+        const phone = document.getElementById('signupPhone').value;
+        const password = document.getElementById('signupPassword').value;
+        const { data, error } = await supabase.auth.signUp({
+            email, password,
+            options: { data: { full_name: name, phone } }
+        });
+        if (error) return showToast('Signup failed: ' + error.message);
+        // Auto-assign customer role
+        if (data.user) {
+            await supabase.from('user_roles').upsert([{ user_id: data.user.id, role_id: 5 }]);
+        }
+        showToast('Account created! Please sign in.');
+        document.querySelector('.tab-row button[data-tab="login"]').click();
+    });
+
+    window.signInWithGoogle = async function() {
+        await supabase.auth.signInWithOAuth({ provider: 'google' });
+    };
+
+    // ─── CATALOG LOAD ───
+    async function loadCatalog() {
+        try {
+            const [b, d, rt, p] = await Promise.all([
+                supabase.from('brands').select('*').order('name'),
+                supabase.from('devices').select('*').order('name'),
+                supabase.from('repair_types').select('*').order('label'),
+                supabase.from('parts').select('*')
+            ]);
+            if (b.error || d.error || rt.error || p.error) throw new Error('Catalog load error');
+            allBrands = b.data || [];
+            allDevices = d.data || [];
+            allRepairTypes = rt.data || [];
+            allParts = p.data || [];
+            populateBrands();
+        } catch (e) {
+            console.warn('Using fallback data');
+            useFallback();
+        }
+    }
+
+    function useFallback() {
+        allBrands = [
+            { id: 'b1', name: 'Apple' }, { id: 'b2', name: 'Samsung' },
+            { id: 'b3', name: 'Vivo' }, { id: 'b4', name: 'OnePlus' },
+            { id: 'b5', name: 'Xiaomi' }, { id: 'b6', name: 'Oppo' }
+        ];
+        allDevices = [
+            { id: 'd1', brand_id: 'b1', name: 'iPhone 15' },
+            { id: 'd2', brand_id: 'b1', name: 'iPhone 14' },
+            { id: 'd3', brand_id: 'b2', name: 'Galaxy S24' },
+            { id: 'd4', brand_id: 'b2', name: 'Galaxy A55' },
+            { id: 'd5', brand_id: 'b3', name: 'V30 Pro' }
+        ];
+        allRepairTypes = [
+            { id: 'rt1', name: 'screen', label: 'Screen Replacement' },
+            { id: 'rt2', name: 'battery', label: 'Battery Replacement' },
+            { id: 'rt3', name: 'chargingport', label: 'Charging Port' }
+        ];
+        allParts = [
+            { device_id: 'd1', repair_type_id: 'rt1', name: 'OLED Display', price: 15000 },
+            { device_id: 'd1', repair_type_id: 'rt2', name: 'Battery', price: 4500 },
+            { device_id: 'd3', repair_type_id: 'rt1', name: 'AMOLED Display', price: 12000 }
+        ];
+        populateBrands();
+    }
+
+    function populateBrands() {
+        const sel = document.getElementById('brandSelect');
+        sel.innerHTML = '<option value="">— Brand —</option>';
+        allBrands.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b.id;
+            opt.textContent = b.name;
+            sel.appendChild(opt);
+        });
+        sel.onchange = updateModels;
+        updateModels();
+    }
+
+    function updateModels() {
+        const brandId = document.getElementById('brandSelect').value;
+        const sel = document.getElementById('modelSelect');
+        sel.innerHTML = '<option value="">— Model —</option>';
+        if (!brandId) return;
+        allDevices.filter(d => d.brand_id === brandId).forEach(d => {
+            const opt = document.createElement('option');
+            opt.value = d.id;
+            opt.textContent = d.name;
+            sel.appendChild(opt);
+        });
+        sel.onchange = updateRepairTypes;
+        updateRepairTypes();
+    }
+
+    function updateRepairTypes() {
+        const sel = document.getElementById('repairTypeSelect');
+        sel.innerHTML = '<option value="">— Repair —</option>';
+        allRepairTypes.forEach(rt => {
+            const opt = document.createElement('option');
+            opt.value = rt.id;
+            opt.textContent = rt.label || rt.name;
+            sel.appendChild(opt);
+        });
+        sel.onchange = updatePartsSurvey;
+        updatePartsSurvey();
+    }
+
+    function updatePartsSurvey() {
+        const modelId = document.getElementById('modelSelect').value;
+        const repairId = document.getElementById('repairTypeSelect').value;
+        const quality = document.getElementById('qualitySelect').value;
+        const offer = document.getElementById('offerToggle').checked;
+        const container = document.getElementById('partsSurveyContainer');
+        const parts = allParts.filter(p => p.device_id === modelId && p.repair_type_id === repairId);
+        const qm = quality === 'premium' ? 1 : 0.7;
+
+        if (!modelId || !repairId || parts.length === 0) {
+            container.innerHTML = 'Select brand, model & repair to see parts.';
+            document.getElementById('partsTotalDisplay').textContent = '₹0.00';
+            document.getElementById('serviceFeeDisplay').textContent = '₹0.00';
+            document.getElementById('totalPriceDisplay').textContent = '₹0.00';
+            return;
+        }
+
+        let total = parts.reduce((s, p) => s + p.price * qm, 0);
+        const discounted = total * 0.9;
+        let service = discounted * 0.15;
+        if (offer) service *= 0.5;
+        const diagnosis = 250;
+        const final = discounted + service + diagnosis;
+
+        container.innerHTML = parts.map(p =>
+            `<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;border-bottom:1px solid #eee;">
+                <span>${p.name} (${quality})</span>
+                <span style="font-weight:600;">₹${(p.price * qm).toFixed(0)}</span>
+            </div>`
+        ).join('');
+
+        document.getElementById('partsTotalDisplay').textContent = '₹' + discounted.toFixed(0);
+        document.getElementById('serviceFeeDisplay').textContent = '₹' + service.toFixed(0);
+        document.getElementById('totalPriceDisplay').textContent = '₹' + final.toFixed(0);
+    }
+
+    document.getElementById('qualitySelect').onchange = updatePartsSurvey;
+    document.getElementById('offerToggle').onchange = updatePartsSurvey;
+
+    // ─── CREATE ORDER ───
+    window.createOrder = async function() {
+        if (!currentUser) return showToast('Please sign in first.');
+        const brand = document.getElementById('brandSelect').value;
+        const model = document.getElementById('modelSelect').value;
+        const repair = document.getElementById('repairTypeSelect').value;
+        if (!brand || !model || !repair) return showToast('Select brand, model & repair.');
+
+        const parts = allParts.filter(p => p.device_id === model && p.repair_type_id === repair);
+        const qm = document.getElementById('qualitySelect').value === 'premium' ? 1 : 0.7;
+        let total = parts.reduce((s, p) => s + p.price * qm, 0);
+        const discounted = total * 0.9;
+        let service = discounted * 0.15;
+        if (document.getElementById('offerToggle').checked) service *= 0.5;
+        const diagnosis = 250;
+        const final = discounted + service + diagnosis;
+
+        const order = {
+            order_number: 'RM-' + Date.now().toString(36).toUpperCase(),
+            user_id: currentUser.id,
+            customer_name: currentUser.user_metadata?.full_name || 'User',
+            customer_phone: currentUser.user_metadata?.phone || '',
+            device_id: model,
+            repair_type_id: repair,
+            parts_total: discounted,
+            service_fee: service,
+            diagnosis_charge: diagnosis,
+            total_price: final,
+            status: 'Pending',
+            created_at: new Date().toISOString()
+        };
+
+        const { error } = await supabase.from('orders').insert(order);
+        if (error) return showToast('Booking failed: ' + error.message);
+        showToast('✅ Order created!');
+        await loadDashboard();
+    };
+
+    // ─── LOAD DASHBOARD ───
+    async function loadDashboard() {
+        document.getElementById('loginScreen').classList.add('hidden');
+        document.getElementById('dashboard').classList.add('active');
+
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboard').classList.remove('active');
+            return;
+        }
+        currentUser = user;
+
+        // Update avatar
+        const name = user.user_metadata?.full_name || user.email;
+        document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+
+        // Load orders
+        const { data: orders, error } = await supabase
+            .from('orders')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+        if (error) console.warn('Orders error:', error);
+        allOrders = orders || [];
+
+        // Stats
+        const total = allOrders.length;
+        const pending = allOrders.filter(o => o.status === 'Pending').length;
+        const active = allOrders.filter(o => ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed'].includes(o.status)).length;
+        const completed = allOrders.filter(o => o.status === 'Completed').length;
+        document.getElementById('statTotal').textContent = total;
+        document.getElementById('statPending').textContent = pending;
+        document.getElementById('statActive').textContent = active;
+        document.getElementById('statCompleted').textContent = completed;
+
+        // Render orders
+        renderOrders(allOrders);
+
+        // Fetch offers
+        fetchOffers();
+        updatePartsSurvey();
+    }
+
+    function renderOrders(orders) {
+        const container = document.getElementById('dashboardContent');
+        if (!orders || orders.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:#6b7a8a;padding:20px;">No orders yet.</div>';
+            return;
+        }
+        container.innerHTML = orders.map(o => `
+            <div class="order-card">
+                <div class="top">
+                    <span class="device">${getDeviceName(o.device_id)}</span>
+                    <span class="status ${o.status}">${o.status}</span>
+                </div>
+                <div class="meta">${getRepairLabel(o.repair_type_id)} • ₹${(o.total_price || 0).toFixed(0)}</div>
+                <div class="meta">${new Date(o.created_at).toLocaleDateString()}</div>
+                <div class="actions">
+                    ${o.status === 'Quotation-Sent' ? `
+                        <button class="btn-accept" onclick="confirmQuotation('${o.id}')">Accept Quote</button>
+                        <button class="btn-decline" onclick="rejectQuotation('${o.id}')">Decline</button>
+                    ` : ''}
+                </div>
+            </div>
+        `).join('');
+    }
+
+    function getDeviceName(id) {
+        const d = allDevices.find(x => x.id === id);
+        return d ? d.name : 'Device';
+    }
+    function getRepairLabel(id) {
+        const r = allRepairTypes.find(x => x.id === id);
+        return r ? r.label : 'Repair';
+    }
+
+    // ─── OFFERS ───
+    async function fetchOffers() {
+        const { data, error } = await supabase.from('offers').select('*').eq('active', true).limit(5);
+        const container = document.getElementById('offersContainer');
+        if (error || !data || data.length === 0) {
+            container.innerHTML = '<div style="font-size:13px;color:#6b7a8a;text-align:center;">No active offers</div>';
+            return;
+        }
+        container.innerHTML = data.map(o => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8fafc;border-radius:10px;">
+                <div>
+                    <strong style="font-size:14px;">${o.name}</strong>
+                    <div style="font-size:12px;color:#6b7a8a;">${o.description || ''}</div>
+                </div>
+                <span style="font-weight:700;color:#e67e22;">${o.discount_percent || 0}% OFF</span>
+            </div>
+        `).join('');
+    }
+
+    // ─── QUOTATION ACTIONS ───
+    window.confirmQuotation = async function(orderId) {
+        const { error } = await supabase.from('orders').update({ status: 'Confirmed' }).eq('id', orderId);
+        if (error) showToast('Error: ' + error.message);
+        else { showToast('✅ Quotation accepted!'); loadDashboard(); }
+    };
+    window.rejectQuotation = async function(orderId) {
+        const { error } = await supabase.from('orders').update({ status: 'Rejected' }).eq('id', orderId);
+        if (error) showToast('Error: ' + error.message);
+        else { showToast('❌ Quotation declined.'); loadDashboard(); }
+    };
+
+    // ─── PROFILE ───
+    window.toggleProfile = function() {
+        const sec = document.getElementById('profileSection');
+        sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+        // Load profile data
+        if (sec.style.display === 'block' && currentUser) {
+            supabase.from('users').select('name,phone,address').eq('id', currentUser.id).single()
+                .then(({ data }) => {
+                    if (data) {
+                        document.getElementById('profileName').value = data.name || '';
+                        document.getElementById('profilePhone').value = data.phone || '';
+                        document.getElementById('profileAddress').value = data.address || '';
+                    }
+                });
+        }
+    };
+
+    window.updateProfile = async function() {
+        if (!currentUser) return showToast('Not logged in.');
+        const name = document.getElementById('profileName').value;
+        const phone = document.getElementById('profilePhone').value;
+        const address = document.getElementById('profileAddress').value;
+        const city = document.getElementById('profileCity').value;
+        const { error } = await supabase.from('users').update({ name, phone, address: address + ', ' + city }).eq('id', currentUser.id);
+        if (error) showToast('Update failed: ' + error.message);
+        else showToast('✅ Profile updated!');
+    };
+
+    // ─── LOGOUT ───
+    window.logoutUser = async function() {
+        await supabase.auth.signOut();
+        currentUser = null;
+        document.getElementById('loginScreen').classList.remove('hidden');
+        document.getElementById('dashboard').classList.remove('active');
+        showToast('Logged out');
+    };
+
+    // ─── GUEST TRACKING ───
+    window.trackOrderGuest = async function(e) {
+        e.preventDefault();
+        const orderId = document.getElementById('trackOrderId').value.trim();
+        const phone = document.getElementById('trackPhone').value.trim();
+        const container = document.getElementById('guestTrackResult');
+        container.innerHTML = '<div style="text-align:center;font-size:13px;color:#6b7a8a;">Searching...</div>';
+
+        const { data, error } = await supabase.from('orders').select('*').eq('order_number', orderId);
+        if (error || !data || data.length === 0) {
+            container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Order not found.</div>';
+            return;
+        }
+        const o = data[0];
+        const dbPhone = (o.customer_phone || '').replace(/[^0-9]/g, '');
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) {
+            container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Phone number mismatch.</div>';
+            return;
+        }
+        container.innerHTML = `
+            <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+                <div style="display:flex;justify-content:space-between;">
+                    <strong>${getDeviceName(o.device_id)}</strong>
+                    <span class="status ${o.status}">${o.status}</span>
+                </div>
+                <div style="font-size:13px;color:#6b7a8a;">${getRepairLabel(o.repair_type_id)}</div>
+                <div style="font-size:13px;">₹${(o.total_price || 0).toFixed(0)}</div>
+            </div>
+        `;
+    };
+
+    // ─── INIT ───
+    document.addEventListener('DOMContentLoaded', async function() {
+        await loadCatalog();
+        // Check if user is already logged in
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+            currentUser = user;
+            await loadDashboard();
+        } else {
+            document.getElementById('loginScreen').classList.remove('hidden');
+            document.getElementById('dashboard').classList.remove('active');
+        }
+    });
+    </script>
 </body>
 </html>
