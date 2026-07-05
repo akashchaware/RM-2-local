@@ -303,14 +303,122 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
 
     let quotationHtml = '';
     if (status === 'Quotation-Sent' || o.total_price) {
+        const partsList = parseCustomQuoteParts(o.custom_quote_parts);
+        const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
+        const additionalParts = partsList.filter(p => !p.name.startsWith('[Original]') && !p.name.startsWith('[Old]'));
+        
+        if (partsList.length === 0 && (o.parts_total || 0) > 0) {
+            originalParts.push({ name: 'Estimated Spare Components', price: o.parts_total });
+        }
+        
+        let originalPartsHtml = '';
+        originalParts.forEach(p => {
+            const name = p.name.replace(/^\[Original\]\s*/, '').replace(/^\[Old\]\s*/, '');
+            originalPartsHtml += `
+                <div class="flex justify-between items-center py-1 text-gray-300 border-b border-white/5 last:border-0 text-[11px]">
+                    <span class="truncate">📦 ${name}</span>
+                    <span class="font-semibold text-white">₹${p.price.toLocaleString('en-IN')}</span>
+                </div>
+            `;
+        });
+        if (!originalPartsHtml) {
+            originalPartsHtml = `<div class="text-gray-600 italic py-1 text-[10px]">No original parts estimated.</div>`;
+        }
+        
+        let additionalPartsHtml = '';
+        additionalParts.forEach(p => {
+            const name = p.name.replace(/^\[Additional\]\s*/, '').replace(/^\[New\]\s*/, '');
+            additionalPartsHtml += `
+                <div class="flex justify-between items-center py-1.5 text-amber-300 border-b border-white/5 last:border-0 bg-amber-500/5 px-2 rounded text-[11px] my-1">
+                    <span class="flex items-center gap-1 truncate font-medium">
+                        <i class="fa-solid fa-triangle-exclamation text-amber-500 text-[10px] animate-pulse"></i> ${name}
+                    </span>
+                    <span class="font-bold text-amber-400">₹${p.price.toLocaleString('en-IN')}</span>
+                </div>
+            `;
+        });
+        
+        const addPartsSum = additionalParts.reduce((sum, p) => sum + p.price, 0);
+        
+        let diagnosisAlert = '';
+        if (addPartsSum > 0) {
+            diagnosisAlert = `
+                <div class="p-2.5 bg-amber-500/10 border border-amber-500/20 rounded-lg text-[11px] text-amber-300 flex items-start gap-2 mb-3">
+                    <i class="fa-solid fa-circle-info text-amber-400 mt-0.5 shrink-0"></i>
+                    <div>
+                        <strong class="font-bold text-amber-200">Bench Diagnosis Finding:</strong> Our senior RepairMaster completed multi-stage diagnostic probing and recommended <strong>${additionalParts.length} additional component-level repairs</strong> (+₹${addPartsSum.toLocaleString('en-IN')}) for full safety and restoration.
+                    </div>
+                </div>
+            `;
+        } else if (status === 'Quotation-Sent') {
+            diagnosisAlert = `
+                <div class="p-2.5 bg-teal-500/10 border border-teal-500/20 rounded-lg text-[11px] text-teal-300 flex items-start gap-2 mb-3">
+                    <i class="fa-solid fa-circle-check text-teal-400 mt-0.5 shrink-0"></i>
+                    <div>
+                        <strong class="font-bold text-teal-200">Diagnostics Complete:</strong> Device bench testing has finished. The quote below has been compiled by the Hub Coordinator and is ready for your approval.
+                    </div>
+                </div>
+            `;
+        }
+        
         quotationHtml = `
-            <div class="quotation-box mt-3 text-xs text-amberAccent bg-amberAccent/5 border border-amberAccent/20 p-3 rounded-lg">
-                <p class="font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-receipt mr-1"></i> Finalized Quotation Summary</p>
-                <p class="text-grayText">Estimation finalized: <strong>₹${(o.total_price || 0).toLocaleString('en-IN')}</strong> ${status === 'Quotation-Sent' ? '<span class="text-amber-400">(Awaiting your acceptance)</span>' : ''}</p>
-                <div class="flex gap-4 text-[10px] text-gray-400 mt-1">
-                    <span>🩺 Diagnosis: ₹${o.diagnosis_charge || 250}</span>
-                    <span>🔧 Service/Workmanship: ₹${o.service_fee || 100}</span>
-                    <span>🛠️ Parts: ₹${o.parts_total || 0}</span>
+            <div class="quotation-box mt-4 bg-slate-950/85 border border-teal-500/20 rounded-xl p-4 shadow-xl text-left">
+                <div class="flex items-center justify-between border-b border-white/5 pb-2 mb-3">
+                    <div class="flex items-center gap-1.5 text-xs font-bold text-teal-400 uppercase tracking-wider">
+                        <i class="fa-solid fa-file-invoice-dollar text-[13px]"></i> Itemized Repair Invoice
+                    </div>
+                    ${status === 'Quotation-Sent' ? '<span class="text-[9px] bg-amber-400 text-slate-950 font-bold uppercase px-2 py-0.5 rounded-full tracking-wider animate-pulse">Action Required</span>' : ''}
+                </div>
+                
+                ${diagnosisAlert}
+                
+                <div class="space-y-3">
+                    <!-- Original Parts Section -->
+                    <div>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-cube text-gray-500"></i> Original Estimated Components (Old Parts)
+                        </p>
+                        <div class="bg-slate-900/40 border border-white/5 rounded-lg px-3 py-1.5">
+                            ${originalPartsHtml}
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Parts Section -->
+                    ${additionalParts.length > 0 ? `
+                        <div>
+                            <p class="text-[9px] text-amber-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                                <i class="fa-solid fa-circle-plus"></i> Additional Required Components (New Parts)
+                            </p>
+                            <div class="bg-slate-900/40 border border-amber-500/10 rounded-lg px-2 py-1">
+                                ${additionalPartsHtml}
+                            </div>
+                        </div>
+                    ` : ''}
+                    
+                    <!-- Diagnosis & Labor Section -->
+                    <div>
+                        <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider mb-1 flex items-center gap-1">
+                            <i class="fa-solid fa-user-gear text-gray-500"></i> Diagnostic &amp; Labor Workmanship
+                        </p>
+                        <div class="bg-slate-900/40 border border-white/5 rounded-lg px-3 py-1.5 text-[11px] space-y-1">
+                            <div class="flex justify-between text-gray-300 border-b border-white/5 pb-1">
+                                <span>🩺 Scientific Bench Diagnosis</span>
+                                <span class="font-semibold text-white">₹${(o.diagnosis_charge || 250).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div class="flex justify-between text-gray-300 pt-0.5">
+                                <span>🔧 Workmanship &amp; Re-assembly Labor</span>
+                                <span class="font-semibold text-white">₹${(o.service_fee || 100).toLocaleString('en-IN')}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 flex items-center justify-between bg-teal-500/5 border border-teal-500/10 p-3 rounded-lg">
+                    <div>
+                        <div class="text-[10px] text-gray-400 uppercase font-semibold">Total Finalized Quotation:</div>
+                        ${status === 'Quotation-Sent' ? '<div class="text-[9px] text-amber-400 italic">No hidden charges. Price includes doorstep return delivery.</div>' : ''}
+                    </div>
+                    <div class="text-base font-black text-emerald-400">₹${(o.total_price || 0).toLocaleString('en-IN')}</div>
                 </div>
             </div>
         `;
@@ -811,6 +919,8 @@ window.allTechnicians = [];
 window.allRepairMasters = [];
 window.editingQuotationParts = {};
 window.editingQuotationBasePrice = {};
+window.editingQuotationServiceFee = {};
+window.editingQuotationDiagnosisCharge = {};
 
 const fallbackTechs = [
     { id: "tech-wardha-1", name: "Rahul Sharma (Wardha - Field Tech)" },
@@ -1056,11 +1166,19 @@ function parseCustomQuoteParts(customPartsStr) {
     if (!customPartsStr) return [];
     return customPartsStr.split('\n').map(line => {
         const idx = line.lastIndexOf(',');
-        if (idx === -1) return { name: line.trim(), price: 0 };
+        if (idx === -1) {
+            const name = line.trim();
+            if (!name) return null;
+            const isOrig = name.startsWith('[Original]') || name.startsWith('[Old]');
+            const cleanName = isOrig ? name : (name.startsWith('[Additional]') ? name : `[Additional] ${name}`);
+            return { name: cleanName, price: 0 };
+        }
         const name = line.substring(0, idx).trim();
         const price = parseFloat(line.substring(idx + 1)) || 0;
-        return { name, price };
-    }).filter(p => p.name);
+        const isOrig = name.startsWith('[Original]') || name.startsWith('[Old]');
+        const cleanName = isOrig ? name : (name.startsWith('[Additional]') ? name : `[Additional] ${name}`);
+        return { name: cleanName, price };
+    }).filter(p => p && p.name);
 }
 
 function serializeCustomQuoteParts(partsList) {
@@ -1068,12 +1186,37 @@ function serializeCustomQuoteParts(partsList) {
 }
 
 function showQuotationForm(orderId, basePrice, customPartsStr) {
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    
     // Parse custom parts
-    const partsList = parseCustomQuoteParts(customPartsStr);
+    let partsList = parseCustomQuoteParts(customPartsStr);
+    
+    let qualityMultiplier = 1.0;
+    if (order && order.parts_quality === 'premium') qualityMultiplier = 1.4;
+    else if (order && order.parts_quality === 'budget') qualityMultiplier = 0.7;
+    
+    // If empty, pre-populate with original parts
+    if (partsList.length === 0 && order) {
+        const originalDbParts = (window.allParts || []).filter(p => String(p.device_id) === String(order.device_id) && String(p.repair_type_id) === String(order.repair_type_id));
+        if (originalDbParts.length > 0) {
+            originalDbParts.forEach(p => {
+                partsList.push({
+                    name: `[Original] ${p.name}`,
+                    price: Math.round(p.price * qualityMultiplier * 0.9)
+                });
+            });
+        } else if (order.parts_total > 0) {
+            partsList.push({
+                name: `[Original] Estimated Spare Components`,
+                price: parseFloat(order.parts_total) || 0
+            });
+        }
+    }
     
     // Store in global window for active editing
     window.editingQuotationParts[orderId] = partsList;
-    window.editingQuotationBasePrice[orderId] = parseFloat(basePrice) || 0;
+    window.editingQuotationServiceFee[orderId] = order ? (parseFloat(order.service_fee) || 100) : 100;
+    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || 250) : 250;
     
     renderQuotationFormInlineEditable(orderId);
 }
@@ -1083,58 +1226,97 @@ function renderQuotationFormInlineEditable(orderId) {
     if (!inlineContainer) return;
     
     const partsList = window.editingQuotationParts[orderId] || [];
-    const basePrice = window.editingQuotationBasePrice[orderId] || 0;
+    const serviceFee = window.editingQuotationServiceFee[orderId] || 0;
+    const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 0;
     
     const partsSum = partsList.reduce((sum, p) => sum + p.price, 0);
-    const liveTotal = basePrice + partsSum;
+    const liveTotal = serviceFee + diagnosisCharge + partsSum;
     
-    let partsHtml = '';
-    if (partsList.length === 0) {
-        partsHtml = `<p class="text-xs text-gray-500 italic py-2">No additional spare components requested yet.</p>`;
-    } else {
-        partsList.forEach((p, index) => {
-            partsHtml += `
-                <div class="flex items-center gap-2 bg-slate-900/60 p-2 rounded-lg border border-white/5">
-                    <input type="text" value="${p.name}" oninput="updateQuotationPartName('${orderId}', ${index}, this.value)" class="flex-1 bg-slate-950 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none focus:border-teal" placeholder="Component Name" />
-                    <div class="flex items-center gap-1 w-24">
-                        <span class="text-xs text-gray-500">₹</span>
-                        <input type="number" value="${p.price}" oninput="updateQuotationPartPrice('${orderId}', ${index}, this.value)" class="w-full bg-slate-950 border border-white/10 rounded px-1.5 py-1 text-xs text-teal font-bold text-right outline-none focus:border-teal" />
-                    </div>
-                    <button onclick="removeQuotationPartEditable('${orderId}', ${index})" class="text-red-400 hover:text-red-300 text-xs px-1.5 py-1" title="Remove Component">
-                        <i class="fa-solid fa-trash-can"></i>
+    let originalPartsHtml = '';
+    let additionalPartsHtml = '';
+    
+    partsList.forEach((p, index) => {
+        const isOriginal = p.name.startsWith('[Original]') || p.name.startsWith('[Old]');
+        const cleanName = p.name.replace(/^\[Original\]\s*/, '').replace(/^\[Old\]\s*/, '').replace(/^\[Additional\]\s*/, '').replace(/^\[New\]\s*/, '');
+        
+        const partHtml = `
+            <div class="flex items-center gap-2 bg-slate-900/60 p-2 rounded-lg border border-white/5">
+                <div class="shrink-0">
+                    <button type="button" onclick="toggleQuotationPartType('${orderId}', ${index}, ${!isOriginal})" class="px-2 py-1 rounded text-[10px] font-bold ${isOriginal ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-teal-500/20 text-teal-400 border border-teal-500/30'}" title="Toggle Component Classification (Original vs Additional)">
+                        ${isOriginal ? 'Old' : 'New'}
                     </button>
                 </div>
-            `;
-        });
+                <input type="text" value="${cleanName}" oninput="updateQuotationPartName('${orderId}', ${index}, this.value)" class="flex-1 bg-slate-950 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none focus:border-teal" placeholder="Component Name" />
+                <div class="flex items-center gap-1 w-24 shrink-0">
+                    <span class="text-xs text-gray-500">₹</span>
+                    <input type="number" value="${p.price}" oninput="updateQuotationPartPrice('${orderId}', ${index}, this.value)" class="w-full bg-slate-950 border border-white/10 rounded px-1.5 py-1 text-xs text-teal font-bold text-right outline-none focus:border-teal" />
+                </div>
+                <button onclick="removeQuotationPartEditable('${orderId}', ${index})" class="text-red-400 hover:text-red-300 text-xs px-1.5 py-1 shrink-0" title="Remove Component">
+                    <i class="fa-solid fa-trash-can"></i>
+                </button>
+            </div>
+        `;
+        
+        if (isOriginal) {
+            originalPartsHtml += partHtml;
+        } else {
+            additionalPartsHtml += partHtml;
+        }
+    });
+    
+    if (!originalPartsHtml) {
+        originalPartsHtml = `<p class="text-xs text-gray-600 italic py-1">No original estimated components listed.</p>`;
+    }
+    if (!additionalPartsHtml) {
+        additionalPartsHtml = `<p class="text-xs text-gray-600 italic py-1">No additional diagnosed components listed yet.</p>`;
     }
     
     inlineContainer.innerHTML = `
-        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-4 mt-3 w-full text-left">
+        <div class="bg-slate-950 p-5 rounded-xl border border-teal-500/30 space-y-4 mt-3 w-full text-left shadow-2xl">
             <div class="flex items-center justify-between border-b border-white/5 pb-2">
-                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-file-invoice-dollar mr-1"></i> Finalize Customer Quotation</span>
+                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-file-invoice-dollar mr-1"></i> Finalize Customer Quotation Breakdown</span>
                 <span class="text-[9px] text-gray-500 font-medium">Coordinator Desk</span>
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Base Service &amp; Labor Fee</label>
+                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">🩺 Diagnosis Charge</label>
                     <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg p-2 focus-within:border-teal transition">
                         <span class="text-xs text-gray-500 mr-1.5">₹</span>
-                        <input type="number" id="quote-base-price-${orderId}" value="${basePrice}" oninput="updateQuotationBasePriceEditable('${orderId}', this.value)" class="w-full bg-transparent border-none text-white text-xs font-bold outline-none" />
+                        <input type="number" id="quote-diag-price-${orderId}" value="${diagnosisCharge}" oninput="updateQuotationDiagnosisChargeEditable('${orderId}', this.value)" class="w-full bg-transparent border-none text-white text-xs font-bold outline-none" />
                     </div>
                 </div>
                 
-                <div class="flex flex-col justify-end">
-                    <button onclick="addNewQuotationPartPromptEditable('${orderId}')" class="btn-outline py-2 px-3 text-xs w-full text-center flex items-center justify-center gap-1 hover:border-teal/50 hover:text-teal">
-                        <i class="fa-solid fa-plus text-[10px]"></i> Add Spare Component
-                    </button>
+                <div>
+                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">🔧 Service &amp; Labor Fee</label>
+                    <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg p-2 focus-within:border-teal transition">
+                        <span class="text-xs text-gray-500 mr-1.5">₹</span>
+                        <input type="number" id="quote-service-price-${orderId}" value="${serviceFee}" oninput="updateQuotationServiceFeeEditable('${orderId}', this.value)" class="w-full bg-transparent border-none text-white text-xs font-bold outline-none" />
+                    </div>
                 </div>
             </div>
             
-            <div class="space-y-2">
-                <label class="block text-[10px] text-gray-400 uppercase font-semibold">Spare Parts &amp; Consumables Breakdown</label>
-                <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
-                    ${partsHtml}
+            <div class="space-y-3">
+                <div class="flex items-center justify-between border-b border-white/5 pb-1">
+                    <label class="block text-[10px] text-amber-400 uppercase font-bold tracking-wider">📦 Original Estimated Components (Old Parts)</label>
+                    <button onclick="addNewQuotationPartPromptEditable('${orderId}', true)" class="text-[9px] text-amber-400 hover:text-amber-300 flex items-center gap-1 font-semibold">
+                        <i class="fa-solid fa-plus text-[8px]"></i> Add Old Part
+                    </button>
+                </div>
+                <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    ${originalPartsHtml}
+                </div>
+            </div>
+            
+            <div class="space-y-3">
+                <div class="flex items-center justify-between border-b border-white/5 pb-1">
+                    <label class="block text-[10px] text-teal-400 uppercase font-bold tracking-wider">➕ Additional Diagnosed Upgrades (New Parts)</label>
+                    <button onclick="addNewQuotationPartPromptEditable('${orderId}', false)" class="text-[9px] text-teal-400 hover:text-teal-300 flex items-center gap-1 font-semibold">
+                        <i class="fa-solid fa-plus text-[8px]"></i> Add New Part
+                    </button>
+                </div>
+                <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                    ${additionalPartsHtml}
                 </div>
             </div>
             
@@ -1163,19 +1345,38 @@ function updateQuotationPartPrice(orderId, index, value) {
 
 function updateQuotationPartName(orderId, index, value) {
     if (window.editingQuotationParts[orderId] && window.editingQuotationParts[orderId][index]) {
-        window.editingQuotationParts[orderId][index].name = value;
+        const p = window.editingQuotationParts[orderId][index];
+        const isOriginal = p.name.startsWith('[Original]') || p.name.startsWith('[Old]');
+        const prefix = isOriginal ? '[Original] ' : '[Additional] ';
+        p.name = prefix + value;
     }
 }
 
-function updateQuotationBasePriceEditable(orderId, value) {
+function toggleQuotationPartType(orderId, index, isOriginal) {
+    if (window.editingQuotationParts[orderId] && window.editingQuotationParts[orderId][index]) {
+        const p = window.editingQuotationParts[orderId][index];
+        const cleanName = p.name.replace(/^\[Original\]\s*/, '').replace(/^\[Old\]\s*/, '').replace(/^\[Additional\]\s*/, '').replace(/^\[New\]\s*/, '');
+        p.name = isOriginal ? `[Original] ${cleanName}` : `[Additional] ${cleanName}`;
+        renderQuotationFormInlineEditable(orderId);
+    }
+}
+
+function updateQuotationDiagnosisChargeEditable(orderId, value) {
     const val = parseFloat(value) || 0;
-    window.editingQuotationBasePrice[orderId] = val;
+    window.editingQuotationDiagnosisCharge[orderId] = val;
     renderQuotationFormInlineEditable(orderId);
 }
 
-function addNewQuotationPartPromptEditable(orderId) {
+function updateQuotationServiceFeeEditable(orderId, value) {
+    const val = parseFloat(value) || 0;
+    window.editingQuotationServiceFee[orderId] = val;
+    renderQuotationFormInlineEditable(orderId);
+}
+
+function addNewQuotationPartPromptEditable(orderId, isOriginal = false) {
     if (window.editingQuotationParts[orderId]) {
-        window.editingQuotationParts[orderId].push({ name: "Spare Component", price: 0 });
+        const prefix = isOriginal ? '[Original] ' : '[Additional] ';
+        window.editingQuotationParts[orderId].push({ name: `${prefix}Spare Component`, price: 0 });
         renderQuotationFormInlineEditable(orderId);
     }
 }
@@ -1189,7 +1390,8 @@ function removeQuotationPartEditable(orderId, index) {
 
 function cancelQuotationEdit(orderId) {
     delete window.editingQuotationParts[orderId];
-    delete window.editingQuotationBasePrice[orderId];
+    delete window.editingQuotationServiceFee[orderId];
+    delete window.editingQuotationDiagnosisCharge[orderId];
     loadDashboard();
 }
 
@@ -1197,11 +1399,15 @@ async function submitFinalizedQuotation(orderId) {
     if (!supabase) return;
     try {
         const partsList = window.editingQuotationParts[orderId] || [];
-        const basePrice = window.editingQuotationBasePrice[orderId] || 0;
+        const serviceFee = window.editingQuotationServiceFee[orderId] || 100;
+        const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 250;
         
-        // Sum total
+        // Separate parts into original vs additional to calculate parts_total
+        const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
+        const originalPartsSum = originalParts.reduce((sum, p) => sum + p.price, 0);
+        
         const partsSum = partsList.reduce((sum, p) => sum + p.price, 0);
-        const liveTotal = basePrice + partsSum;
+        const liveTotal = serviceFee + diagnosisCharge + partsSum;
         
         // Serialize parts list back
         const customPartsStr = serializeCustomQuoteParts(partsList);
@@ -1209,6 +1415,9 @@ async function submitFinalizedQuotation(orderId) {
         const { error } = await supabase
             .from('orders')
             .update({
+                diagnosis_charge: diagnosisCharge,
+                service_fee: serviceFee,
+                parts_total: originalPartsSum,
                 total_price: liveTotal,
                 custom_quote_parts: customPartsStr,
                 status: 'Quotation-Sent'
@@ -1219,7 +1428,8 @@ async function submitFinalizedQuotation(orderId) {
         
         showToast('✉️ Finalized quotation sent to customer for review!', 'success');
         delete window.editingQuotationParts[orderId];
-        delete window.editingQuotationBasePrice[orderId];
+        delete window.editingQuotationServiceFee[orderId];
+        delete window.editingQuotationDiagnosisCharge[orderId];
         loadDashboard();
     } catch (err) {
         showToast('Failed to dispatch quotation: ' + err.message, 'error');
@@ -2578,11 +2788,10 @@ window.submitAddPart = submitAddPart;
 window.showQuotationForm = showQuotationForm;
 window.updateQuotationPartPrice = updateQuotationPartPrice;
 window.updateQuotationPartName = updateQuotationPartName;
-window.updateQuotationBasePrice = updateQuotationBasePrice;
-window.updateQuotationBasePriceEditable = updateQuotationBasePriceEditable;
-window.addNewQuotationPartPrompt = addNewQuotationPartPrompt;
+window.toggleQuotationPartType = toggleQuotationPartType;
+window.updateQuotationDiagnosisChargeEditable = updateQuotationDiagnosisChargeEditable;
+window.updateQuotationServiceFeeEditable = updateQuotationServiceFeeEditable;
 window.addNewQuotationPartPromptEditable = addNewQuotationPartPromptEditable;
-window.removeQuotationPart = removeQuotationPart;
 window.removeQuotationPartEditable = removeQuotationPartEditable;
 window.cancelQuotationEdit = cancelQuotationEdit;
 window.submitFinalizedQuotation = submitFinalizedQuotation;
