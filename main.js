@@ -224,8 +224,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
             if (status === 'With-RepairMaster') {
                 actions += `
-                    <button onclick="updateDiagnosis('${o.id}', prompt('Diagnosis notes:'))" class="action-btn btn-diagnose">Diagnose Logs</button>
-                    <button onclick="requestAdditionalParts('${o.id}', prompt('Part Name:'), parseFloat(prompt('Price:')))" class="action-btn btn-part">+ Add Part</button>
+                   <button onclick="updateDiagnosis('${o.id}')" class="action-btn btn-diagnose">Diagnose Logs</button>
+<button onclick="requestAdditionalParts('${o.id}')" class="action-btn btn-part">+ Add Part</button>
                 `;
             } else if (status === 'Confirmed') {
                 actions += `
