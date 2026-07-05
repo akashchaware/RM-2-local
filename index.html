@@ -4,10 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RepairMaster – Doorstep Repair</title>
-    <!-- FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        /* ─── RESET & BASE ─── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #f5f7fa;
@@ -18,10 +16,8 @@
             max-width: 480px;
             margin: 0 auto;
         }
-
-        /* ─── CARDS ─── */
         .card {
-            background: #ffffff;
+            background: #fff;
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 16px;
@@ -36,8 +32,6 @@
             gap: 8px;
             color: #0b7f7a;
         }
-
-        /* ─── HEADER ─── */
         .header {
             display: flex;
             align-items: center;
@@ -56,13 +50,6 @@
             gap: 10px;
             align-items: center;
         }
-        .header-actions button {
-            background: none;
-            border: none;
-            font-size: 20px;
-            cursor: pointer;
-            color: #1a2a3a;
-        }
         .user-avatar {
             width: 40px;
             height: 40px;
@@ -76,25 +63,6 @@
             font-size: 16px;
             cursor: pointer;
             border: 2px solid #0b7f7a;
-        }
-
-        /* ─── LOGIN SCREEN ─── */
-        .login-screen { display: block; }
-        .login-screen.hidden { display: none; }
-        .login-screen .card { text-align: center; }
-        .login-screen input {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #dce1e7;
-            border-radius: 10px;
-            font-size: 15px;
-            margin-bottom: 10px;
-            background: #f8fafc;
-        }
-        .login-screen input:focus {
-            outline: none;
-            border-color: #0b7f7a;
-            box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
         }
         .btn-primary {
             width: 100%;
@@ -151,38 +119,60 @@
             color: #0b7f7a;
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
-
-        /* ─── DASHBOARD ─── */
-        .dashboard { display: none; }
-        .dashboard.active { display: block; }
-
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .stat-box {
-            background: #fff;
-            border-radius: 12px;
-            padding: 14px;
+        .hidden { display: none !important; }
+        /* Public Home */
+        .hero {
+            background: linear-gradient(135deg, #0b7f7a, #0a6b66);
+            color: #fff;
+            border-radius: 16px;
+            padding: 28px 20px;
             text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
         }
-        .stat-box .num {
+        .hero h1 {
             font-size: 28px;
             font-weight: 800;
+            margin-bottom: 8px;
+        }
+        .hero p {
+            font-size: 15px;
+            opacity: 0.9;
+            margin-bottom: 16px;
+        }
+        .hero .btn-teal {
+            background: #fff;
             color: #0b7f7a;
+            padding: 10px 24px;
+            border-radius: 40px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
         }
-        .stat-box .label {
+        .city-notice {
+            background: #fff3cd;
+            color: #856404;
+            padding: 8px 14px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 500;
+            display: inline-block;
+            margin-bottom: 12px;
+        }
+        .badge-row {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 10px 0;
+        }
+        .badge {
+            background: #e8edf2;
+            padding: 6px 14px;
+            border-radius: 20px;
             font-size: 12px;
-            color: #6b7a8a;
             font-weight: 600;
+            color: #1a2a3a;
         }
-
-        /* ─── ESTIMATOR ─── */
-        .estimator select,
-        .estimator input {
+        .estimator select, .estimator input {
             width: 100%;
             padding: 12px 14px;
             border: 1px solid #dce1e7;
@@ -191,8 +181,7 @@
             margin-bottom: 10px;
             background: #f8fafc;
         }
-        .estimator select:focus,
-        .estimator input:focus {
+        .estimator select:focus, .estimator input:focus {
             outline: none;
             border-color: #0b7f7a;
             box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
@@ -229,8 +218,41 @@
             height: 18px;
             accent-color: #0b7f7a;
         }
-
-        /* ─── ORDERS ─── */
+        .offer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: #f8fafc;
+            border-radius: 10px;
+            margin-bottom: 8px;
+        }
+        .offer-item strong { font-size: 14px; }
+        .offer-item .discount { font-weight: 700; color: #e67e22; }
+        /* Dashboard */
+        .stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .stat-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .stat-box .num {
+            font-size: 28px;
+            font-weight: 800;
+            color: #0b7f7a;
+        }
+        .stat-box .label {
+            font-size: 12px;
+            color: #6b7a8a;
+            font-weight: 600;
+        }
         .order-card {
             background: #fff;
             border-radius: 12px;
@@ -279,12 +301,9 @@
             font-weight: 600;
             cursor: pointer;
         }
-        .btn-view { background: #e8edf2; color: #1a2a3a; }
         .btn-accept { background: #0b7f7a; color: #fff; }
         .btn-decline { background: #e74c3c; color: #fff; }
-        .btn-assign { background: #f39c12; color: #fff; }
-
-        /* ─── PROFILE ─── */
+        .btn-view { background: #e8edf2; color: #1a2a3a; }
         .profile input {
             width: 100%;
             padding: 12px 14px;
@@ -299,8 +318,6 @@
             border-color: #0b7f7a;
             box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
         }
-
-        /* ─── TOAST ─── */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -319,8 +336,6 @@
             text-align: center;
         }
         .toast.show { opacity: 1; }
-
-        /* ─── RESPONSIVE TWEAKS ─── */
         @media (max-width: 400px) {
             body { padding: 10px; }
             .stats { grid-template-columns: 1fr; }
@@ -330,74 +345,38 @@
 </head>
 <body>
 
-    <!-- ─── TOAST ─── -->
     <div id="toast" class="toast"></div>
 
-    <!-- ─── LOGIN SCREEN ─── -->
-    <div id="loginScreen" class="login-screen">
+    <!-- ─── PUBLIC HOME (visible when not logged in) ─── -->
+    <div id="publicHome">
         <div class="header">
             <div class="logo">Repair<span>Master</span></div>
-            <div style="font-size:12px;color:#6b7a8a;">Direct To Consumer</div>
-        </div>
-
-        <div class="card">
-            <div class="tab-row">
-                <button class="active" data-tab="login">Sign In</button>
-                <button data-tab="signup">Sign Up</button>
-            </div>
-
-            <!-- Login Form -->
-            <form id="loginForm">
-                <input type="email" id="loginEmail" placeholder="Email" required />
-                <input type="password" id="loginPassword" placeholder="Password" required />
-                <button class="btn-primary" type="submit">Sign In</button>
-            </form>
-
-            <!-- Signup Form -->
-            <form id="signupForm" style="display:none;">
-                <input type="text" id="signupName" placeholder="Full Name" required />
-                <input type="email" id="signupEmail" placeholder="Email" required />
-                <input type="tel" id="signupPhone" placeholder="Phone Number" />
-                <input type="password" id="signupPassword" placeholder="Password" required />
-                <button class="btn-primary" type="submit">Create Account</button>
-            </form>
-
-            <div style="margin-top:12px;text-align:center;font-size:13px;color:#6b7a8a;">
-                <button onclick="signInWithGoogle()" style="background:none;border:none;color:#0b7f7a;font-weight:600;cursor:pointer;">
-                    <i class="fa-brands fa-google"></i> Sign in with Google
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ─── DASHBOARD ─── -->
-    <div id="dashboard" class="dashboard">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">Repair<span>Master</span></div>
-            <div class="header-actions">
-                <span id="userRole" style="font-size:12px;color:#0b7f7a;font-weight:600;">Customer</span>
-                <div class="user-avatar" id="userAvatar" onclick="toggleProfile()">U</div>
+            <div style="display:flex;gap:12px;font-size:14px;font-weight:600;">
+                <a href="#" onclick="showLogin()" style="color:#0b7f7a;text-decoration:none;">Login</a>
+                <a href="#" onclick="showSignup()" style="color:#6b7a8a;text-decoration:none;">Sign Up</a>
             </div>
         </div>
 
-        <!-- Stats -->
-        <div class="stats">
-            <div class="stat-box"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
-            <div class="stat-box"><div class="num" id="statPending" style="color:#f39c12;">0</div><div class="label">Pending</div></div>
-            <div class="stat-box"><div class="num" id="statActive" style="color:#3498db;">0</div><div class="label">Active</div></div>
-            <div class="stat-box"><div class="num" id="statCompleted" style="color:#27ae60;">0</div><div class="label">Completed</div></div>
+        <!-- Hero -->
+        <div class="hero">
+            <h1>Repair<span style="color:#fcd34d;">Master</span></h1>
+            <p>Direct To Consumer – Smart, Fast &amp; Reliable Repairs</p>
+            <button class="btn-teal" onclick="document.getElementById('calculator-section').scrollIntoView()">Get Estimate</button>
         </div>
 
-        <!-- Hot Deals -->
-        <div class="card">
-            <div class="card-title"><i class="fa-solid fa-fire" style="color:#e67e22;"></i> Hot Deals</div>
-            <div id="offersContainer" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <!-- City & Maintenance -->
+        <div style="margin-bottom:12px;">
+            <span class="city-notice"><i class="fa-solid fa-location-dot"></i> Serving Wardha – Nagpur &amp; Amravati coming soon!</span>
+            <div class="badge-row">
+                <span class="badge"><i class="fa-solid fa-shield-halved"></i> Maintenance Mode</span>
+                <span class="badge"><i class="fa-regular fa-clock"></i> 90 Days Warranty</span>
+                <span class="badge"><i class="fa-solid fa-otp"></i> OTP Handover</span>
+            </div>
         </div>
 
-        <!-- Estimator -->
-        <div class="card estimator">
-            <div class="card-title"><i class="fa-solid fa-calculator"></i> Estimate</div>
+        <!-- Calculator -->
+        <div class="card estimator" id="calculator-section">
+            <div class="card-title"><i class="fa-solid fa-calculator"></i> Estimate Your Repair</div>
             <select id="brandSelect"><option value="">— Brand —</option></select>
             <select id="modelSelect"><option value="">— Model —</option></select>
             <select id="repairTypeSelect"><option value="">— Repair —</option></select>
@@ -419,9 +398,82 @@
             <button class="btn-primary" id="bookServiceBtn" onclick="createOrder()">
                 <i class="fa-regular fa-calendar-check"></i> Book Service
             </button>
+            <p style="font-size:12px;color:#6b7a8a;margin-top:8px;text-align:center;">You'll be prompted to login before booking.</p>
         </div>
 
-        <!-- Profile (hidden by default, toggled by avatar) -->
+        <!-- Hot Deals -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-fire" style="color:#e67e22;"></i> Hot Deals</div>
+            <div id="offersContainer"></div>
+        </div>
+
+        <!-- Guest Tracking -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Track Your Order</div>
+            <form id="trackForm" onsubmit="trackOrderGuest(event)">
+                <input type="text" id="trackOrderId" placeholder="Order ID (e.g. RM-REQ-XXXX)" required />
+                <input type="tel" id="trackPhone" placeholder="Phone Number" required />
+                <button class="btn-secondary" type="submit">Track</button>
+            </form>
+            <div id="guestTrackResult" style="margin-top:10px;"></div>
+        </div>
+
+        <!-- Login / Signup Modal (hidden by default) -->
+        <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; padding:20px;">
+            <div style="background:#fff; max-width:400px; width:100%; border-radius:20px; padding:24px; max-height:90vh; overflow-y:auto;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                    <h2 style="font-size:20px;">Welcome Back</h2>
+                    <button onclick="closeLoginModal()" style="background:none; border:none; font-size:24px; cursor:pointer;">&times;</button>
+                </div>
+                <div class="tab-row">
+                    <button class="active" data-tab="login2">Sign In</button>
+                    <button data-tab="signup2">Sign Up</button>
+                </div>
+                <form id="loginForm2">
+                    <input type="email" id="loginEmail2" placeholder="Email" required />
+                    <input type="password" id="loginPassword2" placeholder="Password" required />
+                    <button class="btn-primary" type="submit">Sign In</button>
+                </form>
+                <form id="signupForm2" style="display:none;">
+                    <input type="text" id="signupName2" placeholder="Full Name" required />
+                    <input type="email" id="signupEmail2" placeholder="Email" required />
+                    <input type="tel" id="signupPhone2" placeholder="Phone Number" />
+                    <input type="password" id="signupPassword2" placeholder="Password" required />
+                    <button class="btn-primary" type="submit">Create Account</button>
+                </form>
+                <div style="margin-top:12px;text-align:center;font-size:13px;color:#6b7a8a;">
+                    <button onclick="signInWithGoogle()" style="background:none;border:none;color:#0b7f7a;font-weight:600;cursor:pointer;">
+                        <i class="fa-brands fa-google"></i> Sign in with Google
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── DASHBOARD (visible after login) ─── -->
+    <div id="dashboard" class="hidden">
+        <div class="header">
+            <div class="logo">Repair<span>Master</span></div>
+            <div class="header-actions">
+                <span id="userRole" style="font-size:12px;color:#0b7f7a;font-weight:600;">Customer</span>
+                <div class="user-avatar" id="userAvatar" onclick="toggleProfile()">U</div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-box"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
+            <div class="stat-box"><div class="num" id="statPending" style="color:#f39c12;">0</div><div class="label">Pending</div></div>
+            <div class="stat-box"><div class="num" id="statActive" style="color:#3498db;">0</div><div class="label">Active</div></div>
+            <div class="stat-box"><div class="num" id="statCompleted" style="color:#27ae60;">0</div><div class="label">Completed</div></div>
+        </div>
+
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-ticket"></i> Your Tickets</div>
+            <div id="dashboardContent">
+                <div style="text-align:center;color:#6b7a8a;padding:20px;">Loading...</div>
+            </div>
+        </div>
+
         <div id="profileSection" style="display:none;">
             <div class="card profile">
                 <div class="card-title"><i class="fa-regular fa-address-card"></i> Profile</div>
@@ -437,451 +489,374 @@
                 <button class="btn-danger" onclick="logoutUser()" style="margin-top:8px;width:100%;">Logout</button>
             </div>
         </div>
-
-        <!-- Orders -->
-        <div class="card">
-            <div class="card-title"><i class="fa-solid fa-ticket"></i> Your Tickets</div>
-            <div id="dashboardContent">
-                <div style="text-align:center;color:#6b7a8a;padding:20px;">Loading...</div>
-            </div>
-        </div>
-
-        <!-- Guest Tracking -->
-        <div class="card">
-            <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Track Order</div>
-            <form id="trackForm" onsubmit="trackOrderGuest(event)">
-                <input type="text" id="trackOrderId" placeholder="Order ID (e.g. RM-REQ-XXXX)" required />
-                <input type="tel" id="trackPhone" placeholder="Phone Number" required />
-                <button class="btn-secondary" type="submit">Track</button>
-            </form>
-            <div id="guestTrackResult" style="margin-top:10px;"></div>
-        </div>
     </div>
 
-    <!-- ─── SUPABASE + MAIN LOGIC ─── -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
-    // ─── SUPABASE ───
-    const SUPABASE_URL = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
-    const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // ─── Supabase client ───
+        const SUPABASE_URL = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // ─── STATE ───
-    let currentUser = null;
-    let allBrands = [];
-    let allDevices = [];
-    let allRepairTypes = [];
-    let allParts = [];
-    let allOrders = [];
+        let currentUser = null;
+        let allBrands = [], allDevices = [], allRepairTypes = [], allParts = [];
+        let allOrders = [];
 
-    // ─── TOAST ───
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.classList.add('show');
-        clearTimeout(t._hide);
-        t._hide = setTimeout(() => t.classList.remove('show'), 3000);
-    }
-
-    // ─── LOGIN / SIGNUP UI ───
-    document.querySelectorAll('.tab-row button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            document.querySelectorAll('.tab-row button').forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
-            document.getElementById('loginForm').style.display = this.dataset.tab === 'login' ? 'block' : 'none';
-            document.getElementById('signupForm').style.display = this.dataset.tab === 'signup' ? 'block' : 'none';
-        });
-    });
-
-    document.getElementById('loginForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-        if (error) return showToast('Login failed: ' + error.message);
-        currentUser = data.user;
-        showToast('Welcome!');
-        await loadDashboard();
-    });
-
-    document.getElementById('signupForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const name = document.getElementById('signupName').value;
-        const email = document.getElementById('signupEmail').value;
-        const phone = document.getElementById('signupPhone').value;
-        const password = document.getElementById('signupPassword').value;
-        const { data, error } = await supabase.auth.signUp({
-            email, password,
-            options: { data: { full_name: name, phone } }
-        });
-        if (error) return showToast('Signup failed: ' + error.message);
-        // Auto-assign customer role
-        if (data.user) {
-            await supabase.from('user_roles').upsert([{ user_id: data.user.id, role_id: 5 }]);
-        }
-        showToast('Account created! Please sign in.');
-        document.querySelector('.tab-row button[data-tab="login"]').click();
-    });
-
-    window.signInWithGoogle = async function() {
-        await supabase.auth.signInWithOAuth({ provider: 'google' });
-    };
-
-    // ─── CATALOG LOAD ───
-    async function loadCatalog() {
-        try {
-            const [b, d, rt, p] = await Promise.all([
-                supabase.from('brands').select('*').order('name'),
-                supabase.from('devices').select('*').order('name'),
-                supabase.from('repair_types').select('*').order('label'),
-                supabase.from('parts').select('*')
-            ]);
-            if (b.error || d.error || rt.error || p.error) throw new Error('Catalog load error');
-            allBrands = b.data || [];
-            allDevices = d.data || [];
-            allRepairTypes = rt.data || [];
-            allParts = p.data || [];
-            populateBrands();
-        } catch (e) {
-            console.warn('Using fallback data');
-            useFallback();
-        }
-    }
-
-    function useFallback() {
-        allBrands = [
-            { id: 'b1', name: 'Apple' }, { id: 'b2', name: 'Samsung' },
-            { id: 'b3', name: 'Vivo' }, { id: 'b4', name: 'OnePlus' },
-            { id: 'b5', name: 'Xiaomi' }, { id: 'b6', name: 'Oppo' }
-        ];
-        allDevices = [
-            { id: 'd1', brand_id: 'b1', name: 'iPhone 15' },
-            { id: 'd2', brand_id: 'b1', name: 'iPhone 14' },
-            { id: 'd3', brand_id: 'b2', name: 'Galaxy S24' },
-            { id: 'd4', brand_id: 'b2', name: 'Galaxy A55' },
-            { id: 'd5', brand_id: 'b3', name: 'V30 Pro' }
-        ];
-        allRepairTypes = [
-            { id: 'rt1', name: 'screen', label: 'Screen Replacement' },
-            { id: 'rt2', name: 'battery', label: 'Battery Replacement' },
-            { id: 'rt3', name: 'chargingport', label: 'Charging Port' }
-        ];
-        allParts = [
-            { device_id: 'd1', repair_type_id: 'rt1', name: 'OLED Display', price: 15000 },
-            { device_id: 'd1', repair_type_id: 'rt2', name: 'Battery', price: 4500 },
-            { device_id: 'd3', repair_type_id: 'rt1', name: 'AMOLED Display', price: 12000 }
-        ];
-        populateBrands();
-    }
-
-    function populateBrands() {
-        const sel = document.getElementById('brandSelect');
-        sel.innerHTML = '<option value="">— Brand —</option>';
-        allBrands.forEach(b => {
-            const opt = document.createElement('option');
-            opt.value = b.id;
-            opt.textContent = b.name;
-            sel.appendChild(opt);
-        });
-        sel.onchange = updateModels;
-        updateModels();
-    }
-
-    function updateModels() {
-        const brandId = document.getElementById('brandSelect').value;
-        const sel = document.getElementById('modelSelect');
-        sel.innerHTML = '<option value="">— Model —</option>';
-        if (!brandId) return;
-        allDevices.filter(d => d.brand_id === brandId).forEach(d => {
-            const opt = document.createElement('option');
-            opt.value = d.id;
-            opt.textContent = d.name;
-            sel.appendChild(opt);
-        });
-        sel.onchange = updateRepairTypes;
-        updateRepairTypes();
-    }
-
-    function updateRepairTypes() {
-        const sel = document.getElementById('repairTypeSelect');
-        sel.innerHTML = '<option value="">— Repair —</option>';
-        allRepairTypes.forEach(rt => {
-            const opt = document.createElement('option');
-            opt.value = rt.id;
-            opt.textContent = rt.label || rt.name;
-            sel.appendChild(opt);
-        });
-        sel.onchange = updatePartsSurvey;
-        updatePartsSurvey();
-    }
-
-    function updatePartsSurvey() {
-        const modelId = document.getElementById('modelSelect').value;
-        const repairId = document.getElementById('repairTypeSelect').value;
-        const quality = document.getElementById('qualitySelect').value;
-        const offer = document.getElementById('offerToggle').checked;
-        const container = document.getElementById('partsSurveyContainer');
-        const parts = allParts.filter(p => p.device_id === modelId && p.repair_type_id === repairId);
-        const qm = quality === 'premium' ? 1 : 0.7;
-
-        if (!modelId || !repairId || parts.length === 0) {
-            container.innerHTML = 'Select brand, model & repair to see parts.';
-            document.getElementById('partsTotalDisplay').textContent = '₹0.00';
-            document.getElementById('serviceFeeDisplay').textContent = '₹0.00';
-            document.getElementById('totalPriceDisplay').textContent = '₹0.00';
-            return;
+        // ─── Toast ───
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.add('show');
+            clearTimeout(t._hide);
+            t._hide = setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        let total = parts.reduce((s, p) => s + p.price * qm, 0);
-        const discounted = total * 0.9;
-        let service = discounted * 0.15;
-        if (offer) service *= 0.5;
-        const diagnosis = 250;
-        const final = discounted + service + diagnosis;
+        // ─── Login Modal ───
+        function showLogin() {
+            document.getElementById('loginModal').style.display = 'flex';
+            document.querySelector('#loginModal .tab-row button[data-tab="login2"]').click();
+        }
+        function showSignup() {
+            document.getElementById('loginModal').style.display = 'flex';
+            document.querySelector('#loginModal .tab-row button[data-tab="signup2"]').click();
+        }
+        function closeLoginModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
 
-        container.innerHTML = parts.map(p =>
-            `<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;border-bottom:1px solid #eee;">
-                <span>${p.name} (${quality})</span>
-                <span style="font-weight:600;">₹${(p.price * qm).toFixed(0)}</span>
-            </div>`
-        ).join('');
+        // ─── Tab switching inside modal ───
+        document.querySelectorAll('#loginModal .tab-row button').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('#loginModal .tab-row button').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                const formId = this.dataset.tab === 'login2' ? 'loginForm2' : 'signupForm2';
+                document.getElementById('loginForm2').style.display = this.dataset.tab === 'login2' ? 'block' : 'none';
+                document.getElementById('signupForm2').style.display = this.dataset.tab === 'signup2' ? 'block' : 'none';
+            });
+        });
 
-        document.getElementById('partsTotalDisplay').textContent = '₹' + discounted.toFixed(0);
-        document.getElementById('serviceFeeDisplay').textContent = '₹' + service.toFixed(0);
-        document.getElementById('totalPriceDisplay').textContent = '₹' + final.toFixed(0);
-    }
+        // ─── Login handler ───
+        document.getElementById('loginForm2').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail2').value;
+            const password = document.getElementById('loginPassword2').value;
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) return showToast('Login failed: ' + error.message);
+            currentUser = data.user;
+            closeLoginModal();
+            await loadDashboard();
+            showToast('Welcome!');
+        });
 
-    document.getElementById('qualitySelect').onchange = updatePartsSurvey;
-    document.getElementById('offerToggle').onchange = updatePartsSurvey;
+        // ─── Signup handler ───
+        document.getElementById('signupForm2').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('signupName2').value;
+            const email = document.getElementById('signupEmail2').value;
+            const phone = document.getElementById('signupPhone2').value;
+            const password = document.getElementById('signupPassword2').value;
+            const { data, error } = await supabase.auth.signUp({
+                email, password,
+                options: { data: { full_name: name, phone } }
+            });
+            if (error) return showToast('Signup failed: ' + error.message);
+            if (data.user) await supabase.from('user_roles').upsert([{ user_id: data.user.id, role_id: 5 }]);
+            showToast('Account created! Please sign in.');
+            document.querySelector('#loginModal .tab-row button[data-tab="login2"]').click();
+        });
 
-    // ─── CREATE ORDER ───
-    window.createOrder = async function() {
-        if (!currentUser) return showToast('Please sign in first.');
-        const brand = document.getElementById('brandSelect').value;
-        const model = document.getElementById('modelSelect').value;
-        const repair = document.getElementById('repairTypeSelect').value;
-        if (!brand || !model || !repair) return showToast('Select brand, model & repair.');
-
-        const parts = allParts.filter(p => p.device_id === model && p.repair_type_id === repair);
-        const qm = document.getElementById('qualitySelect').value === 'premium' ? 1 : 0.7;
-        let total = parts.reduce((s, p) => s + p.price * qm, 0);
-        const discounted = total * 0.9;
-        let service = discounted * 0.15;
-        if (document.getElementById('offerToggle').checked) service *= 0.5;
-        const diagnosis = 250;
-        const final = discounted + service + diagnosis;
-
-        const order = {
-            order_number: 'RM-' + Date.now().toString(36).toUpperCase(),
-            user_id: currentUser.id,
-            customer_name: currentUser.user_metadata?.full_name || 'User',
-            customer_phone: currentUser.user_metadata?.phone || '',
-            device_id: model,
-            repair_type_id: repair,
-            parts_total: discounted,
-            service_fee: service,
-            diagnosis_charge: diagnosis,
-            total_price: final,
-            status: 'Pending',
-            created_at: new Date().toISOString()
+        window.signInWithGoogle = async function() {
+            await supabase.auth.signInWithOAuth({ provider: 'google' });
         };
 
-        const { error } = await supabase.from('orders').insert(order);
-        if (error) return showToast('Booking failed: ' + error.message);
-        showToast('✅ Order created!');
-        await loadDashboard();
-    };
-
-    // ─── LOAD DASHBOARD ───
-    async function loadDashboard() {
-        document.getElementById('loginScreen').classList.add('hidden');
-        document.getElementById('dashboard').classList.add('active');
-
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('dashboard').classList.remove('active');
-            return;
+        // ─── Catalog ───
+        async function loadCatalog() {
+            try {
+                const [b, d, rt, p] = await Promise.all([
+                    supabase.from('brands').select('*').order('name'),
+                    supabase.from('devices').select('*').order('name'),
+                    supabase.from('repair_types').select('*').order('label'),
+                    supabase.from('parts').select('*')
+                ]);
+                if (b.error || d.error || rt.error || p.error) throw new Error('Catalog error');
+                allBrands = b.data || []; allDevices = d.data || []; allRepairTypes = rt.data || []; allParts = p.data || [];
+                populateBrands();
+            } catch(e) { useFallback(); }
         }
-        currentUser = user;
 
-        // Update avatar
-        const name = user.user_metadata?.full_name || user.email;
-        document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
-
-        // Load orders
-        const { data: orders, error } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('user_id', user.id)
-            .order('created_at', { ascending: false });
-        if (error) console.warn('Orders error:', error);
-        allOrders = orders || [];
-
-        // Stats
-        const total = allOrders.length;
-        const pending = allOrders.filter(o => o.status === 'Pending').length;
-        const active = allOrders.filter(o => ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed'].includes(o.status)).length;
-        const completed = allOrders.filter(o => o.status === 'Completed').length;
-        document.getElementById('statTotal').textContent = total;
-        document.getElementById('statPending').textContent = pending;
-        document.getElementById('statActive').textContent = active;
-        document.getElementById('statCompleted').textContent = completed;
-
-        // Render orders
-        renderOrders(allOrders);
-
-        // Fetch offers
-        fetchOffers();
-        updatePartsSurvey();
-    }
-
-    function renderOrders(orders) {
-        const container = document.getElementById('dashboardContent');
-        if (!orders || orders.length === 0) {
-            container.innerHTML = '<div style="text-align:center;color:#6b7a8a;padding:20px;">No orders yet.</div>';
-            return;
+        function useFallback() {
+            allBrands = [
+                { id: 'b1', name: 'Apple' }, { id: 'b2', name: 'Samsung' },
+                { id: 'b3', name: 'Vivo' }, { id: 'b4', name: 'OnePlus' }
+            ];
+            allDevices = [
+                { id: 'd1', brand_id: 'b1', name: 'iPhone 15' },
+                { id: 'd2', brand_id: 'b1', name: 'iPhone 14' },
+                { id: 'd3', brand_id: 'b2', name: 'Galaxy S24' }
+            ];
+            allRepairTypes = [
+                { id: 'rt1', name: 'screen', label: 'Screen Replacement' },
+                { id: 'rt2', name: 'battery', label: 'Battery Replacement' }
+            ];
+            allParts = [
+                { device_id: 'd1', repair_type_id: 'rt1', name: 'OLED Display', price: 15000 },
+                { device_id: 'd1', repair_type_id: 'rt2', name: 'Battery', price: 4500 }
+            ];
+            populateBrands();
         }
-        container.innerHTML = orders.map(o => `
-            <div class="order-card">
-                <div class="top">
-                    <span class="device">${getDeviceName(o.device_id)}</span>
-                    <span class="status ${o.status}">${o.status}</span>
-                </div>
-                <div class="meta">${getRepairLabel(o.repair_type_id)} • ₹${(o.total_price || 0).toFixed(0)}</div>
-                <div class="meta">${new Date(o.created_at).toLocaleDateString()}</div>
-                <div class="actions">
-                    ${o.status === 'Quotation-Sent' ? `
-                        <button class="btn-accept" onclick="confirmQuotation('${o.id}')">Accept Quote</button>
-                        <button class="btn-decline" onclick="rejectQuotation('${o.id}')">Decline</button>
-                    ` : ''}
-                </div>
-            </div>
-        `).join('');
-    }
 
-    function getDeviceName(id) {
-        const d = allDevices.find(x => x.id === id);
-        return d ? d.name : 'Device';
-    }
-    function getRepairLabel(id) {
-        const r = allRepairTypes.find(x => x.id === id);
-        return r ? r.label : 'Repair';
-    }
-
-    // ─── OFFERS ───
-    async function fetchOffers() {
-        const { data, error } = await supabase.from('offers').select('*').eq('active', true).limit(5);
-        const container = document.getElementById('offersContainer');
-        if (error || !data || data.length === 0) {
-            container.innerHTML = '<div style="font-size:13px;color:#6b7a8a;text-align:center;">No active offers</div>';
-            return;
+        function populateBrands() {
+            const sel = document.getElementById('brandSelect');
+            sel.innerHTML = '<option value="">— Brand —</option>';
+            allBrands.forEach(b => { const opt = document.createElement('option'); opt.value = b.id; opt.textContent = b.name; sel.appendChild(opt); });
+            sel.onchange = updateModels; updateModels();
         }
-        container.innerHTML = data.map(o => `
-            <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:#f8fafc;border-radius:10px;">
-                <div>
-                    <strong style="font-size:14px;">${o.name}</strong>
-                    <div style="font-size:12px;color:#6b7a8a;">${o.description || ''}</div>
-                </div>
-                <span style="font-weight:700;color:#e67e22;">${o.discount_percent || 0}% OFF</span>
-            </div>
-        `).join('');
-    }
 
-    // ─── QUOTATION ACTIONS ───
-    window.confirmQuotation = async function(orderId) {
-        const { error } = await supabase.from('orders').update({ status: 'Confirmed' }).eq('id', orderId);
-        if (error) showToast('Error: ' + error.message);
-        else { showToast('✅ Quotation accepted!'); loadDashboard(); }
-    };
-    window.rejectQuotation = async function(orderId) {
-        const { error } = await supabase.from('orders').update({ status: 'Rejected' }).eq('id', orderId);
-        if (error) showToast('Error: ' + error.message);
-        else { showToast('❌ Quotation declined.'); loadDashboard(); }
-    };
-
-    // ─── PROFILE ───
-    window.toggleProfile = function() {
-        const sec = document.getElementById('profileSection');
-        sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
-        // Load profile data
-        if (sec.style.display === 'block' && currentUser) {
-            supabase.from('users').select('name,phone,address').eq('id', currentUser.id).single()
-                .then(({ data }) => {
-                    if (data) {
-                        document.getElementById('profileName').value = data.name || '';
-                        document.getElementById('profilePhone').value = data.phone || '';
-                        document.getElementById('profileAddress').value = data.address || '';
-                    }
-                });
+        function updateModels() {
+            const brandId = document.getElementById('brandSelect').value;
+            const sel = document.getElementById('modelSelect');
+            sel.innerHTML = '<option value="">— Model —</option>';
+            if (!brandId) return;
+            allDevices.filter(d => d.brand_id === brandId).forEach(d => {
+                const opt = document.createElement('option'); opt.value = d.id; opt.textContent = d.name; sel.appendChild(opt);
+            });
+            sel.onchange = updateRepairTypes; updateRepairTypes();
         }
-    };
 
-    window.updateProfile = async function() {
-        if (!currentUser) return showToast('Not logged in.');
-        const name = document.getElementById('profileName').value;
-        const phone = document.getElementById('profilePhone').value;
-        const address = document.getElementById('profileAddress').value;
-        const city = document.getElementById('profileCity').value;
-        const { error } = await supabase.from('users').update({ name, phone, address: address + ', ' + city }).eq('id', currentUser.id);
-        if (error) showToast('Update failed: ' + error.message);
-        else showToast('✅ Profile updated!');
-    };
-
-    // ─── LOGOUT ───
-    window.logoutUser = async function() {
-        await supabase.auth.signOut();
-        currentUser = null;
-        document.getElementById('loginScreen').classList.remove('hidden');
-        document.getElementById('dashboard').classList.remove('active');
-        showToast('Logged out');
-    };
-
-    // ─── GUEST TRACKING ───
-    window.trackOrderGuest = async function(e) {
-        e.preventDefault();
-        const orderId = document.getElementById('trackOrderId').value.trim();
-        const phone = document.getElementById('trackPhone').value.trim();
-        const container = document.getElementById('guestTrackResult');
-        container.innerHTML = '<div style="text-align:center;font-size:13px;color:#6b7a8a;">Searching...</div>';
-
-        const { data, error } = await supabase.from('orders').select('*').eq('order_number', orderId);
-        if (error || !data || data.length === 0) {
-            container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Order not found.</div>';
-            return;
+        function updateRepairTypes() {
+            const sel = document.getElementById('repairTypeSelect');
+            sel.innerHTML = '<option value="">— Repair —</option>';
+            allRepairTypes.forEach(rt => {
+                const opt = document.createElement('option'); opt.value = rt.id; opt.textContent = rt.label || rt.name; sel.appendChild(opt);
+            });
+            sel.onchange = updatePartsSurvey; updatePartsSurvey();
         }
-        const o = data[0];
-        const dbPhone = (o.customer_phone || '').replace(/[^0-9]/g, '');
-        const cleanPhone = phone.replace(/[^0-9]/g, '');
-        if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) {
-            container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Phone number mismatch.</div>';
-            return;
-        }
-        container.innerHTML = `
-            <div style="background:#f8fafc;border-radius:10px;padding:12px;">
-                <div style="display:flex;justify-content:space-between;">
-                    <strong>${getDeviceName(o.device_id)}</strong>
-                    <span class="status ${o.status}">${o.status}</span>
-                </div>
-                <div style="font-size:13px;color:#6b7a8a;">${getRepairLabel(o.repair_type_id)}</div>
-                <div style="font-size:13px;">₹${(o.total_price || 0).toFixed(0)}</div>
-            </div>
-        `;
-    };
 
-    // ─── INIT ───
-    document.addEventListener('DOMContentLoaded', async function() {
-        await loadCatalog();
-        // Check if user is already logged in
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-            currentUser = user;
+        function updatePartsSurvey() {
+            const modelId = document.getElementById('modelSelect').value;
+            const repairId = document.getElementById('repairTypeSelect').value;
+            const quality = document.getElementById('qualitySelect').value;
+            const offer = document.getElementById('offerToggle').checked;
+            const parts = allParts.filter(p => p.device_id === modelId && p.repair_type_id === repairId);
+            const qm = quality === 'premium' ? 1 : 0.7;
+            const container = document.getElementById('partsSurveyContainer');
+
+            if (!modelId || !repairId || parts.length === 0) {
+                container.innerHTML = 'Select brand, model & repair to see parts.';
+                document.getElementById('partsTotalDisplay').textContent = '₹0.00';
+                document.getElementById('serviceFeeDisplay').textContent = '₹0.00';
+                document.getElementById('totalPriceDisplay').textContent = '₹0.00';
+                return;
+            }
+            let total = parts.reduce((s, p) => s + p.price * qm, 0);
+            const discounted = total * 0.9;
+            let service = discounted * 0.15;
+            if (offer) service *= 0.5;
+            const diagnosis = 250;
+            const final = discounted + service + diagnosis;
+
+            container.innerHTML = parts.map(p => `<div style="display:flex;justify-content:space-between;font-size:13px;padding:2px 0;border-bottom:1px solid #eee;"><span>${p.name}</span><span>₹${(p.price * qm).toFixed(0)}</span></div>`).join('');
+            document.getElementById('partsTotalDisplay').textContent = '₹' + discounted.toFixed(0);
+            document.getElementById('serviceFeeDisplay').textContent = '₹' + service.toFixed(0);
+            document.getElementById('totalPriceDisplay').textContent = '₹' + final.toFixed(0);
+        }
+
+        document.getElementById('qualitySelect').onchange = updatePartsSurvey;
+        document.getElementById('offerToggle').onchange = updatePartsSurvey;
+
+        // ─── Create Order ───
+        window.createOrder = async function() {
+            if (!currentUser) { showToast('Please login first.'); showLogin(); return; }
+            const brand = document.getElementById('brandSelect').value;
+            const model = document.getElementById('modelSelect').value;
+            const repair = document.getElementById('repairTypeSelect').value;
+            if (!brand || !model || !repair) return showToast('Select brand, model & repair.');
+
+            const parts = allParts.filter(p => p.device_id === model && p.repair_type_id === repair);
+            const qm = document.getElementById('qualitySelect').value === 'premium' ? 1 : 0.7;
+            let total = parts.reduce((s, p) => s + p.price * qm, 0);
+            const discounted = total * 0.9;
+            let service = discounted * 0.15;
+            if (document.getElementById('offerToggle').checked) service *= 0.5;
+            const diagnosis = 250;
+            const final = discounted + service + diagnosis;
+
+            const order = {
+                order_number: 'RM-' + Date.now().toString(36).toUpperCase(),
+                user_id: currentUser.id,
+                customer_name: currentUser.user_metadata?.full_name || 'User',
+                customer_phone: currentUser.user_metadata?.phone || '',
+                device_id: model,
+                repair_type_id: repair,
+                parts_total: discounted,
+                service_fee: service,
+                diagnosis_charge: diagnosis,
+                total_price: final,
+                status: 'Pending',
+                created_at: new Date().toISOString()
+            };
+            const { error } = await supabase.from('orders').insert(order);
+            if (error) return showToast('Booking failed: ' + error.message);
+            showToast('✅ Order created!');
             await loadDashboard();
-        } else {
-            document.getElementById('loginScreen').classList.remove('hidden');
-            document.getElementById('dashboard').classList.remove('active');
+        };
+
+        // ─── Load Dashboard ───
+        async function loadDashboard() {
+            document.getElementById('publicHome').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                document.getElementById('publicHome').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+                return;
+            }
+            currentUser = user;
+            const name = user.user_metadata?.full_name || user.email;
+            document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+            document.getElementById('userRole').textContent = 'Customer';
+
+            const { data: orders, error } = await supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+            if (error) console.warn('Orders error:', error);
+            allOrders = orders || [];
+
+            const total = allOrders.length;
+            const pending = allOrders.filter(o => o.status === 'Pending').length;
+            const active = allOrders.filter(o => ['Technician Assigned','Pickup-Pending','With-RepairMaster','Quotation-Sent','Confirmed'].includes(o.status)).length;
+            const completed = allOrders.filter(o => o.status === 'Completed').length;
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statPending').textContent = pending;
+            document.getElementById('statActive').textContent = active;
+            document.getElementById('statCompleted').textContent = completed;
+
+            renderOrders(allOrders);
         }
-    });
+
+        function renderOrders(orders) {
+            const container = document.getElementById('dashboardContent');
+            if (!orders || orders.length === 0) { container.innerHTML = '<div style="text-align:center;color:#6b7a8a;padding:20px;">No orders yet.</div>'; return; }
+            container.innerHTML = orders.map(o => `
+                <div class="order-card">
+                    <div class="top">
+                        <span class="device">${getDeviceName(o.device_id)}</span>
+                        <span class="status ${o.status}">${o.status}</span>
+                    </div>
+                    <div class="meta">${getRepairLabel(o.repair_type_id)} • ₹${(o.total_price || 0).toFixed(0)}</div>
+                    <div class="meta">${new Date(o.created_at).toLocaleDateString()}</div>
+                    <div class="actions">
+                        ${o.status === 'Quotation-Sent' ? `
+                            <button class="btn-accept" onclick="confirmQuotation('${o.id}')">Accept Quote</button>
+                            <button class="btn-decline" onclick="rejectQuotation('${o.id}')">Decline</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getDeviceName(id) { const d = allDevices.find(x => x.id === id); return d ? d.name : 'Device'; }
+        function getRepairLabel(id) { const r = allRepairTypes.find(x => x.id === id); return r ? r.label : 'Repair'; }
+
+        // ─── Offers ───
+        async function fetchOffers() {
+            const { data, error } = await supabase.from('offers').select('*').eq('active', true).limit(5);
+            const container = document.getElementById('offersContainer');
+            if (error || !data || data.length === 0) {
+                container.innerHTML = '<div style="font-size:13px;color:#6b7a8a;text-align:center;">No active offers</div>';
+                return;
+            }
+            container.innerHTML = data.map(o => `
+                <div class="offer-item">
+                    <div><strong>${o.name}</strong><div style="font-size:12px;color:#6b7a8a;">${o.description || ''}</div></div>
+                    <span class="discount">${o.discount_percent || 0}% OFF</span>
+                </div>
+            `).join('');
+        }
+
+        // ─── Quotation Actions ───
+        window.confirmQuotation = async function(orderId) {
+            const { error } = await supabase.from('orders').update({ status: 'Confirmed' }).eq('id', orderId);
+            if (error) showToast('Error: ' + error.message); else { showToast('✅ Quotation accepted!'); loadDashboard(); }
+        };
+        window.rejectQuotation = async function(orderId) {
+            const { error } = await supabase.from('orders').update({ status: 'Rejected' }).eq('id', orderId);
+            if (error) showToast('Error: ' + error.message); else { showToast('❌ Quotation declined.'); loadDashboard(); }
+        };
+
+        // ─── Profile ───
+        window.toggleProfile = function() {
+            const sec = document.getElementById('profileSection');
+            sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
+            if (sec.style.display === 'block' && currentUser) {
+                supabase.from('users').select('name,phone,address').eq('id', currentUser.id).single()
+                    .then(({ data }) => {
+                        if (data) {
+                            document.getElementById('profileName').value = data.name || '';
+                            document.getElementById('profilePhone').value = data.phone || '';
+                            document.getElementById('profileAddress').value = data.address || '';
+                        }
+                    });
+            }
+        };
+
+        window.updateProfile = async function() {
+            if (!currentUser) return showToast('Not logged in.');
+            const name = document.getElementById('profileName').value;
+            const phone = document.getElementById('profilePhone').value;
+            const address = document.getElementById('profileAddress').value;
+            const city = document.getElementById('profileCity').value;
+            const { error } = await supabase.from('users').update({ name, phone, address: address + ', ' + city }).eq('id', currentUser.id);
+            if (error) showToast('Update failed: ' + error.message); else showToast('✅ Profile updated!');
+        };
+
+        // ─── Logout ───
+        window.logoutUser = async function() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            document.getElementById('publicHome').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+            showToast('Logged out');
+        };
+
+        // ─── Guest Tracking ───
+        window.trackOrderGuest = async function(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('trackOrderId').value.trim();
+            const phone = document.getElementById('trackPhone').value.trim();
+            const container = document.getElementById('guestTrackResult');
+            container.innerHTML = '<div style="text-align:center;font-size:13px;color:#6b7a8a;">Searching...</div>';
+            const { data, error } = await supabase.from('orders').select('*').eq('order_number', orderId);
+            if (error || !data || data.length === 0) { container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Order not found.</div>'; return; }
+            const o = data[0];
+            const dbPhone = (o.customer_phone || '').replace(/[^0-9]/g, '');
+            const cleanPhone = phone.replace(/[^0-9]/g, '');
+            if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) { container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Phone number mismatch.</div>'; return; }
+            container.innerHTML = `
+                <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+                    <div style="display:flex;justify-content:space-between;">
+                        <strong>${getDeviceName(o.device_id)}</strong>
+                        <span class="status ${o.status}">${o.status}</span>
+                    </div>
+                    <div style="font-size:13px;color:#6b7a8a;">${getRepairLabel(o.repair_type_id)}</div>
+                    <div style="font-size:13px;">₹${(o.total_price || 0).toFixed(0)}</div>
+                </div>
+            `;
+        };
+
+        // ─── Init ───
+        document.addEventListener('DOMContentLoaded', async function() {
+            await loadCatalog();
+            await fetchOffers();
+
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                currentUser = user;
+                await loadDashboard();
+            } else {
+                document.getElementById('publicHome').classList.remove('hidden');
+                document.getElementById('dashboard').classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html>
