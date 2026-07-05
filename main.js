@@ -13,6 +13,7 @@ let allDevices = [];
 let allRepairTypes = [];
 let allParts = [];
 let currentUser = null;
+let orderSubscription = null;
 let currentRoles = [];
 
 // ─── TOAST NOTIFICATION ENGINE ───
@@ -2096,6 +2097,7 @@ async function updateNavForAuth(user) {
                     </button>
                 </div>
             `;
+            subscribeToOrderUpdates();
         }
 
         // Setup dynamic profile sidebar drawer container
@@ -2258,6 +2260,7 @@ async function updateNavForAuth(user) {
 
         let drawer = document.getElementById('profileSidebarDrawer');
         if (drawer) drawer.classList.add('hidden');
+        unsubscribeFromOrderUpdates();
     }
 }
 
@@ -2778,6 +2781,48 @@ async function submitOrderReview(orderId, rating, reviewText) {
         }
     } catch (err) {
         showToast('Failed to save review: ' + err.message, 'error');
+    }
+}
+// ─── SUPABASE REALTIME SUBSCRIPTION ───
+function subscribeToOrderUpdates() {
+    if (!supabase || !currentUser) return;
+
+    // Prevent duplicate subscriptions
+    if (orderSubscription) {
+        console.log('Already subscribed to order updates.');
+        return;
+    }
+
+    orderSubscription = supabase
+        .channel('order-updates')
+        .on(
+            'postgres_changes',
+            {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'orders'
+                // Optional: filter by user_id for customers
+                // filter: `user_id=eq.${currentUser.id}`
+            },
+            (payload) => {
+                const newStatus = payload.new.status || 'updated';
+                const orderNumber = payload.new.order_number || 'Order';
+                showToast(`🔔 ${orderNumber} status: ${newStatus}`, 'info');
+                if (typeof loadDashboard === 'function') {
+                    loadDashboard();
+                }
+            }
+        )
+        .subscribe((status) => {
+            console.log('Realtime subscription status:', status);
+        });
+}
+
+function unsubscribeFromOrderUpdates() {
+    if (orderSubscription) {
+        supabase.removeChannel(orderSubscription);
+        orderSubscription = null;
+        console.log('Unsubscribed from order updates.');
     }
 }
 
