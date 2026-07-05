@@ -1078,7 +1078,7 @@ async function openQuotationEditor(orderId) {
             .single();
         if (error) throw error;
 
-        // Parse additional parts from custom_quote_parts (format: "PartName,Price\nPartName2,Price2")
+        // Parse additional parts from custom_quote_parts
         let additionalParts = [];
         if (order.custom_quote_parts) {
             additionalParts = order.custom_quote_parts.split('\n')
@@ -1090,13 +1090,14 @@ async function openQuotationEditor(orderId) {
         }
 
         const deviceName = getDeviceName(order.device_id) || order.device_other || 'Device';
+        const repairLabel = order.repair_type_id ? getRepairLabel(order.repair_type_id) : order.repair_other || 'Repair';
         const partsTotal = order.parts_total || 0;
         const serviceFee = order.service_fee || 0;
         const diagnosisCharge = order.diagnosis_charge || 250;
         const additionalTotal = additionalParts.reduce((sum, p) => sum + p.price, 0);
         let totalQuoted = partsTotal + serviceFee + diagnosisCharge + additionalTotal;
 
-        // Build modal
+        // Build modal with editable fields
         const modal = document.createElement('div');
         modal.id = 'quotationEditorModal';
         modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto';
@@ -1107,14 +1108,23 @@ async function openQuotationEditor(orderId) {
                     <button onclick="document.getElementById('quotationEditorModal').remove()" class="text-gray-400 hover:text-white text-xl">✕</button>
                 </div>
                 <div class="text-sm text-gray-300 mb-4">
-                    <span class="font-bold">${deviceName}</span> — ${order.repair_type_id ? getRepairLabel(order.repair_type_id) : order.repair_other || 'Repair'}
+                    <span class="font-bold">${deviceName}</span> — ${repairLabel}
                 </div>
 
-                <!-- Static breakdown -->
-                <div class="bg-navyBG/40 rounded-xl p-4 mb-4 space-y-2 text-sm">
-                    <div class="flex justify-between"><span>Parts Total (INR)</span><span class="font-bold text-teal-400">₹${partsTotal.toFixed(2)}</span></div>
-                    <div class="flex justify-between"><span>Service/Workmanship</span><span class="font-bold text-teal-400">₹${serviceFee.toFixed(2)}</span></div>
-                    <div class="flex justify-between"><span>Diagnosis Charge (INR)</span><span class="font-bold text-teal-400">₹${diagnosisCharge.toFixed(2)}</span></div>
+                <!-- Editable base breakdown -->
+                <div class="bg-navyBG/40 rounded-xl p-4 mb-4 space-y-3 text-sm">
+                    <div class="flex items-center gap-3">
+                        <label class="w-48 text-gray-300">Parts Total (INR)</label>
+                        <input type="number" id="editPartsTotal" value="${partsTotal.toFixed(2)}" step="0.01" min="0" class="flex-1 bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" />
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="w-48 text-gray-300">Service/Workmanship (INR)</label>
+                        <input type="number" id="editServiceFee" value="${serviceFee.toFixed(2)}" step="0.01" min="0" class="flex-1 bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" />
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <label class="w-48 text-gray-300">Diagnosis Charge (INR)</label>
+                        <input type="number" id="editDiagnosis" value="${diagnosisCharge.toFixed(2)}" step="0.01" min="0" class="flex-1 bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" />
+                    </div>
                 </div>
 
                 <!-- Additional Parts (editable) -->
@@ -1138,7 +1148,7 @@ async function openQuotationEditor(orderId) {
                     <p class="text-[10px] text-gray-500 mt-1">Add each part individually. They will appear in the list above.</p>
                 </div>
 
-                <!-- Total -->
+                <!-- Total (auto-calculated) -->
                 <div class="bg-teal-500/10 border border-teal-500/30 rounded-xl p-4 mb-4">
                     <div class="flex justify-between text-lg font-bold">
                         <span>Total Quoted Price</span>
@@ -1158,10 +1168,14 @@ async function openQuotationEditor(orderId) {
         // Store additional parts globally for this modal instance
         window._quotationParts = additionalParts;
 
-        // Set up live total update on input changes
-        document.querySelectorAll('.part-price-input, .part-name-input').forEach(el => {
+        // Set up live total update on any change
+        const inputs = modal.querySelectorAll('input');
+        inputs.forEach(el => {
             el.addEventListener('input', updateQuotationTotal);
         });
+
+        // Initial total update
+        updateQuotationTotal();
 
     } catch (err) {
         showToast('Failed to load quotation: ' + err.message, 'error');
