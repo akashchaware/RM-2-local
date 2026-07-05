@@ -836,7 +836,7 @@ async function assignOrderRoles(orderId) {
                 user_id: ur.user_id,
                 role_id: ur.role_id,
                 displayName: displayName,
-                roleName: ur.role_id === 3 ? 'technician' : 'repairmaster'
+                roleName: ur.role_id === 3 ? 'repairmaster' : 'technician'
             };
         });
 
