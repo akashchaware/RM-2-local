@@ -183,7 +183,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         if (isAdmin || isCoordinator) {
             if (status === 'Pending') {
                 actions += `
-                    <button onclick="assignOrderRoles('${o.id}', prompt('Technician user ID:'), prompt('RepairMaster user ID:'))" class="action-btn btn-assign">Assign Staff</button>
+                    <button onclick="showAssignForm('${o.id}')" class="action-btn btn-assign">Assign Staff</button>
                 `;
             }
             if (isCoordinator) {
@@ -196,12 +196,12 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
             }
             if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
                 actions += `
-                    <button onclick="sendQuotation('${o.id}')" class="action-btn btn-quote">Manage Price</button>
+                    <button onclick="showQuotationForm('${o.id}', ${o.total_price || 0}, '${(o.custom_quote_parts || '').replace(/'/g, "\\'")}')" class="action-btn btn-quote">Manage Price</button>
                 `;
             }
             if (status === 'Ready-For-Delivery') {
                 actions += `
-                    <button onclick="assignDeliveryTechnician('${o.id}', prompt('Available Delivery Tech User ID:'))" class="action-btn btn-assign">Assign Delivery Tech</button>
+                    <button onclick="showAssignDeliveryForm('${o.id}')" class="action-btn btn-assign">Assign Delivery Tech</button>
                 `;
             }
         }
@@ -229,8 +229,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
             if (status === 'With-RepairMaster') {
                 actions += `
-                    <button onclick="updateDiagnosis('${o.id}', prompt('Diagnosis notes:'))" class="action-btn btn-diagnose">Diagnose Logs</button>
-                    <button onclick="requestAdditionalParts('${o.id}', prompt('Part Name:'), parseFloat(prompt('Price:')))" class="action-btn btn-part">+ Add Part</button>
+                    <button onclick="showDiagnosisForm('${o.id}')" class="action-btn btn-diagnose">Diagnose Logs</button>
+                    <button onclick="showAddPartForm('${o.id}')" class="action-btn btn-part">+ Add Part</button>
                 `;
             } else if (status === 'Confirmed') {
                 actions += `
@@ -403,10 +403,11 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     ${quotationHtml}
                     ${otpNoticeHtml}
                     ${workflowHtml}
+                    <div id="inline-form-container-${o.id}"></div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
                     <span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>
-                    <div class="flex flex-wrap gap-1 justify-end">${actions}</div>
+                    <div id="actions-${o.id}" class="flex flex-wrap gap-1 justify-end">${actions}</div>
                 </div>
             </div>
         </div>
@@ -806,6 +807,425 @@ async function createOrder() {
     }
 }
 
+window.allTechnicians = [];
+window.allRepairMasters = [];
+window.editingQuotationParts = {};
+window.editingQuotationBasePrice = {};
+
+const fallbackTechs = [
+    { id: "tech-wardha-1", name: "Rahul Sharma (Wardha - Field Tech)" },
+    { id: "tech-nagpur-1", name: "Amit Patel (Nagpur - Field Tech)" },
+    { id: "tech-arvi-1", name: "Sanjay Deshmukh (Arvi - Field Tech)" }
+];
+const fallbackMasters = [
+    { id: "master-lab-1", name: "Vikram Malhotra (Senior Lab Master)" },
+    { id: "master-lab-2", name: "Karan Johar (Micro-soldering Expert)" }
+];
+
+async function loadStaffLists() {
+    if (!supabase) {
+        window.allTechnicians = fallbackTechs;
+        window.allRepairMasters = fallbackMasters;
+        return;
+    }
+    try {
+        const { data: userRoles, error: rErr } = await supabase
+            .from('user_roles')
+            .select('user_id, role_id, roles(name)');
+        
+        const { data: users, error: uErr } = await supabase
+            .from('users')
+            .select('id, name, email');
+            
+        if (!rErr && !uErr && userRoles && users) {
+            const techs = [];
+            const masters = [];
+            userRoles.forEach(ur => {
+                const roleName = ur.roles?.name?.toLowerCase() || '';
+                const roleId = parseInt(ur.role_id);
+                const user = users.find(u => u.id === ur.user_id);
+                if (user) {
+                    const displayName = user.name ? `${user.name} (${user.email})` : user.email;
+                    const staffObj = { id: user.id, name: displayName, email: user.email };
+                    if (roleName === 'technician' || roleId === 3) {
+                        techs.push(staffObj);
+                    } else if (roleName === 'repairmaster' || roleId === 4) {
+                        masters.push(staffObj);
+                    }
+                }
+            });
+            
+            // Combine with some fallbacks to guarantee non-empty lists in sandbox/demo
+            window.allTechnicians = techs.length > 0 ? techs : fallbackTechs;
+            window.allRepairMasters = masters.length > 0 ? masters : fallbackMasters;
+        } else {
+            window.allTechnicians = fallbackTechs;
+            window.allRepairMasters = fallbackMasters;
+        }
+    } catch (e) {
+        console.warn("loadStaffLists error", e);
+        window.allTechnicians = fallbackTechs;
+        window.allRepairMasters = fallbackMasters;
+    }
+}
+
+function showAssignForm(orderId) {
+    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
+    if (!inlineContainer) return;
+    
+    const techs = window.allTechnicians || [];
+    const masters = window.allRepairMasters || [];
+    
+    let techOptions = `<option value="">-- Select Technician --</option>`;
+    techs.forEach(t => {
+        techOptions += `<option value="${t.id}">${t.name}</option>`;
+    });
+    
+    let masterOptions = `<option value="">-- Select RepairMaster --</option>`;
+    masters.forEach(m => {
+        masterOptions += `<option value="${m.id}">${m.name}</option>`;
+    });
+    
+    inlineContainer.innerHTML = `
+        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 mt-3 w-full text-left">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-user-plus mr-1"></i> Assign Field Staff</span>
+                <span class="text-[9px] text-gray-500">Manual Routing</span>
+            </div>
+            <div>
+                <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Field Pickup Technician</label>
+                <select id="assign-tech-${orderId}" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
+                    ${techOptions}
+                </select>
+            </div>
+            <div>
+                <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Bench RepairMaster</label>
+                <select id="assign-master-${orderId}" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
+                    ${masterOptions}
+                </select>
+            </div>
+            <div class="flex gap-2 justify-end pt-1">
+                <button onclick="loadDashboard()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitAssignRoles('${orderId}')" class="px-3 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Confirm Staff</button>
+            </div>
+        </div>
+    `;
+}
+
+async function submitAssignRoles(orderId) {
+    const techSelect = document.getElementById(`assign-tech-${orderId}`);
+    const masterSelect = document.getElementById(`assign-master-${orderId}`);
+    if (!techSelect || !masterSelect) return;
+    
+    const techId = techSelect.value;
+    const masterId = masterSelect.value;
+    
+    if (!techId || !masterId) {
+        showToast('Please select both a Technician and a RepairMaster.', 'error');
+        return;
+    }
+    
+    await assignOrderRoles(orderId, techId, masterId);
+}
+
+function showAssignDeliveryForm(orderId) {
+    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
+    if (!inlineContainer) return;
+    
+    const techs = window.allTechnicians || [];
+    
+    let techOptions = `<option value="">-- Select Delivery Tech --</option>`;
+    techs.forEach(t => {
+        techOptions += `<option value="${t.id}">${t.name}</option>`;
+    });
+    
+    inlineContainer.innerHTML = `
+        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 mt-3 w-full text-left">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-truck mr-1"></i> Assign Delivery Staff</span>
+                <span class="text-[9px] text-gray-500">Delivery Logistics</span>
+            </div>
+            <div>
+                <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Delivery Technician</label>
+                <select id="assign-delivery-tech-${orderId}" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
+                    ${techOptions}
+                </select>
+            </div>
+            <div class="flex gap-2 justify-end pt-1">
+                <button onclick="loadDashboard()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitAssignDelivery('${orderId}')" class="px-3 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Confirm Tech</button>
+            </div>
+        </div>
+    `;
+}
+
+async function submitAssignDelivery(orderId) {
+    const techSelect = document.getElementById(`assign-delivery-tech-${orderId}`);
+    if (!techSelect) return;
+    
+    const techId = techSelect.value;
+    
+    if (!techId) {
+        showToast('Please select a Delivery Technician.', 'error');
+        return;
+    }
+    
+    await assignDeliveryTechnician(orderId, techId);
+}
+
+function showDiagnosisForm(orderId) {
+    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
+    if (!inlineContainer) return;
+    
+    inlineContainer.innerHTML = `
+        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 mt-3 w-full text-left">
+            <div class="flex items-center justify-between border-b border-white/5 pb-1.5">
+                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-stethoscope mr-1"></i> Lab Diagnosis Logs</span>
+                <span class="text-[9px] text-gray-500">RepairMaster Bench</span>
+            </div>
+            <div>
+                <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Diagnosis Notes &amp; Test Results</label>
+                <textarea id="diag-notes-${orderId}" rows="3" placeholder="Describe hardware test results, motherboard diagnostics, or microscopic inspection notes..." class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none resize-none focus:border-teal"></textarea>
+            </div>
+            <div class="flex gap-2 justify-end pt-1">
+                <button onclick="loadDashboard()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitDiagnosis('${orderId}')" class="px-3 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Save Logs</button>
+            </div>
+        </div>
+    `;
+}
+
+async function submitDiagnosis(orderId) {
+    const notesInput = document.getElementById(`diag-notes-${orderId}`);
+    if (!notesInput) return;
+    
+    const notes = notesInput.value.trim();
+    if (!notes) {
+        showToast('Please enter diagnosis notes.', 'error');
+        return;
+    }
+    
+    await updateDiagnosis(orderId, notes);
+}
+
+function showAddPartForm(orderId) {
+    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
+    if (!inlineContainer) return;
+    
+    inlineContainer.innerHTML = `
+        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 mt-3 w-full text-left">
+            <div class="flex items-center justify-between border-b border-white/5 pb-1.5">
+                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-puzzle-piece mr-1"></i> Request Additional Part</span>
+                <span class="text-[9px] text-gray-500">Bench Lab Extra</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Part / Service Name</label>
+                    <input type="text" id="add-part-name-${orderId}" placeholder="e.g. Back Glass panel" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal" />
+                </div>
+                <div>
+                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Estimated Cost (₹)</label>
+                    <input type="number" id="add-part-price-${orderId}" placeholder="e.g. 1500" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal" />
+                </div>
+            </div>
+            <div class="flex gap-2 justify-end pt-1">
+                <button onclick="loadDashboard()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitAddPart('${orderId}')" class="px-3 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Submit Request</button>
+            </div>
+        </div>
+    `;
+}
+
+async function submitAddPart(orderId) {
+    const nameInput = document.getElementById(`add-part-name-${orderId}`);
+    const priceInput = document.getElementById(`add-part-price-${orderId}`);
+    if (!nameInput || !priceInput) return;
+    
+    const partName = nameInput.value.trim();
+    const price = parseFloat(priceInput.value) || 0;
+    
+    if (!partName) {
+        showToast('Please enter a part name.', 'error');
+        return;
+    }
+    
+    await requestAdditionalParts(orderId, partName, price);
+}
+
+function parseCustomQuoteParts(customPartsStr) {
+    if (!customPartsStr) return [];
+    return customPartsStr.split('\n').map(line => {
+        const idx = line.lastIndexOf(',');
+        if (idx === -1) return { name: line.trim(), price: 0 };
+        const name = line.substring(0, idx).trim();
+        const price = parseFloat(line.substring(idx + 1)) || 0;
+        return { name, price };
+    }).filter(p => p.name);
+}
+
+function serializeCustomQuoteParts(partsList) {
+    return partsList.map(p => `${p.name},${p.price}`).join('\n');
+}
+
+function showQuotationForm(orderId, basePrice, customPartsStr) {
+    // Parse custom parts
+    const partsList = parseCustomQuoteParts(customPartsStr);
+    
+    // Store in global window for active editing
+    window.editingQuotationParts[orderId] = partsList;
+    window.editingQuotationBasePrice[orderId] = parseFloat(basePrice) || 0;
+    
+    renderQuotationFormInlineEditable(orderId);
+}
+
+function renderQuotationFormInlineEditable(orderId) {
+    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
+    if (!inlineContainer) return;
+    
+    const partsList = window.editingQuotationParts[orderId] || [];
+    const basePrice = window.editingQuotationBasePrice[orderId] || 0;
+    
+    const partsSum = partsList.reduce((sum, p) => sum + p.price, 0);
+    const liveTotal = basePrice + partsSum;
+    
+    let partsHtml = '';
+    if (partsList.length === 0) {
+        partsHtml = `<p class="text-xs text-gray-500 italic py-2">No additional spare components requested yet.</p>`;
+    } else {
+        partsList.forEach((p, index) => {
+            partsHtml += `
+                <div class="flex items-center gap-2 bg-slate-900/60 p-2 rounded-lg border border-white/5">
+                    <input type="text" value="${p.name}" oninput="updateQuotationPartName('${orderId}', ${index}, this.value)" class="flex-1 bg-slate-950 border border-white/10 rounded px-2 py-1 text-xs text-white outline-none focus:border-teal" placeholder="Component Name" />
+                    <div class="flex items-center gap-1 w-24">
+                        <span class="text-xs text-gray-500">₹</span>
+                        <input type="number" value="${p.price}" oninput="updateQuotationPartPrice('${orderId}', ${index}, this.value)" class="w-full bg-slate-950 border border-white/10 rounded px-1.5 py-1 text-xs text-teal font-bold text-right outline-none focus:border-teal" />
+                    </div>
+                    <button onclick="removeQuotationPartEditable('${orderId}', ${index})" class="text-red-400 hover:text-red-300 text-xs px-1.5 py-1" title="Remove Component">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </div>
+            `;
+        });
+    }
+    
+    inlineContainer.innerHTML = `
+        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-4 mt-3 w-full text-left">
+            <div class="flex items-center justify-between border-b border-white/5 pb-2">
+                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-file-invoice-dollar mr-1"></i> Finalize Customer Quotation</span>
+                <span class="text-[9px] text-gray-500 font-medium">Coordinator Desk</span>
+            </div>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Base Service &amp; Labor Fee</label>
+                    <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg p-2 focus-within:border-teal transition">
+                        <span class="text-xs text-gray-500 mr-1.5">₹</span>
+                        <input type="number" id="quote-base-price-${orderId}" value="${basePrice}" oninput="updateQuotationBasePriceEditable('${orderId}', this.value)" class="w-full bg-transparent border-none text-white text-xs font-bold outline-none" />
+                    </div>
+                </div>
+                
+                <div class="flex flex-col justify-end">
+                    <button onclick="addNewQuotationPartPromptEditable('${orderId}')" class="btn-outline py-2 px-3 text-xs w-full text-center flex items-center justify-center gap-1 hover:border-teal/50 hover:text-teal">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Add Spare Component
+                    </button>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <label class="block text-[10px] text-gray-400 uppercase font-semibold">Spare Parts &amp; Consumables Breakdown</label>
+                <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                    ${partsHtml}
+                </div>
+            </div>
+            
+            <div class="flex items-center justify-between bg-teal-500/5 border border-teal-500/10 p-3 rounded-lg">
+                <div class="text-xs font-semibold text-gray-300">Finalized Customer Quote Total:</div>
+                <div class="text-sm font-black text-emerald-400">₹${liveTotal.toLocaleString('en-IN')}</div>
+            </div>
+            
+            <div class="flex gap-2 justify-end">
+                <button onclick="cancelQuotationEdit('${orderId}')" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitFinalizedQuotation('${orderId}')" class="px-4 py-1.5 rounded bg-teal text-slate-950 text-xs font-black hover:bg-tealAccent transition shadow-md flex items-center gap-1">
+                    <i class="fa-solid fa-paper-plane text-[10px]"></i> Send Quotation
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function updateQuotationPartPrice(orderId, index, value) {
+    const val = parseFloat(value) || 0;
+    if (window.editingQuotationParts[orderId] && window.editingQuotationParts[orderId][index]) {
+        window.editingQuotationParts[orderId][index].price = val;
+        renderQuotationFormInlineEditable(orderId);
+    }
+}
+
+function updateQuotationPartName(orderId, index, value) {
+    if (window.editingQuotationParts[orderId] && window.editingQuotationParts[orderId][index]) {
+        window.editingQuotationParts[orderId][index].name = value;
+    }
+}
+
+function updateQuotationBasePriceEditable(orderId, value) {
+    const val = parseFloat(value) || 0;
+    window.editingQuotationBasePrice[orderId] = val;
+    renderQuotationFormInlineEditable(orderId);
+}
+
+function addNewQuotationPartPromptEditable(orderId) {
+    if (window.editingQuotationParts[orderId]) {
+        window.editingQuotationParts[orderId].push({ name: "Spare Component", price: 0 });
+        renderQuotationFormInlineEditable(orderId);
+    }
+}
+
+function removeQuotationPartEditable(orderId, index) {
+    if (window.editingQuotationParts[orderId]) {
+        window.editingQuotationParts[orderId].splice(index, 1);
+        renderQuotationFormInlineEditable(orderId);
+    }
+}
+
+function cancelQuotationEdit(orderId) {
+    delete window.editingQuotationParts[orderId];
+    delete window.editingQuotationBasePrice[orderId];
+    loadDashboard();
+}
+
+async function submitFinalizedQuotation(orderId) {
+    if (!supabase) return;
+    try {
+        const partsList = window.editingQuotationParts[orderId] || [];
+        const basePrice = window.editingQuotationBasePrice[orderId] || 0;
+        
+        // Sum total
+        const partsSum = partsList.reduce((sum, p) => sum + p.price, 0);
+        const liveTotal = basePrice + partsSum;
+        
+        // Serialize parts list back
+        const customPartsStr = serializeCustomQuoteParts(partsList);
+        
+        const { error } = await supabase
+            .from('orders')
+            .update({
+                total_price: liveTotal,
+                custom_quote_parts: customPartsStr,
+                status: 'Quotation-Sent'
+            })
+            .eq('id', orderId);
+            
+        if (error) throw error;
+        
+        showToast('✉️ Finalized quotation sent to customer for review!', 'success');
+        delete window.editingQuotationParts[orderId];
+        delete window.editingQuotationBasePrice[orderId];
+        loadDashboard();
+    } catch (err) {
+        showToast('Failed to dispatch quotation: ' + err.message, 'error');
+    }
+}
+
 // ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
 async function assignOrderRoles(orderId, technicianId, repairmasterId) {
     if (!supabase) return;
@@ -882,8 +1302,7 @@ async function initiatePickup(orderId) {
             .update({ pickup_otp: otp, status: 'Pickup-Pending' })
             .eq('id', orderId);
         if (error) throw error;
-        alert(`🔒 Handover Security OTP: ${otp}\nProvide this code to the customer to authorize the safe handover.`);
-        showToast('🔒 Handover OTP generated: ' + otp, 'success');
+        showToast('🔒 Handover OTP generated securely for the customer.', 'success');
         loadDashboard();
     } catch (err) {
         showToast('Pickup generation failed: ' + err.message, 'error');
@@ -1074,6 +1493,10 @@ async function loadDashboard() {
     const isCoordinator = activeRole === 'coordinator';
     const isTechnician = activeRole === 'technician';
     const isRepairMaster = activeRole === 'repairmaster';
+
+    if (isAdmin || isCoordinator) {
+        await loadStaffLists();
+    }
 
     const roleBadge = document.getElementById('userRoleBadge');
     const roleDisplay = document.getElementById('roleDisplay');
@@ -2143,3 +2566,23 @@ window.executePayment = executePayment;
 window.closeTicket = closeTicket;
 window.trackOrderGuest = trackOrderGuest;
 window.submitOrderReview = submitOrderReview;
+
+window.showAssignForm = showAssignForm;
+window.submitAssignRoles = submitAssignRoles;
+window.showAssignDeliveryForm = showAssignDeliveryForm;
+window.submitAssignDelivery = submitAssignDelivery;
+window.showDiagnosisForm = showDiagnosisForm;
+window.submitDiagnosis = submitDiagnosis;
+window.showAddPartForm = showAddPartForm;
+window.submitAddPart = submitAddPart;
+window.showQuotationForm = showQuotationForm;
+window.updateQuotationPartPrice = updateQuotationPartPrice;
+window.updateQuotationPartName = updateQuotationPartName;
+window.updateQuotationBasePrice = updateQuotationBasePrice;
+window.updateQuotationBasePriceEditable = updateQuotationBasePriceEditable;
+window.addNewQuotationPartPrompt = addNewQuotationPartPrompt;
+window.addNewQuotationPartPromptEditable = addNewQuotationPartPromptEditable;
+window.removeQuotationPart = removeQuotationPart;
+window.removeQuotationPartEditable = removeQuotationPartEditable;
+window.cancelQuotationEdit = cancelQuotationEdit;
+window.submitFinalizedQuotation = submitFinalizedQuotation;
