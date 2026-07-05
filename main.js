@@ -976,18 +976,47 @@ async function verifyPickup(orderId, otp) {
     }
 }
 
-async function updateDiagnosis(orderId, notes) {
-    if (!notes || !supabase) return;
+async function updateDiagnosis(orderId) {
+    // Build modal with a textarea for diagnosis notes
+    const modal = document.createElement('div');
+    modal.id = 'diagnosisModal';
+    modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-slate-900 border border-grayBorder rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4">📋 Lab Diagnosis Logs</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm text-grayText">Diagnosis Notes</label>
+                    <textarea id="diagnosisNotesInput" rows="4" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" placeholder="Enter diagnosis details, observed issues, recommended repairs..."></textarea>
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="document.getElementById('diagnosisModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
+                    <button onclick="confirmDiagnosis('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Save Logs</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Global function for the modal button
+window.confirmDiagnosis = async function(orderId) {
+    const notes = document.getElementById('diagnosisNotesInput').value.trim();
+    if (!notes) {
+        showToast('Please enter diagnosis notes.', 'error');
+        return;
+    }
+    if (!supabase) return;
     try {
         const { error } = await supabase.from('orders').update({ diagnosis_notes: notes }).eq('id', orderId);
         if (error) throw error;
         showToast('📋 Lab diagnosis logs updated.', 'success');
+        document.getElementById('diagnosisModal')?.remove();
         loadDashboard();
     } catch (err) {
         showToast('Diagnosis update failed: ' + err.message, 'error');
     }
-}
-
+};
 async function requestAdditionalParts(orderId, partName, price) {
     if (!partName || isNaN(price) || !supabase) return;
     try {
