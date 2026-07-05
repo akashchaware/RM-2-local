@@ -6,7 +6,7 @@
     <title>RepairMaster – Doorstep Repair</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        /* ─── All styles (same as before) ─── */
+        /* ─── RESET & BASE ─── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #f5f7fa;
@@ -17,8 +17,9 @@
             max-width: 480px;
             margin: 0 auto;
         }
+
         .card {
-            background: #fff;
+            background: #ffffff;
             border-radius: 16px;
             padding: 16px;
             margin-bottom: 16px;
@@ -51,6 +52,20 @@
             gap: 10px;
             align-items: center;
         }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #0b7f7a;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+            border: 2px solid #0b7f7a;
+        }
         .btn-primary {
             width: 100%;
             padding: 14px;
@@ -71,6 +86,15 @@
             border: none;
             border-radius: 10px;
             font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .btn-danger {
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
         }
@@ -249,14 +273,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
-        // ─── Supabase client ───
         const SUPABASE_URL = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let allBrands = [], allDevices = [], allRepairTypes = [], allParts = [];
 
-        // ─── Toast ───
         function showToast(msg) {
             const t = document.getElementById('toast');
             t.textContent = msg;
@@ -265,7 +287,6 @@
             t._hide = setTimeout(() => t.classList.remove('show'), 3000);
         }
 
-        // ─── Login Modal ───
         function showLogin() {
             document.getElementById('loginModal').style.display = 'flex';
             document.querySelector('#loginModal .tab-row button[data-tab="login2"]').click();
@@ -278,18 +299,15 @@
             document.getElementById('loginModal').style.display = 'none';
         }
 
-        // ─── Tab switching inside modal ───
         document.querySelectorAll('#loginModal .tab-row button').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('#loginModal .tab-row button').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
-                const formId = this.dataset.tab === 'login2' ? 'loginForm2' : 'signupForm2';
                 document.getElementById('loginForm2').style.display = this.dataset.tab === 'login2' ? 'block' : 'none';
                 document.getElementById('signupForm2').style.display = this.dataset.tab === 'signup2' ? 'block' : 'none';
             });
         });
 
-        // ─── Login handler (redirect to dashboard.html) ───
         document.getElementById('loginForm2').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail2').value;
@@ -300,7 +318,6 @@
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
         });
 
-        // ─── Signup handler (redirect to dashboard after signup) ───
         document.getElementById('signupForm2').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('signupName2').value;
@@ -321,7 +338,6 @@
             await supabase.auth.signInWithOAuth({ provider: 'google' });
         };
 
-        // ─── Catalog ───
         async function loadCatalog() {
             try {
                 const [b, d, rt, p] = await Promise.all([
@@ -416,16 +432,13 @@
         document.getElementById('qualitySelect').onchange = updatePartsSurvey;
         document.getElementById('offerToggle').onchange = updatePartsSurvey;
 
-        // ─── Create Order (redirect to login if not logged in) ───
         window.createOrder = async function() {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) { showToast('Please login first.'); showLogin(); return; }
-            // If logged in, redirect to dashboard with a flag to show booking? Or just redirect.
             showToast('Please book from your dashboard.');
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
         };
 
-        // ─── Offers ───
         async function fetchOffers() {
             const { data, error } = await supabase.from('offers').select('*').eq('active', true).limit(5);
             const container = document.getElementById('offersContainer');
@@ -441,7 +454,6 @@
             `).join('');
         }
 
-        // ─── Guest Tracking ───
         window.trackOrderGuest = async function(e) {
             e.preventDefault();
             const orderId = document.getElementById('trackOrderId').value.trim();
@@ -469,12 +481,10 @@
         function getDeviceName(id) { const d = allDevices.find(x => x.id === id); return d ? d.name : 'Device'; }
         function getRepairLabel(id) { const r = allRepairTypes.find(x => x.id === id); return r ? r.label : 'Repair'; }
 
-        // ─── Init ───
         document.addEventListener('DOMContentLoaded', async function() {
             await loadCatalog();
             await fetchOffers();
 
-            // If user is already logged in, redirect to dashboard
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
                 window.location.href = 'dashboard.html';
