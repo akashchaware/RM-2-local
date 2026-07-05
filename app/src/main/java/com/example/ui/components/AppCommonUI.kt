@@ -39,12 +39,12 @@ import com.example.ui.theme.*
 @Composable
 fun RepairMasterLogo(modifier: Modifier = Modifier, sizeDp: Int = 56) {
     Image(
-        painter = painterResource(id = R.drawable.img_brand_logo_circular_1782765220741),
+        painter = painterResource(id = R.drawable.img_maintenance_mode_1782766826537),
         contentDescription = "RepairMaster Brand Logo",
         modifier = modifier
             .size(sizeDp.dp)
-            .clip(CircleShape)
-            .border(2.dp, TealPrimary, CircleShape),
+            .clip(RoundedCornerShape(12.dp))
+            .border(1.5.dp, TealPrimary, RoundedCornerShape(12.dp)),
         contentScale = ContentScale.Crop
     )
 }

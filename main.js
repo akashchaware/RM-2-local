@@ -2047,6 +2047,11 @@ async function updateNavForAuth(user) {
                     </div>
                     <span class="text-sm text-gray-300 font-bold hover:text-teal transition" id="navUserName">${username}</span>
                 </div>
+
+                <!-- Direct Logout Option on Desktop Navigation -->
+                <button onclick="logoutUser()" class="text-xs bg-red-500/10 hover:bg-red-500/20 text-red-400 hover:text-red-300 border border-red-500/20 px-3 py-1.5 rounded-lg transition font-bold flex items-center gap-1" title="Log Out Account">
+                    <i class="fa-solid fa-power-off text-[10px]"></i> Log Out
+                </button>
             `;
         }
 
@@ -2057,8 +2062,11 @@ async function updateNavForAuth(user) {
             mNavUserInfo.classList.remove('hidden');
             mNavUserInfo.innerHTML = `
                 <div class="mt-2 flex flex-col gap-2 items-center justify-center">
-                    <button onclick="toggleProfileDrawer()" class="bg-slate-900 border border-slate-800 py-2 px-4 rounded-xl text-xs text-white font-bold">
+                    <button onclick="toggleProfileDrawer()" class="w-full bg-slate-900 border border-slate-800 py-2.5 px-4 rounded-xl text-xs text-white font-bold flex items-center justify-center gap-1.5">
                         👤 View &amp; Edit Profile
+                    </button>
+                    <button onclick="logoutUser(); toggleMobileMenu();" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+                        <i class="fa-solid fa-power-off"></i> Log Out Account
                     </button>
                 </div>
             `;
