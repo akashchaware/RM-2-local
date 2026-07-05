@@ -1017,21 +1017,55 @@ window.confirmDiagnosis = async function(orderId) {
         showToast('Diagnosis update failed: ' + err.message, 'error');
     }
 };
-async function requestAdditionalParts(orderId, partName, price) {
-    if (!partName || isNaN(price) || !supabase) return;
+async function requestAdditionalParts(orderId) {
+    // Build modal with inputs for part name and price
+    const modal = document.createElement('div');
+    modal.id = 'partModal';
+    modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-slate-900 border border-grayBorder rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <h3 class="text-xl font-bold text-white mb-4">🔧 Request Additional Part</h3>
+            <div class="space-y-4">
+                <div>
+                    <label class="text-sm text-grayText">Part Name</label>
+                    <input type="text" id="partNameInput" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" placeholder="e.g. Battery, Screen, Charging Port..." />
+                </div>
+                <div>
+                    <label class="text-sm text-grayText">Price (INR)</label>
+                    <input type="number" id="partPriceInput" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" placeholder="Enter amount" min="0" step="1" />
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button onclick="document.getElementById('partModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
+                    <button onclick="confirmPart('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Add Part</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Global function for the modal button
+window.confirmPart = async function(orderId) {
+    const partName = document.getElementById('partNameInput').value.trim();
+    const price = parseFloat(document.getElementById('partPriceInput').value);
+    if (!partName || isNaN(price) || price <= 0) {
+        showToast('Please enter a valid part name and price.', 'error');
+        return;
+    }
+    if (!supabase) return;
     try {
-        // Typically updates orders.custom_quote_parts
         const { data: ticket } = await supabase.from('orders').select('custom_quote_parts').eq('id', orderId).single();
         let existing = ticket.custom_quote_parts ? ticket.custom_quote_parts + '\n' : '';
         existing += `${partName},${price}`;
         const { error } = await supabase.from('orders').update({ custom_quote_parts: existing }).eq('id', orderId);
         if (error) throw error;
-        showToast('Spare request dispatched to distributor.', 'success');
+        showToast(`✅ Part "${partName}" added successfully.`, 'success');
+        document.getElementById('partModal')?.remove();
         loadDashboard();
     } catch (err) {
         showToast('Request failed: ' + err.message, 'error');
     }
-}
+};
 
 async function sendQuotation(orderId) {
     if (!supabase) return;
