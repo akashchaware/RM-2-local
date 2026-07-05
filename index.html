@@ -6,6 +6,7 @@
     <title>RepairMaster – Doorstep Repair</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
+        /* ─── All styles (same as before) ─── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #f5f7fa;
@@ -50,20 +51,6 @@
             gap: 10px;
             align-items: center;
         }
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #0b7f7a;
-            color: #fff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            border: 2px solid #0b7f7a;
-        }
         .btn-primary {
             width: 100%;
             padding: 14px;
@@ -84,15 +71,6 @@
             border: none;
             border-radius: 10px;
             font-size: 15px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn-danger {
-            background: #e74c3c;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
         }
@@ -120,7 +98,6 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         .hidden { display: none !important; }
-        /* Public Home */
         .hero {
             background: linear-gradient(135deg, #0b7f7a, #0a6b66);
             color: #fff;
@@ -129,225 +106,50 @@
             text-align: center;
             margin-bottom: 20px;
         }
-        .hero h1 {
-            font-size: 28px;
-            font-weight: 800;
-            margin-bottom: 8px;
-        }
-        .hero p {
-            font-size: 15px;
-            opacity: 0.9;
-            margin-bottom: 16px;
-        }
-        .hero .btn-teal {
-            background: #fff;
-            color: #0b7f7a;
-            padding: 10px 24px;
-            border-radius: 40px;
-            font-weight: 700;
-            border: none;
-            cursor: pointer;
-        }
+        .hero h1 { font-size: 28px; font-weight: 800; margin-bottom: 8px; }
+        .hero p { font-size: 15px; opacity: 0.9; margin-bottom: 16px; }
+        .hero .btn-teal { background: #fff; color: #0b7f7a; padding: 10px 24px; border-radius: 40px; font-weight: 700; border: none; cursor: pointer; }
         .city-notice {
-            background: #fff3cd;
-            color: #856404;
-            padding: 8px 14px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 500;
-            display: inline-block;
-            margin-bottom: 12px;
+            background: #fff3cd; color: #856404; padding: 8px 14px; border-radius: 30px; font-size: 13px; font-weight: 500; display: inline-block; margin-bottom: 12px;
         }
-        .badge-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            margin: 10px 0;
-        }
-        .badge {
-            background: #e8edf2;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            color: #1a2a3a;
-        }
+        .badge-row { display: flex; gap: 10px; flex-wrap: wrap; margin: 10px 0; }
+        .badge { background: #e8edf2; padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; color: #1a2a3a; }
         .estimator select, .estimator input {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #dce1e7;
-            border-radius: 10px;
-            font-size: 15px;
-            margin-bottom: 10px;
-            background: #f8fafc;
+            width: 100%; padding: 12px 14px; border: 1px solid #dce1e7; border-radius: 10px; font-size: 15px; margin-bottom: 10px; background: #f8fafc;
         }
         .estimator select:focus, .estimator input:focus {
-            outline: none;
-            border-color: #0b7f7a;
-            box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
+            outline: none; border-color: #0b7f7a; box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
         }
         .price-breakdown {
-            background: #f8fafc;
-            border-radius: 10px;
-            padding: 12px;
-            margin: 10px 0;
+            background: #f8fafc; border-radius: 10px; padding: 12px; margin: 10px 0;
         }
         .price-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 6px 0;
-            font-size: 14px;
+            display: flex; justify-content: space-between; padding: 6px 0; font-size: 14px;
         }
         .price-row.total {
-            border-top: 2px solid #dce1e7;
-            padding-top: 10px;
-            font-weight: 700;
-            font-size: 18px;
-            color: #0b7f7a;
+            border-top: 2px solid #dce1e7; padding-top: 10px; font-weight: 700; font-size: 18px; color: #0b7f7a;
         }
         .checkbox-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            color: #4a5a6a;
-            margin: 6px 0;
+            display: flex; align-items: center; gap: 8px; font-size: 14px; color: #4a5a6a; margin: 6px 0;
         }
-        .checkbox-row input {
-            width: 18px;
-            height: 18px;
-            accent-color: #0b7f7a;
-        }
+        .checkbox-row input { width: 18px; height: 18px; accent-color: #0b7f7a; }
         .offer-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            background: #f8fafc;
-            border-radius: 10px;
-            margin-bottom: 8px;
+            display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8fafc; border-radius: 10px; margin-bottom: 8px;
         }
         .offer-item strong { font-size: 14px; }
         .offer-item .discount { font-weight: 700; color: #e67e22; }
-        /* Dashboard */
-        .stats {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 16px;
-        }
-        .stat-box {
-            background: #fff;
-            border-radius: 12px;
-            padding: 14px;
-            text-align: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        }
-        .stat-box .num {
-            font-size: 28px;
-            font-weight: 800;
-            color: #0b7f7a;
-        }
-        .stat-box .label {
-            font-size: 12px;
-            color: #6b7a8a;
-            font-weight: 600;
-        }
-        .order-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border-left: 4px solid #0b7f7a;
-        }
-        .order-card .top {
-            display: flex;
-            justify-content: space-between;
-            align-items: start;
-        }
-        .order-card .device {
-            font-weight: 700;
-            font-size: 16px;
-        }
-        .order-card .status {
-            font-size: 12px;
-            font-weight: 700;
-            padding: 3px 10px;
-            border-radius: 20px;
-            background: #e8edf2;
-            color: #4a5a6a;
-        }
-        .order-card .status.Pending { background: #fef3cd; color: #856404; }
-        .order-card .status.Confirmed { background: #d4edda; color: #155724; }
-        .order-card .status.Completed { background: #cce5ff; color: #004085; }
-        .order-card .status.Rejected { background: #f8d7da; color: #721c24; }
-        .order-card .meta {
-            font-size: 13px;
-            color: #6b7a8a;
-            margin-top: 4px;
-        }
-        .order-card .actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 6px;
-            margin-top: 10px;
-        }
-        .order-card .actions button {
-            padding: 6px 14px;
-            border: none;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-        .btn-accept { background: #0b7f7a; color: #fff; }
-        .btn-decline { background: #e74c3c; color: #fff; }
-        .btn-view { background: #e8edf2; color: #1a2a3a; }
-        .profile input {
-            width: 100%;
-            padding: 12px 14px;
-            border: 1px solid #dce1e7;
-            border-radius: 10px;
-            font-size: 15px;
-            margin-bottom: 10px;
-            background: #f8fafc;
-        }
-        .profile input:focus {
-            outline: none;
-            border-color: #0b7f7a;
-            box-shadow: 0 0 0 3px rgba(11,127,122,0.15);
-        }
         .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1a2a3a;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 9999;
-            max-width: 90%;
-            text-align: center;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #1a2a3a; color: #fff; padding: 12px 24px; border-radius: 12px; font-weight: 600; font-size: 14px; opacity: 0; transition: opacity 0.3s; z-index: 9999; max-width: 90%; text-align: center;
         }
         .toast.show { opacity: 1; }
-        @media (max-width: 400px) {
-            body { padding: 10px; }
-            .stats { grid-template-columns: 1fr; }
-            .order-card .top { flex-direction: column; gap: 4px; }
-        }
+        @media (max-width: 400px) { body { padding: 10px; } }
     </style>
 </head>
 <body>
 
     <div id="toast" class="toast"></div>
 
-    <!-- ─── PUBLIC HOME (visible when not logged in) ─── -->
+    <!-- ─── PUBLIC HOME ─── -->
     <div id="publicHome">
         <div class="header">
             <div class="logo">Repair<span>Master</span></div>
@@ -357,14 +159,12 @@
             </div>
         </div>
 
-        <!-- Hero -->
         <div class="hero">
             <h1>Repair<span style="color:#fcd34d;">Master</span></h1>
             <p>Direct To Consumer – Smart, Fast &amp; Reliable Repairs</p>
             <button class="btn-teal" onclick="document.getElementById('calculator-section').scrollIntoView()">Get Estimate</button>
         </div>
 
-        <!-- City & Maintenance -->
         <div style="margin-bottom:12px;">
             <span class="city-notice"><i class="fa-solid fa-location-dot"></i> Serving Wardha – Nagpur &amp; Amravati coming soon!</span>
             <div class="badge-row">
@@ -374,7 +174,6 @@
             </div>
         </div>
 
-        <!-- Calculator -->
         <div class="card estimator" id="calculator-section">
             <div class="card-title"><i class="fa-solid fa-calculator"></i> Estimate Your Repair</div>
             <select id="brandSelect"><option value="">— Brand —</option></select>
@@ -401,13 +200,11 @@
             <p style="font-size:12px;color:#6b7a8a;margin-top:8px;text-align:center;">You'll be prompted to login before booking.</p>
         </div>
 
-        <!-- Hot Deals -->
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-fire" style="color:#e67e22;"></i> Hot Deals</div>
             <div id="offersContainer"></div>
         </div>
 
-        <!-- Guest Tracking -->
         <div class="card">
             <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Track Your Order</div>
             <form id="trackForm" onsubmit="trackOrderGuest(event)">
@@ -418,7 +215,7 @@
             <div id="guestTrackResult" style="margin-top:10px;"></div>
         </div>
 
-        <!-- Login / Signup Modal (hidden by default) -->
+        <!-- Login Modal -->
         <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999; justify-content:center; align-items:center; padding:20px;">
             <div style="background:#fff; max-width:400px; width:100%; border-radius:20px; padding:24px; max-height:90vh; overflow-y:auto;">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
@@ -450,47 +247,6 @@
         </div>
     </div>
 
-    <!-- ─── DASHBOARD (visible after login) ─── -->
-    <div id="dashboard" class="hidden">
-        <div class="header">
-            <div class="logo">Repair<span>Master</span></div>
-            <div class="header-actions">
-                <span id="userRole" style="font-size:12px;color:#0b7f7a;font-weight:600;">Customer</span>
-                <div class="user-avatar" id="userAvatar" onclick="toggleProfile()">U</div>
-            </div>
-        </div>
-
-        <div class="stats">
-            <div class="stat-box"><div class="num" id="statTotal">0</div><div class="label">Total</div></div>
-            <div class="stat-box"><div class="num" id="statPending" style="color:#f39c12;">0</div><div class="label">Pending</div></div>
-            <div class="stat-box"><div class="num" id="statActive" style="color:#3498db;">0</div><div class="label">Active</div></div>
-            <div class="stat-box"><div class="num" id="statCompleted" style="color:#27ae60;">0</div><div class="label">Completed</div></div>
-        </div>
-
-        <div class="card">
-            <div class="card-title"><i class="fa-solid fa-ticket"></i> Your Tickets</div>
-            <div id="dashboardContent">
-                <div style="text-align:center;color:#6b7a8a;padding:20px;">Loading...</div>
-            </div>
-        </div>
-
-        <div id="profileSection" style="display:none;">
-            <div class="card profile">
-                <div class="card-title"><i class="fa-regular fa-address-card"></i> Profile</div>
-                <input type="text" id="profileName" placeholder="Full Name" />
-                <input type="tel" id="profilePhone" placeholder="Phone" />
-                <input type="text" id="profileAddress" placeholder="Address" />
-                <select id="profileCity">
-                    <option value="Wardha">Wardha</option>
-                    <option value="Nagpur">Nagpur (coming soon)</option>
-                    <option value="Amravati">Amravati (coming soon)</option>
-                </select>
-                <button class="btn-primary" onclick="updateProfile()">Save Profile</button>
-                <button class="btn-danger" onclick="logoutUser()" style="margin-top:8px;width:100%;">Logout</button>
-            </div>
-        </div>
-    </div>
-
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
         // ─── Supabase client ───
@@ -498,9 +254,7 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let currentUser = null;
         let allBrands = [], allDevices = [], allRepairTypes = [], allParts = [];
-        let allOrders = [];
 
         // ─── Toast ───
         function showToast(msg) {
@@ -535,20 +289,18 @@
             });
         });
 
-        // ─── Login handler ───
+        // ─── Login handler (redirect to dashboard.html) ───
         document.getElementById('loginForm2').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail2').value;
             const password = document.getElementById('loginPassword2').value;
             const { data, error } = await supabase.auth.signInWithPassword({ email, password });
             if (error) return showToast('Login failed: ' + error.message);
-            currentUser = data.user;
-            closeLoginModal();
-            await loadDashboard();
-            showToast('Welcome!');
+            showToast('Welcome! Redirecting...');
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
         });
 
-        // ─── Signup handler ───
+        // ─── Signup handler (redirect to dashboard after signup) ───
         document.getElementById('signupForm2').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('signupName2').value;
@@ -664,98 +416,14 @@
         document.getElementById('qualitySelect').onchange = updatePartsSurvey;
         document.getElementById('offerToggle').onchange = updatePartsSurvey;
 
-        // ─── Create Order ───
+        // ─── Create Order (redirect to login if not logged in) ───
         window.createOrder = async function() {
-            if (!currentUser) { showToast('Please login first.'); showLogin(); return; }
-            const brand = document.getElementById('brandSelect').value;
-            const model = document.getElementById('modelSelect').value;
-            const repair = document.getElementById('repairTypeSelect').value;
-            if (!brand || !model || !repair) return showToast('Select brand, model & repair.');
-
-            const parts = allParts.filter(p => p.device_id === model && p.repair_type_id === repair);
-            const qm = document.getElementById('qualitySelect').value === 'premium' ? 1 : 0.7;
-            let total = parts.reduce((s, p) => s + p.price * qm, 0);
-            const discounted = total * 0.9;
-            let service = discounted * 0.15;
-            if (document.getElementById('offerToggle').checked) service *= 0.5;
-            const diagnosis = 250;
-            const final = discounted + service + diagnosis;
-
-            const order = {
-                order_number: 'RM-' + Date.now().toString(36).toUpperCase(),
-                user_id: currentUser.id,
-                customer_name: currentUser.user_metadata?.full_name || 'User',
-                customer_phone: currentUser.user_metadata?.phone || '',
-                device_id: model,
-                repair_type_id: repair,
-                parts_total: discounted,
-                service_fee: service,
-                diagnosis_charge: diagnosis,
-                total_price: final,
-                status: 'Pending',
-                created_at: new Date().toISOString()
-            };
-            const { error } = await supabase.from('orders').insert(order);
-            if (error) return showToast('Booking failed: ' + error.message);
-            showToast('✅ Order created!');
-            await loadDashboard();
-        };
-
-        // ─── Load Dashboard ───
-        async function loadDashboard() {
-            document.getElementById('publicHome').classList.add('hidden');
-            document.getElementById('dashboard').classList.remove('hidden');
-
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                document.getElementById('publicHome').classList.remove('hidden');
-                document.getElementById('dashboard').classList.add('hidden');
-                return;
-            }
-            currentUser = user;
-            const name = user.user_metadata?.full_name || user.email;
-            document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
-            document.getElementById('userRole').textContent = 'Customer';
-
-            const { data: orders, error } = await supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-            if (error) console.warn('Orders error:', error);
-            allOrders = orders || [];
-
-            const total = allOrders.length;
-            const pending = allOrders.filter(o => o.status === 'Pending').length;
-            const active = allOrders.filter(o => ['Technician Assigned','Pickup-Pending','With-RepairMaster','Quotation-Sent','Confirmed'].includes(o.status)).length;
-            const completed = allOrders.filter(o => o.status === 'Completed').length;
-            document.getElementById('statTotal').textContent = total;
-            document.getElementById('statPending').textContent = pending;
-            document.getElementById('statActive').textContent = active;
-            document.getElementById('statCompleted').textContent = completed;
-
-            renderOrders(allOrders);
-        }
-
-        function renderOrders(orders) {
-            const container = document.getElementById('dashboardContent');
-            if (!orders || orders.length === 0) { container.innerHTML = '<div style="text-align:center;color:#6b7a8a;padding:20px;">No orders yet.</div>'; return; }
-            container.innerHTML = orders.map(o => `
-                <div class="order-card">
-                    <div class="top">
-                        <span class="device">${getDeviceName(o.device_id)}</span>
-                        <span class="status ${o.status}">${o.status}</span>
-                    </div>
-                    <div class="meta">${getRepairLabel(o.repair_type_id)} • ₹${(o.total_price || 0).toFixed(0)}</div>
-                    <div class="meta">${new Date(o.created_at).toLocaleDateString()}</div>
-                    <div class="actions">
-                        ${o.status === 'Quotation-Sent' ? `
-                            <button class="btn-accept" onclick="confirmQuotation('${o.id}')">Accept Quote</button>
-                            <button class="btn-decline" onclick="rejectQuotation('${o.id}')">Decline</button>
-                        ` : ''}
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function getDeviceName(id) { const d = allDevices.find(x => x.id === id); return d ? d.name : 'Device'; }
-        function getRepairLabel(id) { const r = allRepairTypes.find(x => x.id === id); return r ? r.label : 'Repair'; }
+            if (!user) { showToast('Please login first.'); showLogin(); return; }
+            // If logged in, redirect to dashboard with a flag to show booking? Or just redirect.
+            showToast('Please book from your dashboard.');
+            setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+        };
 
         // ─── Offers ───
         async function fetchOffers() {
@@ -772,51 +440,6 @@
                 </div>
             `).join('');
         }
-
-        // ─── Quotation Actions ───
-        window.confirmQuotation = async function(orderId) {
-            const { error } = await supabase.from('orders').update({ status: 'Confirmed' }).eq('id', orderId);
-            if (error) showToast('Error: ' + error.message); else { showToast('✅ Quotation accepted!'); loadDashboard(); }
-        };
-        window.rejectQuotation = async function(orderId) {
-            const { error } = await supabase.from('orders').update({ status: 'Rejected' }).eq('id', orderId);
-            if (error) showToast('Error: ' + error.message); else { showToast('❌ Quotation declined.'); loadDashboard(); }
-        };
-
-        // ─── Profile ───
-        window.toggleProfile = function() {
-            const sec = document.getElementById('profileSection');
-            sec.style.display = sec.style.display === 'none' ? 'block' : 'none';
-            if (sec.style.display === 'block' && currentUser) {
-                supabase.from('users').select('name,phone,address').eq('id', currentUser.id).single()
-                    .then(({ data }) => {
-                        if (data) {
-                            document.getElementById('profileName').value = data.name || '';
-                            document.getElementById('profilePhone').value = data.phone || '';
-                            document.getElementById('profileAddress').value = data.address || '';
-                        }
-                    });
-            }
-        };
-
-        window.updateProfile = async function() {
-            if (!currentUser) return showToast('Not logged in.');
-            const name = document.getElementById('profileName').value;
-            const phone = document.getElementById('profilePhone').value;
-            const address = document.getElementById('profileAddress').value;
-            const city = document.getElementById('profileCity').value;
-            const { error } = await supabase.from('users').update({ name, phone, address: address + ', ' + city }).eq('id', currentUser.id);
-            if (error) showToast('Update failed: ' + error.message); else showToast('✅ Profile updated!');
-        };
-
-        // ─── Logout ───
-        window.logoutUser = async function() {
-            await supabase.auth.signOut();
-            currentUser = null;
-            document.getElementById('publicHome').classList.remove('hidden');
-            document.getElementById('dashboard').classList.add('hidden');
-            showToast('Logged out');
-        };
 
         // ─── Guest Tracking ───
         window.trackOrderGuest = async function(e) {
@@ -843,18 +466,18 @@
             `;
         };
 
+        function getDeviceName(id) { const d = allDevices.find(x => x.id === id); return d ? d.name : 'Device'; }
+        function getRepairLabel(id) { const r = allRepairTypes.find(x => x.id === id); return r ? r.label : 'Repair'; }
+
         // ─── Init ───
         document.addEventListener('DOMContentLoaded', async function() {
             await loadCatalog();
             await fetchOffers();
 
+            // If user is already logged in, redirect to dashboard
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                currentUser = user;
-                await loadDashboard();
-            } else {
-                document.getElementById('publicHome').classList.remove('hidden');
-                document.getElementById('dashboard').classList.add('hidden');
+                window.location.href = 'dashboard.html';
             }
         });
     </script>
