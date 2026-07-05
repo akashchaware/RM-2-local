@@ -242,11 +242,10 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
     if (isClient) {
         if (status === 'Quotation-Sent') {
-            actions += `
-                <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
-                <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
-            `;
-        } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
+    actions += `
+        <button onclick="viewQuotation('${o.id}')" class="action-btn btn-confirm">View Quotation</button>
+    `;
+} else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
             const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
             actions += `
                 <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
