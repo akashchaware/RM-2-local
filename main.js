@@ -1067,10 +1067,10 @@ window.confirmPart = async function(orderId) {
     }
 };
 
-async function sendQuotation(orderId) {
-    if (!supabase) return;
+async function openQuotationEditor(orderId) {
+    if (!supabase) return showToast('Supabase not connected', 'error');
     try {
-        // Fetch current order details
+        // Fetch order data
         const { data: order, error } = await supabase
             .from('orders')
             .select('*')
@@ -1078,64 +1078,208 @@ async function sendQuotation(orderId) {
             .single();
         if (error) throw error;
 
-        // Build modal with editable fields
+        // Parse additional parts from custom_quote_parts (format: "PartName,Price\nPartName2,Price2")
+        let additionalParts = [];
+        if (order.custom_quote_parts) {
+            additionalParts = order.custom_quote_parts.split('\n')
+                .filter(line => line.trim() !== '')
+                .map(line => {
+                    const [name, price] = line.split(',').map(s => s.trim());
+                    return { name, price: parseFloat(price) || 0 };
+                });
+        }
+
+        const deviceName = getDeviceName(order.device_id) || order.device_other || 'Device';
+        const partsTotal = order.parts_total || 0;
+        const serviceFee = order.service_fee || 0;
+        const diagnosisCharge = order.diagnosis_charge || 250;
+        const additionalTotal = additionalParts.reduce((sum, p) => sum + p.price, 0);
+        let totalQuoted = partsTotal + serviceFee + diagnosisCharge + additionalTotal;
+
+        // Build modal
         const modal = document.createElement('div');
-        modal.id = 'quotationModal';
-        modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+        modal.id = 'quotationEditorModal';
+        modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto';
         modal.innerHTML = `
-            <div class="bg-slate-900 border border-teal-500/30 rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
-                <h3 class="text-xl font-bold text-white mb-4">📋 Finalize Quotation</h3>
-                <div class="space-y-4">
-                    <div class="bg-slate-800/30 p-3 rounded-xl border border-slate-700/50 text-sm text-gray-300">
-                        <p><strong>Device:</strong> ${order.device_other || getDeviceName(order.device_id) || 'N/A'}</p>
-                        <p><strong>Repair:</strong> ${order.repair_other || getRepairLabel(order.repair_type_id) || 'N/A'}</p>
+            <div class="bg-slate-900 border border-grayBorder rounded-2xl p-6 max-w-2xl w-full shadow-2xl my-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-xl font-bold text-white">📋 Quotation Editor</h3>
+                    <button onclick="document.getElementById('quotationEditorModal').remove()" class="text-gray-400 hover:text-white text-xl">✕</button>
+                </div>
+                <div class="text-sm text-gray-300 mb-4">
+                    <span class="font-bold">${deviceName}</span> — ${order.repair_type_id ? getRepairLabel(order.repair_type_id) : order.repair_other || 'Repair'}
+                </div>
+
+                <!-- Static breakdown -->
+                <div class="bg-navyBG/40 rounded-xl p-4 mb-4 space-y-2 text-sm">
+                    <div class="flex justify-between"><span>Parts Total (INR)</span><span class="font-bold text-teal-400">₹${partsTotal.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span>Service/Workmanship</span><span class="font-bold text-teal-400">₹${serviceFee.toFixed(2)}</span></div>
+                    <div class="flex justify-between"><span>Diagnosis Charge (INR)</span><span class="font-bold text-teal-400">₹${diagnosisCharge.toFixed(2)}</span></div>
+                </div>
+
+                <!-- Additional Parts (editable) -->
+                <div class="mb-4">
+                    <label class="text-sm text-grayText font-bold block mb-2">Additional Parts (custom quote parts) – edit below</label>
+                    <div id="additionalPartsList" class="space-y-2 max-h-40 overflow-y-auto">
+                        ${additionalParts.length === 0 ? '<p class="text-gray-500 text-xs">No additional parts added yet.</p>' : ''}
+                        ${additionalParts.map((p, idx) => `
+                            <div class="flex items-center gap-2 bg-navyBG/30 p-2 rounded-lg border border-grayBorder/40">
+                                <input type="text" value="${p.name}" class="part-name-input flex-1 bg-transparent border-none text-white text-sm focus:outline-none" data-idx="${idx}" placeholder="Part name" />
+                                <input type="number" value="${p.price}" class="part-price-input w-24 bg-transparent border border-grayBorder/40 rounded px-2 py-1 text-white text-sm focus:border-teal-500 outline-none" data-idx="${idx}" step="0.01" min="0" />
+                                <button onclick="removeAdditionalPart(${idx})" class="text-red-400 hover:text-red-300 text-sm font-bold px-2">✕</button>
+                            </div>
+                        `).join('')}
                     </div>
-                    <div>
-                        <label class="text-sm text-grayText">Parts Total (INR)</label>
-                        <input type="number" id="quotePartsTotal" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" value="${order.parts_total || 0}" step="0.01" min="0" />
+                    <div class="mt-2 flex gap-2">
+                        <input type="text" id="newPartName" placeholder="Part name" class="flex-1 bg-navyBG border border-grayBorder rounded-lg p-2 text-sm text-white focus:border-teal-500 outline-none" />
+                        <input type="number" id="newPartPrice" placeholder="Price" class="w-28 bg-navyBG border border-grayBorder rounded-lg p-2 text-sm text-white focus:border-teal-500 outline-none" step="0.01" min="0" />
+                        <button onclick="addAdditionalPart()" class="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-bold">Add</button>
                     </div>
-                    <div>
-                        <label class="text-sm text-grayText">Service Fee (INR)</label>
-                        <input type="number" id="quoteServiceFee" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" value="${order.service_fee || 0}" step="0.01" min="0" />
+                    <p class="text-[10px] text-gray-500 mt-1">Add each part individually. They will appear in the list above.</p>
+                </div>
+
+                <!-- Total -->
+                <div class="bg-teal-500/10 border border-teal-500/30 rounded-xl p-4 mb-4">
+                    <div class="flex justify-between text-lg font-bold">
+                        <span>Total Quoted Price</span>
+                        <span id="quotationTotalDisplay" class="text-teal-400">₹${totalQuoted.toFixed(2)}</span>
                     </div>
-                    <div>
-                        <label class="text-sm text-grayText">Diagnosis Charge (INR)</label>
-                        <input type="number" id="quoteDiagnosis" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" value="${order.diagnosis_charge || 250}" step="0.01" min="0" />
-                    </div>
-                    <div>
-                        <label class="text-sm text-grayText">Additional Parts (custom quote parts) – edit below</label>
-                        <textarea id="quoteCustomParts" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" rows="3">${order.custom_quote_parts || ''}</textarea>
-                        <p class="text-[10px] text-gray-500 mt-1">Add each part on a new line: PartName,Price</p>
-                    </div>
-                    <div class="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3 flex justify-between items-center">
-                        <span class="text-sm font-bold text-white">Total Quoted Price</span>
-                        <span class="text-xl font-black text-teal-400" id="quoteTotalDisplay">₹${(order.total_price || 0).toFixed(2)}</span>
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button onclick="document.getElementById('quotationModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
-                        <button onclick="confirmQuotationFinal('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Send Quotation</button>
-                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('quotationEditorModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
+                    <button onclick="sendQuotationFromEditor('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Send Quotation</button>
                 </div>
             </div>
         `;
         document.body.appendChild(modal);
 
-        // Live update total when fields change
-        const updateTotal = () => {
-            const parts = parseFloat(document.getElementById('quotePartsTotal').value) || 0;
-            const service = parseFloat(document.getElementById('quoteServiceFee').value) || 0;
-            const diagnosis = parseFloat(document.getElementById('quoteDiagnosis').value) || 0;
-            const total = parts + service + diagnosis;
-            document.getElementById('quoteTotalDisplay').textContent = '₹' + total.toFixed(2);
-        };
-        document.getElementById('quotePartsTotal').addEventListener('input', updateTotal);
-        document.getElementById('quoteServiceFee').addEventListener('input', updateTotal);
-        document.getElementById('quoteDiagnosis').addEventListener('input', updateTotal);
+        // Store additional parts globally for this modal instance
+        window._quotationParts = additionalParts;
+
+        // Set up live total update on input changes
+        document.querySelectorAll('.part-price-input, .part-name-input').forEach(el => {
+            el.addEventListener('input', updateQuotationTotal);
+        });
+
     } catch (err) {
-        showToast('Failed to load order: ' + err.message, 'error');
+        showToast('Failed to load quotation: ' + err.message, 'error');
     }
 }
 
+// Helper to update total when part prices change
+function updateQuotationTotal() {
+    const priceInputs = document.querySelectorAll('.part-price-input');
+    let total = 0;
+    // Get static values from breakdown
+    const partsTotal = parseFloat(document.querySelector('.bg-navyBG/40 .flex:first-child span:last-child')?.textContent?.replace('₹', '') || 0);
+    const serviceFee = parseFloat(document.querySelector('.bg-navyBG/40 .flex:nth-child(2) span:last-child')?.textContent?.replace('₹', '') || 0);
+    const diagnosis = parseFloat(document.querySelector('.bg-navyBG/40 .flex:nth-child(3) span:last-child')?.textContent?.replace('₹', '') || 0);
+    let additional = 0;
+    priceInputs.forEach(inp => {
+        additional += parseFloat(inp.value) || 0;
+    });
+    const totalQuoted = partsTotal + serviceFee + diagnosis + additional;
+    document.getElementById('quotationTotalDisplay').textContent = '₹' + totalQuoted.toFixed(2);
+}
+
+// Add additional part from the input fields
+function addAdditionalPart() {
+    const nameInput = document.getElementById('newPartName');
+    const priceInput = document.getElementById('newPartPrice');
+    const name = nameInput.value.trim();
+    const price = parseFloat(priceInput.value);
+    if (!name || isNaN(price) || price <= 0) {
+        showToast('Enter a valid part name and price.', 'error');
+        return;
+    }
+    const list = document.getElementById('additionalPartsList');
+    const idx = list.children.length;
+    const div = document.createElement('div');
+    div.className = 'flex items-center gap-2 bg-navyBG/30 p-2 rounded-lg border border-grayBorder/40';
+    div.innerHTML = `
+        <input type="text" value="${name}" class="part-name-input flex-1 bg-transparent border-none text-white text-sm focus:outline-none" data-idx="${idx}" placeholder="Part name" />
+        <input type="number" value="${price}" class="part-price-input w-24 bg-transparent border border-grayBorder/40 rounded px-2 py-1 text-white text-sm focus:border-teal-500 outline-none" data-idx="${idx}" step="0.01" min="0" />
+        <button onclick="removeAdditionalPart(${idx})" class="text-red-400 hover:text-red-300 text-sm font-bold px-2">✕</button>
+    `;
+    list.appendChild(div);
+    // Remove the "no parts" placeholder if present
+    const placeholder = list.querySelector('p.text-gray-500');
+    if (placeholder) placeholder.remove();
+    // Add event listeners for live total update
+    div.querySelectorAll('.part-price-input, .part-name-input').forEach(el => {
+        el.addEventListener('input', updateQuotationTotal);
+    });
+    // Clear inputs
+    nameInput.value = '';
+    priceInput.value = '';
+    updateQuotationTotal();
+}
+
+// Remove additional part by index
+function removeAdditionalPart(idx) {
+    const list = document.getElementById('additionalPartsList');
+    const children = list.children;
+    // Find the element with data-idx = idx
+    for (let i = 0; i < children.length; i++) {
+        const input = children[i].querySelector('.part-name-input');
+        if (input && parseInt(input.dataset.idx) === idx) {
+            children[i].remove();
+            break;
+        }
+    }
+    // Update the displayed total
+    updateQuotationTotal();
+}
+
+// Send quotation from editor
+async function sendQuotationFromEditor(orderId) {
+    if (!supabase) return showToast('Supabase not connected', 'error');
+    try {
+        // Gather all part name and price pairs from the editor
+        const nameInputs = document.querySelectorAll('.part-name-input');
+        const priceInputs = document.querySelectorAll('.part-price-input');
+        let parts = [];
+        nameInputs.forEach((inp, i) => {
+            const name = inp.value.trim();
+            const price = parseFloat(priceInputs[i]?.value) || 0;
+            if (name && price > 0) {
+                parts.push({ name, price });
+            }
+        });
+        // Format as "Name,Price\nName2,Price2"
+        const customPartsString = parts.map(p => `${p.name},${p.price}`).join('\n');
+
+        // Calculate total (we can read from the display)
+        const totalDisplay = document.getElementById('quotationTotalDisplay');
+        const total = parseFloat(totalDisplay.textContent.replace('₹', '')) || 0;
+
+        // Update order
+        const { error } = await supabase
+            .from('orders')
+            .update({
+                custom_quote_parts: customPartsString || null,
+                total_price: total,
+                status: 'Quotation-Sent'
+            })
+            .eq('id', orderId);
+        if (error) throw error;
+
+        showToast('✉️ Quotation sent to customer for review.', 'success');
+        document.getElementById('quotationEditorModal')?.remove();
+        loadDashboard();
+    } catch (err) {
+        showToast('Failed to send quotation: ' + err.message, 'error');
+    }
+}
+
+// Expose helper functions globally
+window.openQuotationEditor = openQuotationEditor;
+window.addAdditionalPart = addAdditionalPart;
+window.removeAdditionalPart = removeAdditionalPart;
+window.sendQuotationFromEditor = sendQuotationFromEditor;
+window.updateQuotationTotal = updateQuotationTotal;
 // Global function for the modal button
 window.confirmQuotationFinal = async function(orderId) {
     const partsTotal = parseFloat(document.getElementById('quotePartsTotal').value) || 0;
