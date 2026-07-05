@@ -13,7 +13,6 @@ let allDevices = [];
 let allRepairTypes = [];
 let allParts = [];
 let currentUser = null;
-let orderSubscription = null;
 let currentRoles = [];
 
 // ─── TOAST NOTIFICATION ENGINE ───
@@ -184,7 +183,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         if (isAdmin || isCoordinator) {
             if (status === 'Pending') {
                 actions += `
-                    <button onclick="assignOrderRoles('${o.id}')" class="action-btn btn-assign">Assign Staff</button>
+                    <button onclick="assignOrderRoles('${o.id}', prompt('Technician user ID:'), prompt('RepairMaster user ID:'))" class="action-btn btn-assign">Assign Staff</button>
                 `;
             }
             if (isCoordinator) {
@@ -197,7 +196,12 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
             }
             if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
                 actions += `
-                    <button onclick="openQuotationEditor('${o.id}')" class="action-btn btn-quote">Manage Price</button>
+                    <button onclick="sendQuotation('${o.id}')" class="action-btn btn-quote">Manage Price</button>
+                `;
+            }
+            if (status === 'Ready-For-Delivery') {
+                actions += `
+                    <button onclick="assignDeliveryTechnician('${o.id}', prompt('Available Delivery Tech User ID:'))" class="action-btn btn-assign">Assign Delivery Tech</button>
                 `;
             }
         }
@@ -225,8 +229,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
             if (status === 'With-RepairMaster') {
                 actions += `
-                   <button onclick="updateDiagnosis('${o.id}')" class="action-btn btn-diagnose">Diagnose Logs</button>
-<button onclick="requestAdditionalParts('${o.id}')" class="action-btn btn-part">+ Add Part</button>
+                    <button onclick="updateDiagnosis('${o.id}', prompt('Diagnosis notes:'))" class="action-btn btn-diagnose">Diagnose Logs</button>
+                    <button onclick="requestAdditionalParts('${o.id}', prompt('Part Name:'), parseFloat(prompt('Price:')))" class="action-btn btn-part">+ Add Part</button>
                 `;
             } else if (status === 'Confirmed') {
                 actions += `
@@ -240,45 +244,44 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     }
 
     // Customer & Guest Actions
-const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
-if (isClient) {
-    if (status === 'Quotation-Sent') {
-        actions += `
-            <button onclick="viewQuotation('${o.id}')" class="action-btn btn-confirm">View Quotation</button>
-        `;
-    } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
-        const labelPay = status === 'Rejected' 
-            ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})`
-            : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
-        actions += `
-            <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
-        `;
-    } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
-        if (!o.customer_rating) {
+    const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
+    if (isClient) {
+        if (status === 'Quotation-Sent') {
             actions += `
-                <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left max-w-sm w-full font-display">
-                    <p class="text-xs font-bold text-white mb-2"><i class="fa-regular fa-star text-teal mr-1"></i> Rate Your Doorstep Experience</p>
-                    <div class="flex gap-1 mb-2">
-                        <button onclick="this.parentElement.setAttribute('data-rating', '1'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 1 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                        <button onclick="this.parentElement.setAttribute('data-rating', '2'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 2 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                        <button onclick="this.parentElement.setAttribute('data-rating', '3'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 3 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                        <button onclick="this.parentElement.setAttribute('data-rating', '4'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 4 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                        <button onclick="this.parentElement.setAttribute('data-rating', '5'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 5 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
+                <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
+            `;
+        } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
+            const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
+            actions += `
+                <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
+            `;
+        } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
+            // If they have not left a rating yet, allow writing a review!
+            if (!o.customer_rating) {
+                actions += `
+                    <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left max-w-sm w-full">
+                        <p class="text-xs font-bold text-white mb-2"><i class="fa-regular fa-star text-tealAccent mr-1"></i> Rate Your Doorstep Experience</p>
+                        <div class="flex gap-1 mb-2">
+                            ${[1, 2, 3, 4, 5].map(star => `
+                                <button onclick="this.parentElement.setAttribute('data-rating', '${star}'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < ${star} ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                            `).join('')}
+                        </div>
+                        <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
+                        <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
                     </div>
-                    <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
-                    <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
-                </div>
-            `;
-        } else {
-            actions += `
-                <div class="mt-2 text-xs text-amber-400 font-medium font-display">
-                    <span>Your Rating: ${'⭐'.repeat(o.customer_rating)}</span>
-                    ${o.customer_review ? `<p class="text-gray-400 italic mt-1">"${o.customer_review}"</p>` : ''}
-                </div>
-            `;
+                `;
+            } else {
+                actions += `
+                    <div class="mt-2 text-xs text-amber-400 font-medium">
+                        <span>Your Rating: ${'⭐'.repeat(o.customer_rating)}</span>
+                        ${o.customer_review ? `<p class="text-gray-400 italic mt-1">"${o.customer_review}"</p>` : ''}
+                    </div>
+                `;
+            }
         }
     }
-}
+
     let otpNoticeHtml = '';
     if (isClient) {
         if (status === 'Pickup-Pending' && o.pickup_otp) {
@@ -804,116 +807,37 @@ async function createOrder() {
 }
 
 // ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
-async function assignOrderRoles(orderId) {
-    if (!supabase) return showToast('Supabase not connected', 'error');
+async function assignOrderRoles(orderId, technicianId, repairmasterId) {
+    if (!supabase) return;
     try {
-        // Fetch user_roles for technicians (3) and repairmasters (4)
-        const { data: userRoles, error: roleError } = await supabase
-            .from('user_roles')
-            .select('user_id, role_id')
-            .in('role_id', [3, 4]);
-
-        if (roleError) throw roleError;
-
-        if (!userRoles || userRoles.length === 0) {
-            showToast('No technicians or repairmasters found in the system.', 'error');
-            return;
-        }
-
-        const userIds = userRoles.map(r => r.user_id);
-
-        // Fetch user profiles (names & emails)
-        const { data: userProfiles, error: profileError } = await supabase
-            .from('users')
-            .select('id, name, email')
-            .in('id', userIds);
-
-        if (profileError) throw profileError;
-
-        // Merge data
-        const usersWithDetails = userRoles.map(ur => {
-            const profile = userProfiles.find(p => p.id === ur.user_id);
-            const displayName = profile?.name || profile?.email || 'Unknown User';
-            return {
-                user_id: ur.user_id,
-                role_id: ur.role_id,
-                displayName: displayName,
-                roleName: ur.role_id === 3 ? 'repairmaster' : 'technician'
-            };
-        });
-
-        // Build modal with dropdowns
-        const modal = document.createElement('div');
-        modal.id = 'assignModal';
-        modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
-        modal.innerHTML = `
-            <div class="bg-slate-900 border border-grayBorder rounded-2xl p-6 max-w-md w-full shadow-2xl">
-                <h3 class="text-xl font-bold text-white mb-4">Assign Staff for Order ${orderId}</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-sm text-grayText">Select Technician</label>
-                        <select id="techSelect" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white">
-                            <option value="">— None —</option>
-                            ${usersWithDetails.filter(u => u.roleName === 'technician').map(u => 
-                                `<option value="${u.user_id}">${u.displayName}</option>`
-                            ).join('')}
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-sm text-grayText">Select RepairMaster</label>
-                        <select id="masterSelect" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white">
-                            <option value="">— None —</option>
-                            ${usersWithDetails.filter(u => u.roleName === 'repairmaster').map(u => 
-                                `<option value="${u.user_id}">${u.displayName}</option>`
-                            ).join('')}
-                        </select>
-                    </div>
-                    <div class="flex gap-3 pt-2">
-                        <button onclick="document.getElementById('assignModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
-                        <button onclick="confirmAssign('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Assign</button>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-// Attach live update listeners to static editable fields
-document.getElementById('editPartsTotal')?.addEventListener('input', updateQuotationTotal);
-document.getElementById('editServiceFee')?.addEventListener('input', updateQuotationTotal);
-document.getElementById('editDiagnosisCharge')?.addEventListener('input', updateQuotationTotal);
-
-// Attach listeners to additional part inputs (they are dynamically created)
-document.querySelectorAll('.part-price-input, .part-name-input').forEach(el => {
-    el.addEventListener('input', updateQuotationTotal);
-});
+        const { error } = await supabase
+            .from('orders')
+            .update({ technician_id: technicianId, repairmaster_id: repairmasterId, status: 'Technician Assigned' })
+            .eq('id', orderId);
+        if (error) throw error;
+        showToast('Roles assigned & notifications dispatched!', 'success');
+        loadDashboard();
     } catch (err) {
-        showToast('Failed to load staff: ' + err.message, 'error');
+        showToast('Assignment error: ' + err.message, 'error');
     }
 }
 
-// Global function for the modal button
-window.confirmAssign = async function(orderId) {
-    const techId = document.getElementById('techSelect').value;
-    const masterId = document.getElementById('masterSelect').value;
-    if (!techId && !masterId) {
-        showToast('Select at least one staff member.', 'error');
-        return;
-    }
+async function assignDeliveryTechnician(orderId, techId) {
+    if (!techId || !supabase) return;
     try {
-        const updateData = { status: 'Technician Assigned' };
-        if (techId) updateData.technician_id = techId;
-        if (masterId) updateData.repairmaster_id = masterId;
-        const { error } = await supabase
-            .from('orders')
-            .update(updateData)
-            .eq('id', orderId);
+        const handoverOtp = Math.floor(1000 + Math.random() * 9000).toString(); // generate delivery OTP automatically
+        const { error } = await supabase.from('orders').update({
+            technician_id: techId,
+            pickup_otp: handoverOtp,
+            status: 'Ready-For-Delivery'
+        }).eq('id', orderId);
         if (error) throw error;
-        showToast('Staff assigned successfully!', 'success');
-        document.getElementById('assignModal')?.remove();
+        showToast('🚚 Delivery Technician assigned successfully & Delivery OTP generated!', 'success');
         loadDashboard();
     } catch (err) {
         showToast('Assignment failed: ' + err.message, 'error');
     }
-};
+}
 
 async function assignSelfAsTechnician(orderId) {
     if (!currentUser || !supabase) return showToast('Authentication required.', 'error');
@@ -958,8 +882,8 @@ async function initiatePickup(orderId) {
             .update({ pickup_otp: otp, status: 'Pickup-Pending' })
             .eq('id', orderId);
         if (error) throw error;
-        // ✅ Removed the alert – technician should not see the OTP
-        showToast('🔒 Pickup initiated. Customer will receive the OTP for handover.', 'success');
+        alert(`🔒 Handover Security OTP: ${otp}\nProvide this code to the customer to authorize the safe handover.`);
+        showToast('🔒 Handover OTP generated: ' + otp, 'success');
         loadDashboard();
     } catch (err) {
         showToast('Pickup generation failed: ' + err.message, 'error');
@@ -987,361 +911,57 @@ async function verifyPickup(orderId, otp) {
     }
 }
 
-async function updateDiagnosis(orderId) {
-    // Build modal with a textarea for diagnosis notes
-    const modal = document.createElement('div');
-    modal.id = 'diagnosisModal';
-    modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
-    modal.innerHTML = `
-        <div class="bg-slate-900 border border-grayBorder rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 class="text-xl font-bold text-white mb-4">📋 Lab Diagnosis Logs</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-sm text-grayText">Diagnosis Notes</label>
-                    <textarea id="diagnosisNotesInput" rows="4" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" placeholder="Enter diagnosis details, observed issues, recommended repairs..."></textarea>
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button onclick="document.getElementById('diagnosisModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
-                    <button onclick="confirmDiagnosis('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Save Logs</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-// Global function for the modal button
-window.confirmDiagnosis = async function(orderId) {
-    const notes = document.getElementById('diagnosisNotesInput').value.trim();
-    if (!notes) {
-        showToast('Please enter diagnosis notes.', 'error');
-        return;
-    }
-    if (!supabase) return;
+async function updateDiagnosis(orderId, notes) {
+    if (!notes || !supabase) return;
     try {
         const { error } = await supabase.from('orders').update({ diagnosis_notes: notes }).eq('id', orderId);
         if (error) throw error;
         showToast('📋 Lab diagnosis logs updated.', 'success');
-        document.getElementById('diagnosisModal')?.remove();
         loadDashboard();
     } catch (err) {
         showToast('Diagnosis update failed: ' + err.message, 'error');
     }
-};
-async function requestAdditionalParts(orderId) {
-    // Build modal with inputs for part name and price
-    const modal = document.createElement('div');
-    modal.id = 'partModal';
-    modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
-    modal.innerHTML = `
-        <div class="bg-slate-900 border border-grayBorder rounded-2xl p-6 max-w-md w-full shadow-2xl">
-            <h3 class="text-xl font-bold text-white mb-4">🔧 Request Additional Part</h3>
-            <div class="space-y-4">
-                <div>
-                    <label class="text-sm text-grayText">Part Name</label>
-                    <input type="text" id="partNameInput" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" placeholder="e.g. Battery, Screen, Charging Port..." />
-                </div>
-                <div>
-                    <label class="text-sm text-grayText">Price (INR)</label>
-                    <input type="number" id="partPriceInput" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" placeholder="Enter amount" min="0" step="1" />
-                </div>
-                <div class="flex gap-3 pt-2">
-                    <button onclick="document.getElementById('partModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
-                    <button onclick="confirmPart('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Add Part</button>
-                </div>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
 }
 
-// Global function for the modal button
-window.confirmPart = async function(orderId) {
-    const partName = document.getElementById('partNameInput').value.trim();
-    const price = parseFloat(document.getElementById('partPriceInput').value);
-    if (!partName || isNaN(price) || price <= 0) {
-        showToast('Please enter a valid part name and price.', 'error');
-        return;
-    }
-    if (!supabase) return;
+async function requestAdditionalParts(orderId, partName, price) {
+    if (!partName || isNaN(price) || !supabase) return;
     try {
+        // Typically updates orders.custom_quote_parts
         const { data: ticket } = await supabase.from('orders').select('custom_quote_parts').eq('id', orderId).single();
         let existing = ticket.custom_quote_parts ? ticket.custom_quote_parts + '\n' : '';
         existing += `${partName},${price}`;
         const { error } = await supabase.from('orders').update({ custom_quote_parts: existing }).eq('id', orderId);
         if (error) throw error;
-        showToast(`✅ Part "${partName}" added successfully.`, 'success');
-        document.getElementById('partModal')?.remove();
+        showToast('Spare request dispatched to distributor.', 'success');
         loadDashboard();
     } catch (err) {
         showToast('Request failed: ' + err.message, 'error');
     }
-};
+}
 
-async function openQuotationEditor(orderId) {
-    if (!supabase) return showToast('Supabase not connected', 'error');
+async function sendQuotation(orderId) {
+    if (!supabase) return;
     try {
-        // Fetch order data
-        const { data: order, error } = await supabase
-            .from('orders')
-            .select('*')
-            .eq('id', orderId)
-            .single();
-        if (error) throw error;
-
-        // Parse additional parts from custom_quote_parts
-        let additionalParts = [];
-        if (order.custom_quote_parts) {
-            additionalParts = order.custom_quote_parts.split('\n')
-                .filter(line => line.trim() !== '')
-                .map(line => {
-                    const [name, price] = line.split(',').map(s => s.trim());
-                    return { name, price: parseFloat(price) || 0 };
-                });
+        const editQuote = prompt("Update & Finalize Price for Quotation (INR):");
+        if (!editQuote || isNaN(editQuote)) {
+            showToast("Invalid price entered.", "error");
+            return;
         }
-
-        const deviceName = getDeviceName(order.device_id) || order.device_other || 'Device';
-        const repairLabel = order.repair_type_id ? getRepairLabel(order.repair_type_id) : order.repair_other || 'Repair';
-        const partsTotal = order.parts_total || 0;
-        const serviceFee = order.service_fee || 0;
-        const diagnosisCharge = order.diagnosis_charge || 250;
-        const additionalTotal = additionalParts.reduce((sum, p) => sum + p.price, 0);
-        let totalQuoted = partsTotal + serviceFee + diagnosisCharge + additionalTotal;
-
-        // Build modal with editable fields
-        const modal = document.createElement('div');
-        modal.id = 'quotationEditorModal';
-        modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 overflow-y-auto';
-        modal.innerHTML = `
-            <div class="bg-slate-900 border border-grayBorder rounded-2xl p-6 max-w-2xl w-full shadow-2xl my-8">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-xl font-bold text-white">📋 Quotation Editor</h3>
-                    <button onclick="document.getElementById('quotationEditorModal').remove()" class="text-gray-400 hover:text-white text-xl">✕</button>
-                </div>
-                <div class="text-sm text-gray-300 mb-4">
-                    <span class="font-bold">${deviceName}</span> — ${repairLabel}
-                </div>
-
-                <!-- Editable base breakdown -->
-                <div class="bg-navyBG/40 rounded-xl p-4 mb-4 space-y-3 text-sm">
-                    <div class="flex items-center gap-3">
-                        <label class="w-48 text-gray-300">Parts Total (INR)</label>
-                        <input type="number" id="editPartsTotal" value="${partsTotal.toFixed(2)}" step="0.01" min="0" class="flex-1 bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" />
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <label class="w-48 text-gray-300">Service/Workmanship (INR)</label>
-                        <input type="number" id="editServiceFee" value="${serviceFee.toFixed(2)}" step="0.01" min="0" class="flex-1 bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" />
-                    </div>
-                    <div class="flex items-center gap-3">
-                        <label class="w-48 text-gray-300">Diagnosis Charge (INR)</label>
-                        <input type="number" id="editDiagnosis" value="${diagnosisCharge.toFixed(2)}" step="0.01" min="0" class="flex-1 bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" />
-                    </div>
-                </div>
-
-                <!-- Additional Parts (editable) -->
-                <div class="mb-4">
-                    <label class="text-sm text-grayText font-bold block mb-2">Additional Parts (custom quote parts) – edit below</label>
-                    <div id="additionalPartsList" class="space-y-2 max-h-40 overflow-y-auto">
-                        ${additionalParts.length === 0 ? '<p class="text-gray-500 text-xs">No additional parts added yet.</p>' : ''}
-                        ${additionalParts.map((p, idx) => `
-                            <div class="flex items-center gap-2 bg-navyBG/30 p-2 rounded-lg border border-grayBorder/40">
-                                <input type="text" value="${p.name}" class="part-name-input flex-1 bg-transparent border-none text-white text-sm focus:outline-none" data-idx="${idx}" placeholder="Part name" />
-                                <input type="number" value="${p.price}" class="part-price-input w-24 bg-transparent border border-grayBorder/40 rounded px-2 py-1 text-white text-sm focus:border-teal-500 outline-none" data-idx="${idx}" step="0.01" min="0" />
-                                <button onclick="removeAdditionalPart(${idx})" class="text-red-400 hover:text-red-300 text-sm font-bold px-2">✕</button>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="mt-2 flex gap-2">
-                        <input type="text" id="newPartName" placeholder="Part name" class="flex-1 bg-navyBG border border-grayBorder rounded-lg p-2 text-sm text-white focus:border-teal-500 outline-none" />
-                        <input type="number" id="newPartPrice" placeholder="Price" class="w-28 bg-navyBG border border-grayBorder rounded-lg p-2 text-sm text-white focus:border-teal-500 outline-none" step="0.01" min="0" />
-                        <button onclick="addAdditionalPart()" class="bg-teal-600 hover:bg-teal-500 text-white px-4 py-2 rounded-lg text-sm font-bold">Add</button>
-                    </div>
-                    <p class="text-[10px] text-gray-500 mt-1">Add each part individually. They will appear in the list above.</p>
-                </div>
-
-                <!-- Total (auto-calculated) -->
-                <div class="bg-teal-500/10 border border-teal-500/30 rounded-xl p-4 mb-4">
-                    <div class="flex justify-between text-lg font-bold">
-                        <span>Total Quoted Price</span>
-                        <span id="quotationTotalDisplay" class="text-teal-400">₹${totalQuoted.toFixed(2)}</span>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="flex gap-3">
-                    <button onclick="document.getElementById('quotationEditorModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
-                    <button onclick="openQuotationEditorFromEditor('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Send Quotation</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-
-        // Store additional parts globally for this modal instance
-        window._quotationParts = additionalParts;
-
-        // Set up live total update on any change
-        const inputs = modal.querySelectorAll('input');
-        inputs.forEach(el => {
-            el.addEventListener('input', updateQuotationTotal);
-        });
-
-        // Initial total update
-        updateQuotationTotal();
-
-    } catch (err) {
-        showToast('Failed to load quotation: ' + err.message, 'error');
-    }
-}
-
-// Helper to update total when part prices change
-function updateQuotationTotal() {
-    // Read from editable inputs
-    const partsTotal = parseFloat(document.getElementById('editPartsTotal')?.value) || 0;
-    const serviceFee = parseFloat(document.getElementById('editServiceFee')?.value) || 0;
-    const diagnosis = parseFloat(document.getElementById('editDiagnosisCharge')?.value) || 0;
-
-    // Read additional parts
-    const priceInputs = document.querySelectorAll('.part-price-input');
-    let additional = 0;
-    priceInputs.forEach(inp => {
-        additional += parseFloat(inp.value) || 0;
-    });
-
-    const totalQuoted = partsTotal + serviceFee + diagnosis + additional;
-    const totalDisplay = document.getElementById('quotationTotalDisplay');
-    if (totalDisplay) totalDisplay.textContent = '₹' + totalQuoted.toFixed(2);
-}
-// Add additional part from the input fields
-function addAdditionalPart() {
-    const nameInput = document.getElementById('newPartName');
-    const priceInput = document.getElementById('newPartPrice');
-    const name = nameInput.value.trim();
-    const price = parseFloat(priceInput.value);
-    if (!name || isNaN(price) || price <= 0) {
-        showToast('Enter a valid part name and price.', 'error');
-        return;
-    }
-    const list = document.getElementById('additionalPartsList');
-    const idx = list.children.length;
-    const div = document.createElement('div');
-    div.className = 'flex items-center gap-2 bg-navyBG/30 p-2 rounded-lg border border-grayBorder/40';
-    div.innerHTML = `
-        <input type="text" value="${name}" class="part-name-input flex-1 bg-transparent border-none text-white text-sm focus:outline-none" data-idx="${idx}" placeholder="Part name" />
-        <input type="number" value="${price}" class="part-price-input w-24 bg-transparent border border-grayBorder/40 rounded px-2 py-1 text-white text-sm focus:border-teal-500 outline-none" data-idx="${idx}" step="0.01" min="0" />
-        <button onclick="removeAdditionalPart(${idx})" class="text-red-400 hover:text-red-300 text-sm font-bold px-2">✕</button>
-    `;
-    list.appendChild(div);
-    // Remove the "no parts" placeholder if present
-    const placeholder = list.querySelector('p.text-gray-500');
-    if (placeholder) placeholder.remove();
-    // Add event listeners for live total update
-    div.querySelectorAll('.part-price-input, .part-name-input').forEach(el => {
-        el.addEventListener('input', updateQuotationTotal);
-    });
-    // Clear inputs
-    nameInput.value = '';
-    priceInput.value = '';
-    updateQuotationTotal();
-}
-
-// Remove additional part by index
-function removeAdditionalPart(idx) {
-    const list = document.getElementById('additionalPartsList');
-    const children = list.children;
-    // Find the element with data-idx = idx
-    for (let i = 0; i < children.length; i++) {
-        const input = children[i].querySelector('.part-name-input');
-        if (input && parseInt(input.dataset.idx) === idx) {
-            children[i].remove();
-            break;
-        }
-    }
-    // Update the displayed total
-    updateQuotationTotal();
-}
-
-// Send quotation from editor
-async function openQuotationEditorFromEditor(orderId) {
-    if (!supabase) return showToast('Supabase not connected', 'error');
-    try {
-        // Gather all part name and price pairs from the editor
-        const nameInputs = document.querySelectorAll('.part-name-input');
-        const priceInputs = document.querySelectorAll('.part-price-input');
-        let parts = [];
-        nameInputs.forEach((inp, i) => {
-            const name = inp.value.trim();
-            const price = parseFloat(priceInputs[i]?.value) || 0;
-            if (name && price > 0) {
-                parts.push({ name, price });
-            }
-        });
-        // Format as "Name,Price\nName2,Price2"
-        const customPartsString = parts.map(p => `${p.name},${p.price}`).join('\n');
-
-        // Calculate total (we can read from the display)
-        const totalDisplay = document.getElementById('quotationTotalDisplay');
-        const total = parseFloat(totalDisplay.textContent.replace('₹', '')) || 0;
-
-        // Update order
+        const finalizedTotal = parseFloat(editQuote);
         const { error } = await supabase
             .from('orders')
             .update({
-                custom_quote_parts: customPartsString || null,
-                total_price: total,
+                total_price: finalizedTotal,
                 status: 'Quotation-Sent'
             })
             .eq('id', orderId);
         if (error) throw error;
-
-        showToast('✉️ Quotation sent to customer for review.', 'success');
-        document.getElementById('quotationEditorModal')?.remove();
+        showToast('✉️ Finalized quotation sent to the customer for review!', 'success');
         loadDashboard();
     } catch (err) {
-        showToast('Failed to send quotation: ' + err.message, 'error');
+        showToast('Failed to dispatch quotation: ' + err.message, 'error');
     }
 }
-
-// Expose helper functions globally
-window.openQuotationEditor = openQuotationEditor;
-window.addAdditionalPart = addAdditionalPart;
-window.removeAdditionalPart = removeAdditionalPart;
-window.openQuotationEditorFromEditor = openQuotationEditorFromEditor;
-window.updateQuotationTotal = updateQuotationTotal;
-// Global function for the modal button
-window.confirmQuotationFinal = async function(orderId) {
-    const partsTotal = parseFloat(document.getElementById('quotePartsTotal').value) || 0;
-    const serviceFee = parseFloat(document.getElementById('quoteServiceFee').value) || 0;
-    const diagnosis = parseFloat(document.getElementById('quoteDiagnosis').value) || 0;
-    const customParts = document.getElementById('quoteCustomParts').value.trim();
-    const total = partsTotal + serviceFee + diagnosis;
-
-    if (total <= 0) {
-        showToast('Total must be greater than 0.', 'error');
-        return;
-    }
-
-    if (!supabase) return;
-    try {
-        const updateData = {
-            parts_total: partsTotal,
-            service_fee: serviceFee,
-            diagnosis_charge: diagnosis,
-            total_price: total,
-            custom_quote_parts: customParts || null,
-            status: 'Quotation-Sent'
-        };
-        const { error } = await supabase
-            .from('orders')
-            .update(updateData)
-            .eq('id', orderId);
-        if (error) throw error;
-        showToast('✉️ Quotation sent to customer!', 'success');
-        document.getElementById('quotationModal')?.remove();
-        loadDashboard();
-    } catch (err) {
-        showToast('Failed to send quotation: ' + err.message, 'error');
-    }
-};
 
 async function confirmQuotation(orderId) {
     if (!supabase) return;
@@ -1506,258 +1126,6 @@ async function loadDashboard() {
     if (document.getElementById('statCompleted')) document.getElementById('statCompleted').textContent = completed;
 
     window.allFetchedOrders = orders;
-
-    function getDeviceName(deviceId) {
-        if (!deviceId) return 'Generic Device';
-        const dev = allDevices.find(d => String(d.id) === String(deviceId));
-        return dev ? dev.name : 'Device';
-    }
-    window.getDeviceName = getDeviceName;
-
-    function getRepairLabel(repairTypeId) {
-        if (!repairTypeId) return 'Device Repair';
-        const rt = allRepairTypes.find(r => String(r.id) === String(repairTypeId));
-        return rt ? rt.label : 'Repair';
-    }
-    window.getRepairLabel = getRepairLabel;
-
-    function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, isGuestMode = false, isMatched = true) {
-        const status = o.status || 'Pending';
-        const statusClass = 'status-' + status.replace(/\s/g, '-');
-        const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
-        const repairLabel = getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
-
-        let actions = '';
-        if (!isGuestMode) {
-            if (isAdmin || isCoordinator) {
-                if (status === 'Pending') {
-                    actions += `
-                        <button onclick="assignOrderRoles('${o.id}')" class="action-btn btn-assign">Assign Staff</button>
-                    `;
-                }
-                if (isCoordinator) {
-                    if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
-                        actions += `
-                            <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
-                            <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
-                        `;
-                    }
-                }
-                if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
-                    actions += `
-                        <button onclick="openQuotationEditor('${o.id}')" class="action-btn btn-quote">Manage Price</button>
-                    `;
-                }
-            }
-
-            if (isTechnician && o.technician_id === currentUser?.id) {
-                if (status === 'Technician Assigned') {
-                    actions += `<button onclick="initiatePickup('${o.id}')" class="action-btn btn-pickup">Start Pickup</button>`;
-                } else if (status === 'Pickup-Pending') {
-                    actions += `
-                        <div class="flex items-center gap-1 mt-1">
-                            <input type="text" id="otp-${o.id}" placeholder="Pickup OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                            <button onclick="verifyPickup('${o.id}', document.getElementById('otp-${o.id}').value)" class="action-btn btn-verify">Verify Handover</button>
-                        </div>
-                    `;
-                } else if (status === 'Ready-For-Delivery') {
-                    actions += `
-                        <div class="flex items-center gap-1 mt-1">
-                            <input type="text" id="delivery-otp-${o.id}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                            <button onclick="closeTicket('${o.id}', document.getElementById('delivery-otp-${o.id}').value)" class="action-btn btn-verify">Verify Delivery</button>
-                        </div>
-                    `;
-                }
-            }
-
-            if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
-                if (status === 'With-RepairMaster') {
-                    actions += `
-                        <button onclick="updateDiagnosis('${o.id}')" class="action-btn btn-diagnose">Diagnose Logs</button>
-<button onclick="requestAdditionalParts('${o.id}')" class="action-btn btn-part">+ Add Part</button>
-                    `;
-                } else if (status === 'Confirmed') {
-                    actions += `
-                        <div class="flex flex-col gap-1 items-end">
-                            <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
-                            <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        // Customer & Guest Actions
-        const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
-        if (isClient) {
-            if (status === 'Quotation-Sent') {
-                actions += `
-                    <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
-                    <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
-                `;
-            } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
-                const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
-                actions += `
-                    <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
-                `;
-            } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
-                // If they have not left a rating yet, allow writing a review!
-                if (!o.customer_rating) {
-                    actions += `
-                        <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left max-w-sm w-full font-display">
-                            <p class="text-xs font-bold text-white mb-2"><i class="fa-regular fa-star text-teal mr-1"></i> Rate Your Doorstep Experience</p>
-                            <div class="flex gap-1 mb-2">
-                                <button onclick="this.parentElement.setAttribute('data-rating', '1'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 1 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                                <button onclick="this.parentElement.setAttribute('data-rating', '2'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 2 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                                <button onclick="this.parentElement.setAttribute('data-rating', '3'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 3 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                                <button onclick="this.parentElement.setAttribute('data-rating', '4'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 4 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                                <button onclick="this.parentElement.setAttribute('data-rating', '5'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 5 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                            </div>
-                            <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
-                            <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
-                        </div>
-                    `;
-                } else {
-                    actions += `
-                        <div class="mt-2 text-xs text-amber-400 font-medium font-display">
-                            <span>Your Rating: ${'⭐'.repeat(o.customer_rating)}</span>
-                            ${o.customer_review ? `<p class="text-gray-400 italic mt-1">"${o.customer_review}"</p>` : ''}
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        let otpNoticeHtml = '';
-        if (isClient) {
-            if (status === 'Pickup-Pending' && o.pickup_otp) {
-                otpNoticeHtml = `
-                    <div class="mt-3 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
-                        <span>🔑 Pickup Handover Code: <span class="text-gray-400 italic">(Show to Technician)</span></span>
-                        <strong class="text-sm text-white tracking-widest bg-teal-900/60 px-3 py-1 rounded border border-teal-500/30">${o.pickup_otp}</strong>
-                    </div>
-                `;
-            } else if (status === 'Ready-For-Delivery' && o.pickup_otp && o.pickup_otp !== 'VERIFIED') {
-                otpNoticeHtml = `
-                    <div class="mt-3 p-3 rounded-lg bg-teal-500/10 border border-teal-500/20 text-xs text-teal-300 flex items-center justify-between">
-                        <span>🔑 Delivery Handover Code: <span class="text-gray-400 italic">(Share with Technician)</span></span>
-                        <strong class="text-sm text-white tracking-widest bg-teal-900/60 px-3 py-1 rounded border border-teal-500/30">${o.pickup_otp}</strong>
-                    </div>
-                `;
-            }
-        }
-
-        let quotationHtml = '';
-        if (status === 'Quotation-Sent' || o.total_price) {
-            quotationHtml = `
-                <div class="quotation-box mt-3 text-xs text-amber-400 bg-amber-500/5 border border-amber-500/20 p-3 rounded-lg">
-                    <p class="font-bold uppercase tracking-wider mb-1"><i class="fa-solid fa-receipt mr-1"></i> Finalized Quotation Summary</p>
-                    <p class="text-gray-300">Estimation finalized: <strong>₹${(o.total_price || 0).toLocaleString('en-IN')}</strong> ${status === 'Quotation-Sent' ? '<span class="text-amber-400">(Awaiting your acceptance)</span>' : ''}</p>
-                    <div class="flex gap-4 text-[10px] text-gray-500 mt-1">
-                        <span>🩺 Diagnosis: ₹${o.diagnosis_charge || 250}</span>
-                        <span>🔧 Service/Workmanship: ₹${o.service_fee || 100}</span>
-                        <span>🛠️ Parts: ₹${o.parts_total || 0}</span>
-                    </div>
-                </div>
-            `;
-        }
-
-        // Live Workflow Tracking Indicator
-        let workflowHtml = '';
-        if (isClient) {
-            const steps = [
-                { name: 'Placed', active: true },
-                { name: 'Assigned', active: ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Pickup', active: ['Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Lab Diagnosed', active: ['With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Quoted', active: ['Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Repairing', active: ['Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Paid', active: ['Ready-For-Delivery', 'Completed'].includes(status) },
-                { name: 'Delivered', active: ['Completed'].includes(status) }
-            ];
-            workflowHtml = `
-                <div class="mt-4 border-t border-slate-800 pt-3">
-                    <p class="text-[10px] text-gray-500 font-bold uppercase tracking-widest mb-2"><i class="fa-solid fa-route mr-1 text-teal"></i> Live Tracking Workflow</p>
-                    <div class="flex items-center justify-between text-[10px] text-center gap-1">
-                        ${steps.map(s => `
-                            <div class="flex-1">
-                                <div class="h-1.5 w-full rounded-full mb-1 ${s.active ? 'bg-teal-500 shadow-sm shadow-teal-500/20' : 'bg-slate-800'}"></div>
-                                <span class="${s.active ? 'text-teal-400 font-bold' : 'text-gray-500'} text-[9px] block leading-tight">${s.name}</span>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Role-Based Customer Metadata Panel (Access Control - Protect Customer Data)
-        let metadataPanel = '';
-        if (!isClient) {
-            if (isAdmin || isCoordinator || isTechnician) {
-                metadataPanel = `
-                    <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
-                        <p class="font-bold text-white mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1 font-display">
-                            <i class="fa-regular fa-user-circle text-teal"></i> DTC Customer Contact Details
-                        </p>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
-                            <div>👤 <strong>Name:</strong> ${o.customer_name || 'N/A'}</div>
-                            <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
-                            <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
-                            <div>📍 <strong>Address:</strong> ${o.address || 'N/A'}</div>
-                            <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
-                        </div>
-                    </div>
-                `;
-            } else if (isRepairMaster) {
-                metadataPanel = `
-                    <div class="mt-3 p-3.5 bg-slate-950/60 border border-amber-500/10 rounded-xl text-xs text-gray-400">
-                        <p class="font-bold text-amber-400 mb-1.5 uppercase tracking-wider text-[9px] flex items-center gap-1 font-display">
-                            <i class="fa-solid fa-user-shield text-amber-500"></i> Customer Info Masked (Bench Protection)
-                        </p>
-                        <p class="text-[11px] leading-relaxed text-gray-500">
-                            To ensure platform security and client privacy, customer direct identifiers and contact information are masked for Bench RepairMaster roles. Please coordinate logistics or customer approvals with the regional Hub Coordinator.
-                        </p>
-                    </div>
-                `;
-            }
-        }
-
-        // Dynamic visual indicator if the item is matched/unmatched
-        const matchOpacityClass = isMatched ? '' : 'opacity-40 filter grayscale scale-95';
-
-        return `
-            <div class="order-card bg-slate-900/40 border border-slate-800/60 rounded-xl p-5 hover:border-teal-500/30 transition-all ${matchOpacityClass}">
-                <div class="flex flex-wrap items-start justify-between gap-3">
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-3 flex-wrap">
-                            <span class="text-lg font-bold text-white font-display">${deviceName}</span>
-                            <span class="text-sm text-gray-500">—</span>
-                            <span class="text-sm text-teal font-medium">${repairLabel}</span>
-                            <span class="status-badge ${statusClass} text-xs">${status}</span>
-                        </div>
-                        <div class="text-xs text-gray-400 mt-1">
-                            <span>ID: ${o.order_number}</span>
-                            <span class="mx-2">•</span>
-                            <span>📅 ${new Date(o.created_at).toLocaleDateString()}</span>
-                            ${o.address ? `<span class="mx-2">•</span><span>📍 ${o.address}</span>` : ''}
-                        </div>
-                        ${o.photo_url ? `<img src="${o.photo_url}" class="mt-3 max-h-24 rounded-lg border border-slate-800" />` : ''}
-                        ${o.diagnosis_notes ? `<p class="mt-2 text-xs text-gray-400 italic bg-slate-950/20 p-2 rounded border border-slate-800">Lab Diagnosis Logs: ${o.diagnosis_notes}</p>` : ''}
-                        ${o.custom_quote_parts ? `<p class="mt-2 text-xs text-amber-300 italic bg-slate-950/20 p-2 rounded border border-slate-800">Requested Spare Parts: ${o.custom_quote_parts}</p>` : ''}
-                        ${metadataPanel}
-                        ${quotationHtml}
-                        ${otpNoticeHtml}
-                        ${workflowHtml}
-                    </div>
-                    <div class="flex flex-col items-end gap-2">
-                        <span class="text-lg font-black text-teal">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>
-                        <div class="flex flex-wrap gap-1 justify-end">${actions}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    window.buildSingleOrderCardHtml = buildSingleOrderCardHtml;
 
     renderFilteredOrders();
 
@@ -2046,47 +1414,11 @@ async function updateNavForAuth(user) {
                     </div>
                     <span class="text-sm text-gray-300 font-bold hover:text-teal transition" id="navUserName">${username}</span>
                 </div>
-
-                <!-- Highly visible Logout Button directly on the Desktop Header -->
-                <button onclick="logoutUser()" class="text-xs font-bold text-red-400 hover:text-red-300 border border-red-500/15 hover:border-red-500/30 px-3.5 py-1.5 rounded-xl bg-red-500/5 transition flex items-center gap-1.5">
-                    <i class="fa-solid fa-power-off"></i> Logout
-                </button>
             `;
         }
 
         if (mNavLogin) mNavLogin.style.display = 'none';
         if (mNavSignup) mNavSignup.style.display = 'none';
-
-        // Remove old mobile dynamic info to avoid duplication
-        const existingMUserInfo = document.getElementById('dynamicMobileUserInfo');
-        if (existingMUserInfo) existingMUserInfo.remove();
-
-        const mobileNav = document.getElementById('mobileNav');
-        if (mobileNav) {
-            const div = document.createElement('div');
-            div.id = 'dynamicMobileUserInfo';
-            div.className = 'mt-4 pt-4 border-t border-white/5 flex flex-col gap-3 items-center justify-center';
-            div.innerHTML = `
-                <div class="flex items-center gap-2.5">
-                    <div class="w-9 h-9 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-bold text-sm flex items-center justify-center">
-                        ${initials}
-                    </div>
-                    <div class="text-left">
-                        <span class="text-sm text-white font-bold block">${username}</span>
-                        <span class="text-[9px] text-teal-400 font-bold uppercase tracking-wider block">DTC Registered</span>
-                    </div>
-                </div>
-                <div class="flex gap-2 w-full mt-2 px-4">
-                    <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="flex-1 bg-slate-900 border border-slate-800 py-2 px-4 rounded-xl text-xs text-white font-bold flex items-center justify-center gap-1.5 hover:bg-slate-800 transition">
-                        👤 Profile Details
-                    </button>
-                    <button onclick="logoutUser()" class="flex-1 bg-red-500/10 border border-red-500/20 py-2 px-4 rounded-xl text-xs text-red-400 font-bold flex items-center justify-center gap-1.5 hover:bg-red-500/20 transition">
-                        <i class="fa-solid fa-power-off"></i> Logout
-                    </button>
-                </div>
-            `;
-            mobileNav.appendChild(div);
-        }
 
         if (mNavUserInfo) {
             mNavUserInfo.classList.remove('hidden');
@@ -2097,7 +1429,6 @@ async function updateNavForAuth(user) {
                     </button>
                 </div>
             `;
-            subscribeToOrderUpdates();
         }
 
         // Setup dynamic profile sidebar drawer container
@@ -2112,32 +1443,12 @@ async function updateNavForAuth(user) {
         // Fetch user metadata/profile table to populate drawer dynamically
         let userDbData = { name: username, phone: user.user_metadata?.phone || 'N/A', address: 'Wardha, Maharashtra' };
         try {
-            const { data: dbUser, error: dbErr } = await supabase.from('users').select('*').eq('id', user.id).single();
+            const { data: dbUser } = await supabase.from('users').select('*').eq('id', user.id).single();
             if (dbUser) {
                 userDbData = dbUser;
-            } else {
-                // Self-healing database insert if the signup failed to insert!
-                const newProfile = {
-                    id: user.id,
-                    email: user.email,
-                    name: username,
-                    phone: user.user_metadata?.phone || 'N/A',
-                    address: user.user_metadata?.city || 'Wardha'
-                };
-                await supabase.from('users').upsert([newProfile]);
-                userDbData = newProfile;
-                
-                // Self-healing role insert if missing
-                const { data: rolesCheck } = await supabase.from('user_roles').select('*').eq('user_id', user.id);
-                if (!rolesCheck || rolesCheck.length === 0) {
-                    await supabase.from('user_roles').upsert([{
-                        user_id: user.id,
-                        role_id: 5 // Customer
-                    }]);
-                }
             }
         } catch (e) {
-            console.warn("Could not fetch or auto-create database user profile:", e);
+            console.warn("Could not fetch database user profile:", e);
         }
 
         drawer.innerHTML = `
@@ -2255,12 +1566,7 @@ async function updateNavForAuth(user) {
         if (mNavSignup) mNavSignup.style.display = 'inline-block';
         if (mNavUserInfo) mNavUserInfo.classList.add('hidden');
 
-        const existingMUserInfo = document.getElementById('dynamicMobileUserInfo');
-        if (existingMUserInfo) existingMUserInfo.remove();
 
-        let drawer = document.getElementById('profileSidebarDrawer');
-        if (drawer) drawer.classList.add('hidden');
-        unsubscribeFromOrderUpdates();
     }
 }
 
@@ -2337,9 +1643,10 @@ window.switchActiveRole = switchActiveRole;
 async function completeRepair(orderId) {
     if (!supabase) return;
     try {
-        const { error } = await supabase.from('orders').update({ status: 'Completed' }).eq('id', orderId);
+        // Change status to 'Ready-For-Delivery' instead of 'Completed' to bypass billing and payment
+        const { error } = await supabase.from('orders').update({ status: 'Ready-For-Delivery' }).eq('id', orderId);
         if (error) throw error;
-        showToast('🎉 Repair completed! Ready for delivery.', 'success');
+        showToast('🎉 Repair completed! Bypassed billing & payment. Coordinator can now assign a delivery technician.', 'success');
         loadDashboard();
     } catch (err) {
         showToast('Failed to complete repair: ' + err.message, 'error');
@@ -2578,22 +1885,18 @@ async function signupUser(e) {
         });
         if (error) throw error;
         if (data.user) {
-            // Wait for profile upsert (robust, avoids duplicate trigger crash, and catches RLS errors gracefully)
-            try {
-                await supabase.from('users').upsert([{
-                    id: data.user.id,
-                    email: email,
-                    name: name,
-                    phone: phone,
-                    address: city
-                }]);
-                await supabase.from('user_roles').upsert([{
-                    user_id: data.user.id,
-                    role_id: parseInt(selectedRole)
-                }]);
-            } catch (dbErr) {
-                console.warn("Could not write profile to public database directly on signup (will auto-heal on login):", dbErr);
-            }
+            // Wait for profile upsert (robust, avoids duplicate trigger crash)
+            await supabase.from('users').upsert([{
+                id: data.user.id,
+                email: email,
+                name: name,
+                phone: phone,
+                address: city
+            }]);
+            await supabase.from('user_roles').upsert([{
+                user_id: data.user.id,
+                role_id: parseInt(selectedRole)
+            }]);
         }
         showToast('Registration success! Redirecting to login...', 'success');
         setTimeout(() => { window.location.href = 'login.html'; }, 2000);
@@ -2672,8 +1975,27 @@ document.addEventListener('DOMContentLoaded', async function() {
         startCarousel();
     }
 
-    // 3. Authenticate Session
+    // 3. Authenticate Session & Setup Realtime Listeners
     if (supabase) {
+        // Setup real-time PostgreSQL channel subscription on orders table
+        supabase.channel('public:orders')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
+                console.log('Realtime change detected in orders table:', payload);
+                if (isDashboard) {
+                    loadDashboard();
+                } else {
+                    // if guest tracking input has values, re-trigger trackOrderGuest to update real-time
+                    const trackInput = document.getElementById('trackOrderId');
+                    const phoneInput = document.getElementById('trackPhone');
+                    if (trackInput && trackInput.value && phoneInput && phoneInput.value) {
+                        const evt = new Event('submit');
+                        const f = document.getElementById('guestTrackForm');
+                        if (f) f.dispatchEvent(evt);
+                    }
+                }
+            })
+            .subscribe();
+
         const session = await supabase.auth.getSession();
         if (session.data?.session) {
             currentUser = session.data.session.user;
@@ -2783,48 +2105,6 @@ async function submitOrderReview(orderId, rating, reviewText) {
         showToast('Failed to save review: ' + err.message, 'error');
     }
 }
-// ─── SUPABASE REALTIME SUBSCRIPTION ───
-function subscribeToOrderUpdates() {
-    if (!supabase || !currentUser) return;
-
-    // Prevent duplicate subscriptions
-    if (orderSubscription) {
-        console.log('Already subscribed to order updates.');
-        return;
-    }
-
-    orderSubscription = supabase
-        .channel('order-updates')
-        .on(
-            'postgres_changes',
-            {
-                event: 'UPDATE',
-                schema: 'public',
-                table: 'orders'
-                // Optional: filter by user_id for customers
-                // filter: `user_id=eq.${currentUser.id}`
-            },
-            (payload) => {
-                const newStatus = payload.new.status || 'updated';
-                const orderNumber = payload.new.order_number || 'Order';
-                showToast(`🔔 ${orderNumber} status: ${newStatus}`, 'info');
-                if (typeof loadDashboard === 'function') {
-                    loadDashboard();
-                }
-            }
-        )
-        .subscribe((status) => {
-            console.log('Realtime subscription status:', status);
-        });
-}
-
-function unsubscribeFromOrderUpdates() {
-    if (orderSubscription) {
-        supabase.removeChannel(orderSubscription);
-        orderSubscription = null;
-        console.log('Unsubscribed from order updates.');
-    }
-}
 
 // ─── 14. EXPOSE ATTACHMENTS FOR HTML HANDLERS ───
 window.signInWithGoogle = signInWithGoogle;
@@ -2845,13 +2125,14 @@ window.updateReqRepairTypes = updateReqRepairTypes;
 window.toggleOther = toggleOther;
 window.populateRequestBrands = populateRequestBrands;
 window.assignOrderRoles = assignOrderRoles;
+window.assignDeliveryTechnician = assignDeliveryTechnician;
 window.assignSelfAsTechnician = assignSelfAsTechnician;
 window.assignSelfAsRepairMaster = assignSelfAsRepairMaster;
 window.initiatePickup = initiatePickup;
 window.verifyPickup = verifyPickup;
 window.updateDiagnosis = updateDiagnosis;
 window.requestAdditionalParts = requestAdditionalParts;
-window.openQuotationEditor = openQuotationEditor;
+window.sendQuotation = sendQuotation;
 window.confirmQuotation = confirmQuotation;
 window.rejectQuotation = rejectQuotation;
 window.updateProfile = updateProfile;

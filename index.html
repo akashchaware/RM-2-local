@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RepairMaster – Premium Doorstep & Lab Repairs</title>
+    <link rel="icon" type="image/jpg" href="app/src/main/res/drawable/img_brand_logo_circular_1782765220741.jpg" />
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Custom Theme Styling Config -->
@@ -423,16 +424,9 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!--  HEADER                                             -->
     <!-- ════════════════════════════════════════════════════ -->
-    <header class="container-custom py-5 flex items-center justify-between flex-wrap gap-4 sticky top-0 z-40 bg-[#0A0F1D]/80 backdrop-blur-md border-b border-white/5">
+    <header class="container-custom py-4 flex items-center justify-between flex-wrap gap-4 sticky top-0 z-40 bg-[#0A0F1D]/85 backdrop-blur-md border-b border-white/5">
         <div class="flex items-center gap-4 cursor-pointer" onclick="window.location.href='index.html'">
-            <div class="rm-logo">RM</div>
-            <div>
-                <span class="font-display text-2xl md:text-3xl font-black tracking-tight">
-                    <span class="text-white">Repair</span><span class="text-teal">Master</span>
-                </span>
-                <span class="block text-[8px] font-semibold tracking-[0.2em] text-emerald-400 uppercase -mt-1">Direct To Consumer</span>
-                <span class="text-[8px] text-gray-500 italic">powered by cm2us.com</span>
-            </div>
+            <img src="app/src/main/res/drawable/img_brand_logo_better_clean_1782737996064.jpg" alt="RepairMaster" class="h-11 md:h-14 object-contain rounded-xl hover:border-teal/20 transition-all duration-300" />
         </div>
 
         <!-- Desktop Navigation tabs -->
@@ -473,7 +467,7 @@
     <main>
         <!-- Carousel Slider -->
         <div class="carousel-container relative">
-            <div class="carousel-slide active" style="background-image: url('repo-image-folder/technician-device-1.png');">
+            <div class="carousel-slide active" style="background-image: url('app/src/main/res/drawable/img_hero_banner_doorstep_better_1782737461990.jpg');">
                 <div class="carousel-content">
                     <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">🔥 Welcome</span>
                     <h1>Repair<span class="text-teal">Master</span></h1>
@@ -485,7 +479,7 @@
                     </div>
                 </div>
             </div>
-            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-scooty.png');">
+            <div class="carousel-slide" style="background-image: url('app/src/main/res/drawable/img_indian_doorstep_service_1782738015281.jpg');">
                 <div class="carousel-content">
                     <span class="inline-block bg-teal-500/20 text-teal-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Doorstep Service</span>
                     <h1>We Come To You</h1>
@@ -495,7 +489,7 @@
                     </div>
                 </div>
             </div>
-            <div class="carousel-slide" style="background-image: url('repo-image-folder/device-generic.png');">
+            <div class="carousel-slide" style="background-image: url('app/src/main/res/drawable/img_indian_service_lab_1782739540576.jpg');">
                 <div class="carousel-content">
                     <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Genuine Parts</span>
                     <h1>State-of-the-Art Workshop</h1>
@@ -505,7 +499,7 @@
                     </div>
                 </div>
             </div>
-            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-device-2.png');">
+            <div class="carousel-slide" style="background-image: url('app/src/main/res/drawable/img_secure_collection_checkpoint_1782767417629.jpg');">
                 <div class="carousel-content">
                     <span class="inline-block bg-teal-500/20 text-teal-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Easy Booking</span>
                     <h1>Seamless Customer App</h1>
@@ -515,7 +509,7 @@
                     </div>
                 </div>
             </div>
-            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-device-1.png');">
+            <div class="carousel-slide" style="background-image: url('app/src/main/res/drawable/img_indian_service_scooter_1782739563064.jpg');">
                 <div class="carousel-content">
                     <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Expanding Network</span>
                     <h1>Serving Wardha</h1>
@@ -750,8 +744,28 @@
         </div>
     </footer>
 
+    <!-- Mobile App Bottom Navigation Bar -->
+    <div class="md:hidden fixed bottom-0 left-0 w-full bg-[#070b14]/95 border-t border-white/10 backdrop-blur-lg flex justify-around py-3 z-50 text-center font-display shadow-2xl">
+        <a href="index.html" class="flex flex-col items-center text-[10px] text-teal">
+            <i class="fa-solid fa-house text-base mb-1"></i>
+            <span>Home</span>
+        </a>
+        <a href="request.html" class="flex flex-col items-center text-[10px] text-gray-400 hover:text-teal transition">
+            <i class="fa-solid fa-screwdriver-wrench text-base mb-1"></i>
+            <span>Request</span>
+        </a>
+        <a href="dashboard.html" class="flex flex-col items-center text-[10px] text-gray-400 hover:text-teal transition">
+            <i class="fa-solid fa-chart-simple text-base mb-1"></i>
+            <span>Hub</span>
+        </a>
+        <a href="app.html" class="flex flex-col items-center text-[10px] text-gray-400 hover:text-teal transition">
+            <i class="fa-solid fa-download text-base mb-1"></i>
+            <span>App</span>
+        </a>
+    </div>
+
     <!-- Toast Notification Container -->
-    <div id="toast" class="fixed bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500"></div>
+    <div id="toast" class="fixed bottom-20 md:bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500"></div>
 
     <!-- Supabase SDK JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
