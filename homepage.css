@@ -1,0 +1,83 @@
+/* ─── homepage.css – Mobile responsiveness for the dark homepage ─── */
+
+/* Fix mobile menu – make it appear on small screens */
+@media (max-width: 768px) {
+    .mobile-menu {
+        display: block !important;
+    }
+    .desktop-nav {
+        display: none !important;
+    }
+    .desktop-nav.open {
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: #0A0F1D;
+        padding: 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        z-index: 50;
+    }
+    .carousel-container {
+        height: 60vh !important;
+        min-height: 300px !important;
+    }
+    .carousel-content h1 {
+        font-size: 2rem !important;
+    }
+    .carousel-content p {
+        font-size: 1rem !important;
+    }
+    .calc-container {
+        padding: 16px !important;
+    }
+    .glass-card {
+        padding: 16px !important;
+    }
+    .container-custom {
+        padding: 0 12px !important;
+    }
+    .grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+    .btn-teal, .btn-outline {
+        padding: 10px 20px !important;
+        font-size: 14px !important;
+    }
+    .maintenance-banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    .offer-card {
+        padding: 16px !important;
+    }
+    .footer .container-custom {
+        grid-template-columns: 1fr !important;
+        gap: 20px !important;
+    }
+    .bottom-nav {
+        display: flex !important;
+    }
+    body {
+        padding-bottom: 70px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .carousel-content h1 {
+        font-size: 1.6rem !important;
+    }
+    .carousel-content p {
+        font-size: 0.9rem !important;
+    }
+    .price-row {
+        font-size: 12px !important;
+    }
+    .total-row {
+        font-size: 16px !important;
+    }
+}
