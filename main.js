@@ -802,20 +802,107 @@ async function createOrder() {
 }
 
 // ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
-async function assignOrderRoles(orderId, technicianId, repairmasterId) {
-    if (!supabase) return;
+async function assignOrderRoles(orderId) {
+    if (!supabase) return showToast('Supabase not connected', 'error');
     try {
-        const { error } = await supabase
-            .from('orders')
-            .update({ technician_id: technicianId, repairmaster_id: repairmasterId, status: 'Technician Assigned' })
-            .eq('id', orderId);
-        if (error) throw error;
-        showToast('Roles assigned & notifications dispatched!', 'success');
-        loadDashboard();
+        // Fetch user_roles for technicians (3) and repairmasters (4)
+        const { data: userRoles, error: roleError } = await supabase
+            .from('user_roles')
+            .select('user_id, role_id')
+            .in('role_id', [3, 4]);
+
+        if (roleError) throw roleError;
+
+        if (!userRoles || userRoles.length === 0) {
+            showToast('No technicians or repairmasters found in the system.', 'error');
+            return;
+        }
+
+        const userIds = userRoles.map(r => r.user_id);
+
+        // Fetch user profiles (names & emails)
+        const { data: userProfiles, error: profileError } = await supabase
+            .from('users')
+            .select('id, name, email')
+            .in('id', userIds);
+
+        if (profileError) throw profileError;
+
+        // Merge data
+        const usersWithDetails = userRoles.map(ur => {
+            const profile = userProfiles.find(p => p.id === ur.user_id);
+            const displayName = profile?.name || profile?.email || 'Unknown User';
+            return {
+                user_id: ur.user_id,
+                role_id: ur.role_id,
+                displayName: displayName,
+                roleName: ur.role_id === 3 ? 'technician' : 'repairmaster'
+            };
+        });
+
+        // Build modal with dropdowns
+        const modal = document.createElement('div');
+        modal.id = 'assignModal';
+        modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+            <div class="bg-slate-900 border border-grayBorder rounded-2xl p-6 max-w-md w-full shadow-2xl">
+                <h3 class="text-xl font-bold text-white mb-4">Assign Staff for Order ${orderId}</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm text-grayText">Select Technician</label>
+                        <select id="techSelect" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white">
+                            <option value="">— None —</option>
+                            ${usersWithDetails.filter(u => u.roleName === 'technician').map(u => 
+                                `<option value="${u.user_id}">${u.displayName}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-sm text-grayText">Select RepairMaster</label>
+                        <select id="masterSelect" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white">
+                            <option value="">— None —</option>
+                            ${usersWithDetails.filter(u => u.roleName === 'repairmaster').map(u => 
+                                `<option value="${u.user_id}">${u.displayName}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="document.getElementById('assignModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
+                        <button onclick="confirmAssign('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Assign</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
     } catch (err) {
-        showToast('Assignment error: ' + err.message, 'error');
+        showToast('Failed to load staff: ' + err.message, 'error');
     }
 }
+
+// Global function for the modal button
+window.confirmAssign = async function(orderId) {
+    const techId = document.getElementById('techSelect').value;
+    const masterId = document.getElementById('masterSelect').value;
+    if (!techId && !masterId) {
+        showToast('Select at least one staff member.', 'error');
+        return;
+    }
+    try {
+        const updateData = { status: 'Technician Assigned' };
+        if (techId) updateData.technician_id = techId;
+        if (masterId) updateData.repairmaster_id = masterId;
+        const { error } = await supabase
+            .from('orders')
+            .update(updateData)
+            .eq('id', orderId);
+        if (error) throw error;
+        showToast('Staff assigned successfully!', 'success');
+        document.getElementById('assignModal')?.remove();
+        loadDashboard();
+    } catch (err) {
+        showToast('Assignment failed: ' + err.message, 'error');
+    }
+};
 
 async function assignSelfAsTechnician(orderId) {
     if (!currentUser || !supabase) return showToast('Authentication required.', 'error');
