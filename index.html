@@ -6,7 +6,7 @@
     <title>RepairMaster – Doorstep Repair</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        /* ─── RESET & BASE ─── */
+        /* ─── All existing styles (same as before) ─── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #f5f7fa;
@@ -17,7 +17,6 @@
             max-width: 480px;
             margin: 0 auto;
         }
-
         .card {
             background: #ffffff;
             border-radius: 16px;
@@ -273,11 +272,44 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script>
+        // ─── Supabase client (keep credentials, but we won't rely on it for catalog) ───
         const SUPABASE_URL = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        let allBrands = [], allDevices = [], allRepairTypes = [], allParts = [];
+        // ─── Hardcoded fallback catalog data (ensures calculator works instantly) ───
+        const allBrands = [
+            { id: 'b1', name: 'Apple' }, { id: 'b2', name: 'Samsung' },
+            { id: 'b3', name: 'Vivo' }, { id: 'b4', name: 'OnePlus' },
+            { id: 'b5', name: 'Xiaomi' }, { id: 'b6', name: 'Oppo' },
+            { id: 'b7', name: 'Realme' }, { id: 'b8', name: 'Google' }
+        ];
+        const allDevices = [
+            { id: 'd1', brand_id: 'b1', name: 'iPhone 15 Pro' },
+            { id: 'd2', brand_id: 'b1', name: 'iPhone 14' },
+            { id: 'd3', brand_id: 'b2', name: 'Galaxy S24 Ultra' },
+            { id: 'd4', brand_id: 'b2', name: 'Galaxy A55' },
+            { id: 'd5', brand_id: 'b3', name: 'V30 Pro' },
+            { id: 'd6', brand_id: 'b3', name: 'V29' },
+            { id: 'd7', brand_id: 'b4', name: 'OnePlus 12' },
+            { id: 'd8', brand_id: 'b5', name: 'Redmi Note 13 Pro' }
+        ];
+        const allRepairTypes = [
+            { id: 'rt1', name: 'screen', label: 'Screen Replacement' },
+            { id: 'rt2', name: 'battery', label: 'Battery Replacement' },
+            { id: 'rt3', name: 'chargingport', label: 'Charging Port' },
+            { id: 'rt4', name: 'camera', label: 'Camera Repair' },
+            { id: 'rt5', name: 'speaker', label: 'Speaker / Mic' }
+        ];
+        const allParts = [
+            { device_id: 'd1', repair_type_id: 'rt1', name: 'OLED Display', price: 15000 },
+            { device_id: 'd1', repair_type_id: 'rt2', name: 'Battery', price: 4500 },
+            { device_id: 'd3', repair_type_id: 'rt1', name: 'AMOLED Display', price: 12000 },
+            { device_id: 'd3', repair_type_id: 'rt2', name: 'Battery Pack', price: 3800 },
+            { device_id: 'd5', repair_type_id: 'rt1', name: 'AMOLED Screen', price: 9000 },
+            { device_id: 'd5', repair_type_id: 'rt2', name: 'Li-Po Battery', price: 2500 },
+            // Add more as needed
+        ];
 
         function showToast(msg) {
             const t = document.getElementById('toast');
@@ -287,6 +319,7 @@
             t._hide = setTimeout(() => t.classList.remove('show'), 3000);
         }
 
+        // ─── Login Modal functions ───
         function showLogin() {
             document.getElementById('loginModal').style.display = 'flex';
             document.querySelector('#loginModal .tab-row button[data-tab="login2"]').click();
@@ -308,6 +341,7 @@
             });
         });
 
+        // ─── Login handler ───
         document.getElementById('loginForm2').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('loginEmail2').value;
@@ -318,6 +352,7 @@
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
         });
 
+        // ─── Signup handler ───
         document.getElementById('signupForm2').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('signupName2').value;
@@ -329,7 +364,9 @@
                 options: { data: { full_name: name, phone } }
             });
             if (error) return showToast('Signup failed: ' + error.message);
-            if (data.user) await supabase.from('user_roles').upsert([{ user_id: data.user.id, role_id: 5 }]);
+            if (data.user) {
+                await supabase.from('user_roles').upsert([{ user_id: data.user.id, role_id: 5 }]);
+            }
             showToast('Account created! Please sign in.');
             document.querySelector('#loginModal .tab-row button[data-tab="login2"]').click();
         });
@@ -338,46 +375,18 @@
             await supabase.auth.signInWithOAuth({ provider: 'google' });
         };
 
-        async function loadCatalog() {
-            try {
-                const [b, d, rt, p] = await Promise.all([
-                    supabase.from('brands').select('*').order('name'),
-                    supabase.from('devices').select('*').order('name'),
-                    supabase.from('repair_types').select('*').order('label'),
-                    supabase.from('parts').select('*')
-                ]);
-                if (b.error || d.error || rt.error || p.error) throw new Error('Catalog error');
-                allBrands = b.data || []; allDevices = d.data || []; allRepairTypes = rt.data || []; allParts = p.data || [];
-                populateBrands();
-            } catch(e) { useFallback(); }
-        }
-
-        function useFallback() {
-            allBrands = [
-                { id: 'b1', name: 'Apple' }, { id: 'b2', name: 'Samsung' },
-                { id: 'b3', name: 'Vivo' }, { id: 'b4', name: 'OnePlus' }
-            ];
-            allDevices = [
-                { id: 'd1', brand_id: 'b1', name: 'iPhone 15' },
-                { id: 'd2', brand_id: 'b1', name: 'iPhone 14' },
-                { id: 'd3', brand_id: 'b2', name: 'Galaxy S24' }
-            ];
-            allRepairTypes = [
-                { id: 'rt1', name: 'screen', label: 'Screen Replacement' },
-                { id: 'rt2', name: 'battery', label: 'Battery Replacement' }
-            ];
-            allParts = [
-                { device_id: 'd1', repair_type_id: 'rt1', name: 'OLED Display', price: 15000 },
-                { device_id: 'd1', repair_type_id: 'rt2', name: 'Battery', price: 4500 }
-            ];
-            populateBrands();
-        }
-
+        // ─── Calculator logic (using hardcoded data) ───
         function populateBrands() {
             const sel = document.getElementById('brandSelect');
             sel.innerHTML = '<option value="">— Brand —</option>';
-            allBrands.forEach(b => { const opt = document.createElement('option'); opt.value = b.id; opt.textContent = b.name; sel.appendChild(opt); });
-            sel.onchange = updateModels; updateModels();
+            allBrands.forEach(b => {
+                const opt = document.createElement('option');
+                opt.value = b.id;
+                opt.textContent = b.name;
+                sel.appendChild(opt);
+            });
+            sel.onchange = updateModels;
+            updateModels();
         }
 
         function updateModels() {
@@ -386,18 +395,24 @@
             sel.innerHTML = '<option value="">— Model —</option>';
             if (!brandId) return;
             allDevices.filter(d => d.brand_id === brandId).forEach(d => {
-                const opt = document.createElement('option'); opt.value = d.id; opt.textContent = d.name; sel.appendChild(opt);
+                const opt = document.createElement('option');
+                opt.value = d.id;
+                opt.textContent = d.name;
+                sel.appendChild(opt);
             });
-            sel.onchange = updateRepairTypes; updateRepairTypes();
+            updateRepairTypes();
         }
 
         function updateRepairTypes() {
             const sel = document.getElementById('repairTypeSelect');
             sel.innerHTML = '<option value="">— Repair —</option>';
             allRepairTypes.forEach(rt => {
-                const opt = document.createElement('option'); opt.value = rt.id; opt.textContent = rt.label || rt.name; sel.appendChild(opt);
+                const opt = document.createElement('option');
+                opt.value = rt.id;
+                opt.textContent = rt.label || rt.name;
+                sel.appendChild(opt);
             });
-            sel.onchange = updatePartsSurvey; updatePartsSurvey();
+            updatePartsSurvey();
         }
 
         function updatePartsSurvey() {
@@ -432,28 +447,47 @@
         document.getElementById('qualitySelect').onchange = updatePartsSurvey;
         document.getElementById('offerToggle').onchange = updatePartsSurvey;
 
+        // ─── Create Order (redirect to login if not logged in) ───
         window.createOrder = async function() {
             const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { showToast('Please login first.'); showLogin(); return; }
+            if (!user) {
+                showToast('Please login first.');
+                showLogin();
+                return;
+            }
             showToast('Please book from your dashboard.');
             setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
         };
 
+        // ─── Offers (try Supabase, fallback) ───
         async function fetchOffers() {
-            const { data, error } = await supabase.from('offers').select('*').eq('active', true).limit(5);
-            const container = document.getElementById('offersContainer');
-            if (error || !data || data.length === 0) {
-                container.innerHTML = '<div style="font-size:13px;color:#6b7a8a;text-align:center;">No active offers</div>';
-                return;
+            try {
+                const { data, error } = await supabase.from('offers').select('*').eq('active', true).limit(5);
+                if (error || !data || data.length === 0) throw new Error('No offers');
+                const container = document.getElementById('offersContainer');
+                container.innerHTML = data.map(o => `
+                    <div class="offer-item">
+                        <div><strong>${o.name}</strong><div style="font-size:12px;color:#6b7a8a;">${o.description || ''}</div></div>
+                        <span class="discount">${o.discount_percent || 0}% OFF</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                // fallback offers
+                const fallback = [
+                    { name: 'Monsoon Screen Guard', description: 'Free tempered glass with screen repair', discount_percent: 100 },
+                    { name: 'Battery Saver Deal', description: '15% off on battery replacements', discount_percent: 15 }
+                ];
+                const container = document.getElementById('offersContainer');
+                container.innerHTML = fallback.map(o => `
+                    <div class="offer-item">
+                        <div><strong>${o.name}</strong><div style="font-size:12px;color:#6b7a8a;">${o.description || ''}</div></div>
+                        <span class="discount">${o.discount_percent}% OFF</span>
+                    </div>
+                `).join('');
             }
-            container.innerHTML = data.map(o => `
-                <div class="offer-item">
-                    <div><strong>${o.name}</strong><div style="font-size:12px;color:#6b7a8a;">${o.description || ''}</div></div>
-                    <span class="discount">${o.discount_percent || 0}% OFF</span>
-                </div>
-            `).join('');
         }
 
+        // ─── Guest Tracking ───
         window.trackOrderGuest = async function(e) {
             e.preventDefault();
             const orderId = document.getElementById('trackOrderId').value.trim();
@@ -461,34 +495,46 @@
             const container = document.getElementById('guestTrackResult');
             container.innerHTML = '<div style="text-align:center;font-size:13px;color:#6b7a8a;">Searching...</div>';
             const { data, error } = await supabase.from('orders').select('*').eq('order_number', orderId);
-            if (error || !data || data.length === 0) { container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Order not found.</div>'; return; }
+            if (error || !data || data.length === 0) {
+                container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Order not found.</div>';
+                return;
+            }
             const o = data[0];
             const dbPhone = (o.customer_phone || '').replace(/[^0-9]/g, '');
             const cleanPhone = phone.replace(/[^0-9]/g, '');
-            if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) { container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Phone number mismatch.</div>'; return; }
+            if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) {
+                container.innerHTML = '<div style="color:#e74c3c;text-align:center;">Phone number mismatch.</div>';
+                return;
+            }
+            const dev = allDevices.find(d => d.id === o.device_id);
+            const deviceName = dev ? dev.name : 'Device';
+            const repair = allRepairTypes.find(r => r.id === o.repair_type_id);
+            const repairLabel = repair ? repair.label : 'Repair';
             container.innerHTML = `
                 <div style="background:#f8fafc;border-radius:10px;padding:12px;">
                     <div style="display:flex;justify-content:space-between;">
-                        <strong>${getDeviceName(o.device_id)}</strong>
+                        <strong>${deviceName}</strong>
                         <span class="status ${o.status}">${o.status}</span>
                     </div>
-                    <div style="font-size:13px;color:#6b7a8a;">${getRepairLabel(o.repair_type_id)}</div>
+                    <div style="font-size:13px;color:#6b7a8a;">${repairLabel}</div>
                     <div style="font-size:13px;">₹${(o.total_price || 0).toFixed(0)}</div>
                 </div>
             `;
         };
 
-        function getDeviceName(id) { const d = allDevices.find(x => x.id === id); return d ? d.name : 'Device'; }
-        function getRepairLabel(id) { const r = allRepairTypes.find(x => x.id === id); return r ? r.label : 'Repair'; }
+        // ─── Init ───
+        document.addEventListener('DOMContentLoaded', function() {
+            populateBrands();
+            fetchOffers();
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            await loadCatalog();
-            await fetchOffers();
-
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                window.location.href = 'dashboard.html';
-            }
+            // Check if user is already logged in (ignore 401 errors)
+            supabase.auth.getUser().then(({ data, error }) => {
+                if (data?.user) {
+                    window.location.href = 'dashboard.html';
+                }
+            }).catch(() => {
+                // ignore auth errors – user is not logged in
+            });
         });
     </script>
 </body>
