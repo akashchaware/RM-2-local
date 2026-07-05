@@ -196,7 +196,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
             }
             if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
                 actions += `
-                    <button onclick="sendQuotation('${o.id}')" class="action-btn btn-quote">Manage Price</button>
+                    <button onclick="openQuotationEditor('${o.id}')" class="action-btn btn-quote">Manage Price</button>
                 `;
             }
         }
@@ -1518,7 +1518,7 @@ async function loadDashboard() {
                 }
                 if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
                     actions += `
-                        <button onclick="sendQuotation('${o.id}')" class="action-btn btn-quote">Manage Price</button>
+                        <button onclick="openQuotationEditor('${o.id}')" class="action-btn btn-quote">Manage Price</button>
                     `;
                 }
             }
