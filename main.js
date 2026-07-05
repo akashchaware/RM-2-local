@@ -1149,7 +1149,7 @@ async function openQuotationEditor(orderId) {
                 <!-- Actions -->
                 <div class="flex gap-3">
                     <button onclick="document.getElementById('quotationEditorModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
-                    <button onclick="sendQuotationFromEditor('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Send Quotation</button>
+                    <button onclick="openQuotationEditorFromEditor('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Send Quotation</button>
                 </div>
             </div>
         `;
@@ -1234,7 +1234,7 @@ function removeAdditionalPart(idx) {
 }
 
 // Send quotation from editor
-async function sendQuotationFromEditor(orderId) {
+async function openQuotationEditorFromEditor(orderId) {
     if (!supabase) return showToast('Supabase not connected', 'error');
     try {
         // Gather all part name and price pairs from the editor
@@ -1278,7 +1278,7 @@ async function sendQuotationFromEditor(orderId) {
 window.openQuotationEditor = openQuotationEditor;
 window.addAdditionalPart = addAdditionalPart;
 window.removeAdditionalPart = removeAdditionalPart;
-window.sendQuotationFromEditor = sendQuotationFromEditor;
+window.openQuotationEditorFromEditor = openQuotationEditorFromEditor;
 window.updateQuotationTotal = updateQuotationTotal;
 // Global function for the modal button
 window.confirmQuotationFinal = async function(orderId) {
@@ -2780,7 +2780,7 @@ window.initiatePickup = initiatePickup;
 window.verifyPickup = verifyPickup;
 window.updateDiagnosis = updateDiagnosis;
 window.requestAdditionalParts = requestAdditionalParts;
-window.sendQuotation = sendQuotation;
+window.openQuotationEditor = openQuotationEditor;
 window.confirmQuotation = confirmQuotation;
 window.rejectQuotation = rejectQuotation;
 window.updateProfile = updateProfile;
