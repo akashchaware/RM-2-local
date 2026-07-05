@@ -1193,20 +1193,22 @@ async function openQuotationEditor(orderId) {
 
 // Helper to update total when part prices change
 function updateQuotationTotal() {
+    // Read from editable inputs
+    const partsTotal = parseFloat(document.getElementById('editPartsTotal')?.value) || 0;
+    const serviceFee = parseFloat(document.getElementById('editServiceFee')?.value) || 0;
+    const diagnosis = parseFloat(document.getElementById('editDiagnosisCharge')?.value) || 0;
+
+    // Read additional parts
     const priceInputs = document.querySelectorAll('.part-price-input');
-    let total = 0;
-    // Get static values from breakdown
-    const partsTotal = parseFloat(document.querySelector('.bg-navyBG/40 .flex:first-child span:last-child')?.textContent?.replace('₹', '') || 0);
-    const serviceFee = parseFloat(document.querySelector('.bg-navyBG/40 .flex:nth-child(2) span:last-child')?.textContent?.replace('₹', '') || 0);
-    const diagnosis = parseFloat(document.querySelector('.bg-navyBG/40 .flex:nth-child(3) span:last-child')?.textContent?.replace('₹', '') || 0);
     let additional = 0;
     priceInputs.forEach(inp => {
         additional += parseFloat(inp.value) || 0;
     });
-    const totalQuoted = partsTotal + serviceFee + diagnosis + additional;
-    document.getElementById('quotationTotalDisplay').textContent = '₹' + totalQuoted.toFixed(2);
-}
 
+    const totalQuoted = partsTotal + serviceFee + diagnosis + additional;
+    const totalDisplay = document.getElementById('quotationTotalDisplay');
+    if (totalDisplay) totalDisplay.textContent = '₹' + totalQuoted.toFixed(2);
+}
 // Add additional part from the input fields
 function addAdditionalPart() {
     const nameInput = document.getElementById('newPartName');
