@@ -732,110 +732,131 @@ async function submitRequest(e) {
         showToast('⚠️ Supabase connection is offline.', 'error');
         return;
     }
-    const name = document.getElementById('reqName').value.trim();
-    const phone = document.getElementById('reqPhone').value.trim();
-    const email = document.getElementById('reqEmail').value.trim();
-    const brandSelect = document.getElementById('reqBrand');
-    const modelSelect = document.getElementById('reqModel');
-    const repairSelect = document.getElementById('reqRepairType');
-    const addressLine = document.getElementById('reqAddressLine').value.trim();
-    const city = document.getElementById('reqCity').value;
-    const notes = document.getElementById('reqNotes')?.value.trim() || '';
-
-    if (!city || city === 'Nagpur' || city === 'Amravati') {
-        showToast('We currently only serve Wardha. Nagpur & Amravati coming soon!', 'error');
-        return;
-    }
-
-    let deviceId = brandSelect.value;
-    let modelId = modelSelect.value;
-    let repairTypeId = repairSelect.value;
-    let deviceOther = null;
-    let repairOther = null;
-
-    if (document.getElementById('reqBrandOther')?.classList.contains('visible')) {
-        deviceOther = document.getElementById('reqBrandOtherInput').value.trim();
-        if (!deviceOther) return showToast('Please enter the brand name.', 'error');
-        deviceId = null;
-    }
-    if (document.getElementById('reqModelOther')?.classList.contains('visible')) {
-        const otherModel = document.getElementById('reqModelOtherInput').value.trim();
-        if (!otherModel) return showToast('Please enter the model name.', 'error');
-        deviceOther = deviceOther ? deviceOther + ' - ' + otherModel : otherModel;
-        modelId = null;
-    }
-    if (document.getElementById('reqRepairOther')?.classList.contains('visible')) {
-        repairOther = document.getElementById('reqRepairOtherInput').value.trim();
-        if (!repairOther) return showToast('Please enter the repair type.', 'error');
-        repairTypeId = null;
-    }
-
-    if (!deviceId && !deviceOther) return showToast('Please select or enter a brand.', 'error');
-    if (!modelId && !deviceOther) return showToast('Please select or enter a model.', 'error');
-    if (!repairTypeId && !repairOther) return showToast('Please select or enter a repair type.', 'error');
-
-    const photoFile = document.getElementById('reqPhoto')?.files[0];
-    let photoUrl = null;
-    if (photoFile) {
-        const fileExt = photoFile.name.split('.').pop();
-        const fileName = `${Date.now()}.${fileExt}`;
-        const filePath = `requests/${fileName}`;
-        const { error: uploadError } = await supabase.storage
-            .from('RequestBucket')
-            .upload(filePath, photoFile);
-        if (uploadError) {
-            showToast('Photo upload failed: ' + uploadError.message, 'error');
-            return;
-        }
-        const { data: urlData } = supabase.storage
-            .from('RequestBucket')
-            .getPublicUrl(filePath);
-        photoUrl = urlData.publicUrl;
-    }
-
-    const session = await supabase.auth.getSession();
-    const user = session.data?.session?.user || null;
-
-    let partsTotal = 0;
-    if (modelId && repairTypeId) {
-        const parts = allParts.filter(p => String(p.device_id) === String(modelId) && String(p.repair_type_id) === String(repairTypeId));
-        partsTotal = parts.reduce((sum, p) => sum + (p.price * 0.7), 0);
-    }
-    const discountedParts = partsTotal * 0.9;
-    const serviceFee = discountedParts > 0 ? (discountedParts * 0.15) : 100.00;
-    const totalEstimate = discountedParts + serviceFee + 250;
-
-    const orderData = {
-        order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
-        user_id: user?.id || null,
-        customer_name: name,
-        customer_phone: phone,
-        customer_email: email,
-        device_id: modelId || null,
-        repair_type_id: repairTypeId || null,
-        device_other: deviceOther || null,
-        repair_other: repairOther || null,
-        photo_url: photoUrl,
-        address: addressLine + ', ' + city,
-        parts_quality: 'standard',
-        parts_total: discountedParts,
-        service_fee: serviceFee,
-        diagnosis_charge: 250,
-        total_price: totalEstimate,
-        discount_applied: 0,
-        status: 'Pending',
-        notes: notes || null,
-        created_at: new Date().toISOString()
-    };
 
     try {
+        const nameEl = document.getElementById('reqName');
+        const phoneEl = document.getElementById('reqPhone');
+        const emailEl = document.getElementById('reqEmail');
+        const brandSelect = document.getElementById('reqBrand');
+        const modelSelect = document.getElementById('reqModel');
+        const repairSelect = document.getElementById('reqRepairType');
+        const addressEl = document.getElementById('reqAddressLine');
+        const cityEl = document.getElementById('reqCity');
+        const notesEl = document.getElementById('reqNotes');
+        const partsQualitySelect = document.getElementById('reqPartsQuality');
+
+        if (!nameEl || !phoneEl || !emailEl || !brandSelect || !modelSelect || !repairSelect || !addressEl || !cityEl) {
+            showToast('⚠️ Repair request form elements are missing.', 'error');
+            return;
+        }
+
+        const name = nameEl.value.trim();
+        const phone = phoneEl.value.trim();
+        const email = emailEl.value.trim();
+        const addressLine = addressEl.value.trim();
+        const city = cityEl.value;
+        const notes = notesEl?.value.trim() || '';
+        const partsQuality = partsQualitySelect ? partsQualitySelect.value : 'standard';
+
+        if (!name || !phone || !email || !addressLine) {
+            showToast('⚠️ Please fill out all required fields.', 'error');
+            return;
+        }
+
+        if (!city || city === 'Nagpur' || city === 'Amravati') {
+            showToast('We currently only serve Wardha. Nagpur & Amravati coming soon!', 'error');
+            return;
+        }
+
+        let deviceId = brandSelect.value;
+        let modelId = modelSelect.value;
+        let repairTypeId = repairSelect.value;
+        let deviceOther = null;
+        let repairOther = null;
+
+        if (document.getElementById('reqBrandOther')?.classList.contains('visible')) {
+            deviceOther = document.getElementById('reqBrandOtherInput')?.value.trim();
+            if (!deviceOther) return showToast('Please enter the brand name.', 'error');
+            deviceId = null;
+        }
+        if (document.getElementById('reqModelOther')?.classList.contains('visible')) {
+            const otherModel = document.getElementById('reqModelOtherInput')?.value.trim();
+            if (!otherModel) return showToast('Please enter the model name.', 'error');
+            deviceOther = deviceOther ? deviceOther + ' - ' + otherModel : otherModel;
+            modelId = null;
+        }
+        if (document.getElementById('reqRepairOther')?.classList.contains('visible')) {
+            repairOther = document.getElementById('reqRepairOtherInput')?.value.trim();
+            if (!repairOther) return showToast('Please enter the repair type.', 'error');
+            repairTypeId = null;
+        }
+
+        if (!deviceId && !deviceOther) return showToast('Please select or enter a brand.', 'error');
+        if (!modelId && !deviceOther) return showToast('Please select or enter a model.', 'error');
+        if (!repairTypeId && !repairOther) return showToast('Please select or enter a repair type.', 'error');
+
+        const photoFile = document.getElementById('reqPhoto')?.files[0];
+        let photoUrl = null;
+        if (photoFile) {
+            const fileExt = photoFile.name.split('.').pop();
+            const fileName = `${Date.now()}.${fileExt}`;
+            const filePath = `requests/${fileName}`;
+            const { error: uploadError } = await supabase.storage
+                .from('RequestBucket')
+                .upload(filePath, photoFile);
+            if (uploadError) {
+                showToast('Photo upload failed: ' + uploadError.message, 'error');
+                return;
+            }
+            const { data: urlData } = supabase.storage
+                .from('RequestBucket')
+                .getPublicUrl(filePath);
+            photoUrl = urlData.publicUrl;
+        }
+
+        const session = await supabase.auth.getSession();
+        const user = session.data?.session?.user || null;
+
+        let partsTotal = 0;
+        if (modelId && repairTypeId) {
+            const parts = allParts.filter(p => String(p.device_id) === String(modelId) && String(p.repair_type_id) === String(repairTypeId));
+            const qualityMultiplier = partsQuality === 'premium' ? 1.0 : 0.7;
+            partsTotal = parts.reduce((sum, p) => sum + (p.price * qualityMultiplier), 0);
+        }
+        const discountedParts = partsTotal * 0.9;
+        const serviceFee = discountedParts > 0 ? (discountedParts * 0.15) : 100.00;
+        const totalEstimate = discountedParts + serviceFee + 250;
+
+        const orderData = {
+            order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
+            user_id: user?.id || null,
+            customer_name: name,
+            customer_phone: phone,
+            customer_email: email,
+            device_id: modelId || null,
+            repair_type_id: repairTypeId || null,
+            device_other: deviceOther || null,
+            repair_other: repairOther || null,
+            photo_url: photoUrl,
+            address: addressLine + ', ' + city,
+            parts_quality: partsQuality,
+            parts_total: discountedParts,
+            service_fee: serviceFee,
+            diagnosis_charge: 250,
+            total_price: totalEstimate,
+            discount_applied: 0,
+            status: 'Pending',
+            notes: notes || null,
+            created_at: new Date().toISOString()
+        };
+
         const { data, error } = await supabase.from('orders').insert([orderData]).select();
         if (error) throw error;
         const coordinatorId = await getCoordinatorId();
-        if (coordinatorId && data[0]) {
+        if (coordinatorId && data && data[0]) {
             await supabase.from('orders').update({ assigned_to: coordinatorId }).eq('id', data[0].id);
         }
-        const orderNumber = data[0]?.order_number || orderData.order_number;
+        const orderNumber = (data && data[0]) ? data[0].order_number : orderData.order_number;
         const successDiv = document.getElementById('requestSuccess');
         if (successDiv) {
             successDiv.classList.remove('hidden');
@@ -2473,7 +2494,9 @@ function showRequestEstimate() {
         const parts = allParts.filter(p => String(p.device_id) === String(modelId) && String(p.repair_type_id) === String(repairTypeId));
         if (parts && parts.length > 0) {
             partsFound = true;
-            const qualityMultiplier = 0.7;
+            const qualitySelect = document.getElementById('reqPartsQuality');
+            const quality = qualitySelect ? qualitySelect.value : 'standard';
+            const qualityMultiplier = quality === 'premium' ? 1.0 : 0.7;
             parts.forEach(part => { totalPartsPrice += part.price * qualityMultiplier; });
         }
     }
