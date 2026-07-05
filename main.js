@@ -1070,26 +1070,107 @@ window.confirmPart = async function(orderId) {
 async function sendQuotation(orderId) {
     if (!supabase) return;
     try {
-        const editQuote = prompt("Update & Finalize Price for Quotation (INR):");
-        if (!editQuote || isNaN(editQuote)) {
-            showToast("Invalid price entered.", "error");
-            return;
-        }
-        const finalizedTotal = parseFloat(editQuote);
-        const { error } = await supabase
+        // Fetch current order details
+        const { data: order, error } = await supabase
             .from('orders')
-            .update({
-                total_price: finalizedTotal,
-                status: 'Quotation-Sent'
-            })
-            .eq('id', orderId);
+            .select('*')
+            .eq('id', orderId)
+            .single();
         if (error) throw error;
-        showToast('✉️ Finalized quotation sent to the customer for review!', 'success');
-        loadDashboard();
+
+        // Build modal with editable fields
+        const modal = document.createElement('div');
+        modal.id = 'quotationModal';
+        modal.className = 'fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4';
+        modal.innerHTML = `
+            <div class="bg-slate-900 border border-teal-500/30 rounded-2xl p-6 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+                <h3 class="text-xl font-bold text-white mb-4">📋 Finalize Quotation</h3>
+                <div class="space-y-4">
+                    <div class="bg-slate-800/30 p-3 rounded-xl border border-slate-700/50 text-sm text-gray-300">
+                        <p><strong>Device:</strong> ${order.device_other || getDeviceName(order.device_id) || 'N/A'}</p>
+                        <p><strong>Repair:</strong> ${order.repair_other || getRepairLabel(order.repair_type_id) || 'N/A'}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm text-grayText">Parts Total (INR)</label>
+                        <input type="number" id="quotePartsTotal" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" value="${order.parts_total || 0}" step="0.01" min="0" />
+                    </div>
+                    <div>
+                        <label class="text-sm text-grayText">Service Fee (INR)</label>
+                        <input type="number" id="quoteServiceFee" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" value="${order.service_fee || 0}" step="0.01" min="0" />
+                    </div>
+                    <div>
+                        <label class="text-sm text-grayText">Diagnosis Charge (INR)</label>
+                        <input type="number" id="quoteDiagnosis" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" value="${order.diagnosis_charge || 250}" step="0.01" min="0" />
+                    </div>
+                    <div>
+                        <label class="text-sm text-grayText">Additional Parts (custom quote parts) – edit below</label>
+                        <textarea id="quoteCustomParts" class="w-full bg-navyBG border border-grayBorder rounded-lg p-2 text-white text-sm focus:border-teal-500 outline-none" rows="3">${order.custom_quote_parts || ''}</textarea>
+                        <p class="text-[10px] text-gray-500 mt-1">Add each part on a new line: PartName,Price</p>
+                    </div>
+                    <div class="bg-teal-500/10 border border-teal-500/20 rounded-xl p-3 flex justify-between items-center">
+                        <span class="text-sm font-bold text-white">Total Quoted Price</span>
+                        <span class="text-xl font-black text-teal-400" id="quoteTotalDisplay">₹${(order.total_price || 0).toFixed(2)}</span>
+                    </div>
+                    <div class="flex gap-3 pt-2">
+                        <button onclick="document.getElementById('quotationModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
+                        <button onclick="confirmQuotationFinal('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Send Quotation</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Live update total when fields change
+        const updateTotal = () => {
+            const parts = parseFloat(document.getElementById('quotePartsTotal').value) || 0;
+            const service = parseFloat(document.getElementById('quoteServiceFee').value) || 0;
+            const diagnosis = parseFloat(document.getElementById('quoteDiagnosis').value) || 0;
+            const total = parts + service + diagnosis;
+            document.getElementById('quoteTotalDisplay').textContent = '₹' + total.toFixed(2);
+        };
+        document.getElementById('quotePartsTotal').addEventListener('input', updateTotal);
+        document.getElementById('quoteServiceFee').addEventListener('input', updateTotal);
+        document.getElementById('quoteDiagnosis').addEventListener('input', updateTotal);
     } catch (err) {
-        showToast('Failed to dispatch quotation: ' + err.message, 'error');
+        showToast('Failed to load order: ' + err.message, 'error');
     }
 }
+
+// Global function for the modal button
+window.confirmQuotationFinal = async function(orderId) {
+    const partsTotal = parseFloat(document.getElementById('quotePartsTotal').value) || 0;
+    const serviceFee = parseFloat(document.getElementById('quoteServiceFee').value) || 0;
+    const diagnosis = parseFloat(document.getElementById('quoteDiagnosis').value) || 0;
+    const customParts = document.getElementById('quoteCustomParts').value.trim();
+    const total = partsTotal + serviceFee + diagnosis;
+
+    if (total <= 0) {
+        showToast('Total must be greater than 0.', 'error');
+        return;
+    }
+
+    if (!supabase) return;
+    try {
+        const updateData = {
+            parts_total: partsTotal,
+            service_fee: serviceFee,
+            diagnosis_charge: diagnosis,
+            total_price: total,
+            custom_quote_parts: customParts || null,
+            status: 'Quotation-Sent'
+        };
+        const { error } = await supabase
+            .from('orders')
+            .update(updateData)
+            .eq('id', orderId);
+        if (error) throw error;
+        showToast('✉️ Quotation sent to customer!', 'success');
+        document.getElementById('quotationModal')?.remove();
+        loadDashboard();
+    } catch (err) {
+        showToast('Failed to send quotation: ' + err.message, 'error');
+    }
+};
 
 async function confirmQuotation(orderId) {
     if (!supabase) return;
