@@ -726,6 +726,15 @@ async function getCoordinatorId() {
 }
 
 // ─── 5. SUBMIT REQUEST PIPELINE ───
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+
 async function submitRequest(e) {
     e.preventDefault();
     if (!supabase) {
@@ -798,20 +807,34 @@ async function submitRequest(e) {
         const photoFile = document.getElementById('reqPhoto')?.files[0];
         let photoUrl = null;
         if (photoFile) {
-            const fileExt = photoFile.name.split('.').pop();
-            const fileName = `${Date.now()}.${fileExt}`;
-            const filePath = `requests/${fileName}`;
-            const { error: uploadError } = await supabase.storage
-                .from('RequestBucket')
-                .upload(filePath, photoFile);
-            if (uploadError) {
-                showToast('Photo upload failed: ' + uploadError.message, 'error');
-                return;
+            try {
+                const fileExt = photoFile.name.split('.').pop();
+                const fileName = `${Date.now()}.${fileExt}`;
+                const filePath = `requests/${fileName}`;
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('RequestBucket')
+                    .upload(filePath, photoFile);
+                if (uploadError) {
+                    console.warn('Storage upload error, falling back to base64:', uploadError);
+                    try {
+                        photoUrl = await fileToBase64(photoFile);
+                    } catch (b64Err) {
+                        console.error('Base64 conversion failed:', b64Err);
+                    }
+                } else {
+                    const { data: urlData } = supabase.storage
+                        .from('RequestBucket')
+                        .getPublicUrl(filePath);
+                    photoUrl = urlData.publicUrl;
+                }
+            } catch (storageErr) {
+                console.warn('Storage upload threw exception, falling back to base64:', storageErr);
+                try {
+                    photoUrl = await fileToBase64(photoFile);
+                } catch (b64Err) {
+                    console.error('Base64 conversion exception:', b64Err);
+                }
             }
-            const { data: urlData } = supabase.storage
-                .from('RequestBucket')
-                .getPublicUrl(filePath);
-            photoUrl = urlData.publicUrl;
         }
 
         const session = await supabase.auth.getSession();
