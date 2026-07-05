@@ -424,40 +424,40 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!--  HEADER                                             -->
     <!-- ════════════════════════════════════════════════════ -->
-    <header class="container-custom py-4 flex items-center justify-between flex-wrap gap-4 sticky top-0 z-40 bg-[#0A0F1D]/85 backdrop-blur-md border-b border-white/5">
-        <div class="flex items-center gap-3 md:gap-4 cursor-pointer select-none" onclick="window.location.href='index.html'">
+    <header class="container-custom py-3 md:py-4 flex items-center justify-between gap-2 md:gap-4 sticky top-0 z-40 bg-[#0A0F1D]/85 backdrop-blur-md border-b border-white/5">
+        <div class="flex items-center gap-2 md:gap-4 cursor-pointer select-none" onclick="window.location.href='index.html'">
             <!-- Logo Icon Container styled to match the mockup perfectly -->
-            <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-14 w-14 md:h-[68px] md:w-[68px] shadow-[0_0_15px_rgba(20,184,166,0.15)] shrink-0 transition-transform duration-300 hover:scale-105">
+            <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-12 w-12 md:h-[68px] md:w-[68px] shadow-[0_0_15px_rgba(20,184,166,0.15)] shrink-0 transition-transform duration-300 hover:scale-105">
                 <img src="app/src/main/res/drawable/img_maintenance_mode_1782766826537.jpg" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
             </div>
             
             <!-- Vertical Divider -->
-            <div class="h-12 md:h-[62px] w-[1.5px] bg-teal/60 shrink-0"></div>
+            <div class="h-10 md:h-[62px] w-[1.5px] bg-teal/60 shrink-0"></div>
             
             <!-- Branding Text Block -->
-            <div class="flex flex-col justify-center relative pr-8">
-                <div class="font-display text-2xl md:text-[30px] font-bold tracking-tight leading-none text-white">
+            <div class="flex flex-col justify-center relative pr-4 md:pr-8">
+                <div class="font-display text-lg sm:text-xl md:text-[30px] font-bold tracking-tight leading-none text-white">
                     Repair<span class="text-teal">Master</span>
                 </div>
                 <!-- Horizontal Line -->
                 <div class="w-full h-[1.5px] bg-teal/60 my-1 md:my-1.5"></div>
                 <!-- Tagline -->
-                <div class="text-[11px] md:text-[14px] font-semibold text-white leading-none tracking-normal">
+                <div class="text-[9px] sm:text-[11px] md:text-[14px] font-semibold text-white leading-none tracking-normal">
                     Direct To Consumer
                 </div>
                 <!-- Powered By -->
-                <div class="text-[9px] md:text-[11px] text-white/90 italic mt-0.5 md:mt-1 leading-none">
+                <div class="text-[7px] sm:text-[9px] md:text-[11px] text-white/90 italic mt-0.5 md:mt-1 leading-none">
                     powered by <span class="text-teal font-medium not-italic">cm2us.com</span>
                 </div>
                 
                 <!-- Sparkles Sparkle on the Right of the text -->
                 <div class="absolute right-0 bottom-1 flex flex-col items-center gap-1">
                     <!-- Large Sparkle -->
-                    <svg class="w-3.5 h-3.5 text-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                    <svg class="w-3 h-3 md:w-3.5 md:h-3.5 text-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
                     </svg>
                     <!-- Small Sparkle -->
-                    <svg class="w-2 h-2 text-teal/80 translate-x-2 -translate-y-1 animate-pulse" viewBox="0 0 24 24" fill="currentColor" style="animation-delay: 0.5s;">
+                    <svg class="w-1.5 h-1.5 md:w-2 md:h-2 text-teal/80 translate-x-1.5 md:translate-x-2 -translate-y-1 animate-pulse" viewBox="0 0 24 24" fill="currentColor" style="animation-delay: 0.5s;">
                         <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
                     </svg>
                 </div>
@@ -482,18 +482,6 @@
         <button class="mobile-menu text-white text-2xl" onclick="toggleMobileMenu()">
             <i class="fa-solid fa-bars"></i>
         </button>
-        <div id="mobileNav" class="hidden absolute top-full left-0 w-full bg-[#0A0F1D]/95 backdrop-blur-md p-6 flex flex-col gap-4 text-center border-b border-white/5 z-50">
-            <a href="index.html" class="nav-link active">Home</a>
-            <a href="request.html" class="nav-link">Repair Request</a>
-            <a href="app.html" class="nav-link">Download</a>
-            <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="login.html" class="nav-link" id="mobileNavLogin">Login</a>
-            <a href="signup.html" class="nav-link" id="mobileNavSignup">Sign Up</a>
-            <span id="mobileNavUserInfo" class="hidden text-sm text-gray-300">
-                <span id="mobileNavUserName" class="font-bold">User</span>
-                <button onclick="logoutUser(); toggleMobileMenu();" class="text-red-400 ml-2 font-bold">Logout</button>
-            </span>
-        </div>
     </header>
 
     <!-- ════════════════════════════════════════════════════ -->

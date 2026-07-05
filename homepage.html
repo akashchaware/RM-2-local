@@ -674,15 +674,19 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!--  HEADER                                             -->
     <!-- ════════════════════════════════════════════════════ -->
-    <header class="container-custom py-5 flex items-center justify-between flex-wrap gap-4 sticky top-0 z-40 bg-[#0A0F1D]/80 backdrop-blur-md border-b border-white/5">
-        <div class="flex items-center gap-4 cursor-pointer" onclick="navigateTo('home')">
-            <div class="rm-logo">RM</div>
-            <div>
-                <span class="font-display text-2xl md:text-3xl font-black tracking-tight">
-                    <span class="text-white">Repair</span><span class="text-teal">Master</span>
-                </span>
-                <span class="block text-[8px] font-semibold tracking-[0.2em] text-emerald-400 uppercase -mt-1">Direct To Consumer</span>
-                <span class="text-[8px] text-gray-500 italic">powered by cm2us.com</span>
+    <header class="container-custom py-3 md:py-4 flex items-center justify-between gap-2 md:gap-4 sticky top-0 z-40 bg-[#0A0F1D]/80 backdrop-blur-md border-b border-white/5">
+        <div class="flex items-center gap-2 md:gap-4 cursor-pointer select-none" onclick="navigateTo('home')">
+            <div class="rm-logo h-10 w-10 text-lg md:h-12 md:w-12 md:text-2xl flex-shrink-0">RM</div>
+            <div class="flex flex-col justify-center pr-2 md:pr-4">
+                <div class="font-display text-lg sm:text-xl md:text-3xl font-bold tracking-tight leading-none text-white">
+                    Repair<span class="text-teal">Master</span>
+                </div>
+                <div class="text-[8px] md:text-[10px] font-semibold text-teal leading-none tracking-normal mt-0.5">
+                    Direct To Consumer
+                </div>
+                <div class="text-[7px] md:text-[8px] text-white/50 italic leading-none mt-0.5">
+                    powered by <span class="text-teal font-medium not-italic">cm2us.com</span>
+                </div>
             </div>
         </div>
 
@@ -704,18 +708,6 @@
         <button class="mobile-menu text-white text-2xl" onclick="toggleMobileMenu()">
             <i class="fa-solid fa-bars"></i>
         </button>
-        <div id="mobileNav" class="hidden absolute top-full left-0 w-full bg-[#0A0F1D]/95 backdrop-blur-md p-6 flex flex-col gap-4 text-center border-b border-white/5 z-50">
-            <a href="#" class="nav-link" data-page="home" onclick="navigateTo('home'); toggleMobileMenu();">Home</a>
-            <a href="#" class="nav-link" data-page="request" onclick="navigateTo('request'); toggleMobileMenu();">Repair Request</a>
-            <a href="#" class="nav-link" data-page="app" onclick="navigateTo('app'); toggleMobileMenu();">Download</a>
-            <a href="#" class="nav-link" data-page="dashboard" onclick="navigateTo('dashboard'); toggleMobileMenu();">Dashboard</a>
-            <a href="#" class="nav-link" id="mobileNavLogin" data-page="login" onclick="navigateTo('login'); toggleMobileMenu();">Login</a>
-            <a href="#" class="nav-link" id="mobileNavSignup" data-page="signup" onclick="navigateTo('signup'); toggleMobileMenu();">Sign Up</a>
-            <span id="mobileNavUserInfo" class="hidden text-sm text-gray-300">
-                <span id="mobileNavUserName" class="font-bold">User</span>
-                <button onclick="logoutUser(); toggleMobileMenu();" class="text-red-400 ml-2 font-bold">Logout</button>
-            </span>
-        </div>
     </header>
 
     <!-- ════════════════════════════════════════════════════ -->

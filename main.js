@@ -1023,10 +1023,30 @@ async function loadStaffLists() {
     }
 }
 
-function showAssignForm(orderId) {
-    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
-    if (!inlineContainer) return;
+function closeAllDashboardModals() {
+    const modals = document.querySelectorAll('.dashboard-modal');
+    modals.forEach(m => m.remove());
+}
+window.closeAllDashboardModals = closeAllDashboardModals;
+
+function createDashboardModal(modalId, contentHtml, maxWidthClass = 'max-w-md') {
+    closeAllDashboardModals(); // Close any other open dashboard modals first!
     
+    const modal = document.createElement('div');
+    modal.id = modalId;
+    modal.className = 'dashboard-modal fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto';
+    modal.innerHTML = `
+        <div class="bg-slate-900 border border-teal-500/30 p-6 rounded-2xl ${maxWidthClass} w-full shadow-2xl relative text-left my-8">
+            <button onclick="closeAllDashboardModals()" class="absolute top-4 right-4 text-gray-400 hover:text-white text-lg transition">✕</button>
+            ${contentHtml}
+        </div>
+    `;
+    document.body.appendChild(modal);
+    return modal;
+}
+window.createDashboardModal = createDashboardModal;
+
+function showAssignForm(orderId) {
     const techs = window.allTechnicians || [];
     const masters = window.allRepairMasters || [];
     
@@ -1040,30 +1060,38 @@ function showAssignForm(orderId) {
         masterOptions += `<option value="${m.id}">${m.name}</option>`;
     });
     
-    inlineContainer.innerHTML = `
-        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 mt-3 w-full text-left">
-            <div class="flex items-center justify-between border-b border-white/5 pb-2">
-                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-user-plus mr-1"></i> Assign Field Staff</span>
-                <span class="text-[9px] text-gray-500">Manual Routing</span>
+    const contentHtml = `
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 border-b border-white/5 pb-3">
+                <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-user-plus"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-teal-400 uppercase tracking-wider">Assign Field Staff</h3>
+                    <p class="text-[10px] text-gray-400">Manual dispatch routing for doorstep pickup</p>
+                </div>
             </div>
-            <div>
-                <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Field Pickup Technician</label>
-                <select id="assign-tech-${orderId}" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
-                    ${techOptions}
-                </select>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Field Pickup Technician</label>
+                    <select id="assign-tech-${orderId}" class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
+                        ${techOptions}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Bench RepairMaster</label>
+                    <select id="assign-master-${orderId}" class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
+                        ${masterOptions}
+                    </select>
+                </div>
             </div>
-            <div>
-                <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Bench RepairMaster</label>
-                <select id="assign-master-${orderId}" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
-                    ${masterOptions}
-                </select>
-            </div>
-            <div class="flex gap-2 justify-end pt-1">
-                <button onclick="loadDashboard()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
-                <button onclick="submitAssignRoles('${orderId}')" class="px-3 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Confirm Staff</button>
+            <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
+                <button onclick="closeAllDashboardModals()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitAssignRoles('${orderId}')" class="px-4 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Confirm Staff</button>
             </div>
         </div>
     `;
+    createDashboardModal(`assignModal-${orderId}`, contentHtml, 'max-w-md');
 }
 
 async function submitAssignRoles(orderId) {
@@ -1083,9 +1111,6 @@ async function submitAssignRoles(orderId) {
 }
 
 function showAssignDeliveryForm(orderId) {
-    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
-    if (!inlineContainer) return;
-    
     const techs = window.allTechnicians || [];
     
     let techOptions = `<option value="">-- Select Delivery Tech --</option>`;
@@ -1093,24 +1118,30 @@ function showAssignDeliveryForm(orderId) {
         techOptions += `<option value="${t.id}">${t.name}</option>`;
     });
     
-    inlineContainer.innerHTML = `
-        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 mt-3 w-full text-left">
-            <div class="flex items-center justify-between border-b border-white/5 pb-2">
-                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-truck mr-1"></i> Assign Delivery Staff</span>
-                <span class="text-[9px] text-gray-500">Delivery Logistics</span>
+    const contentHtml = `
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 border-b border-white/5 pb-2">
+                <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-truck"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-teal-400 uppercase tracking-wider">Assign Delivery Staff</h3>
+                    <p class="text-[10px] text-gray-400">Delivery logistics dispatcher</p>
+                </div>
             </div>
             <div>
                 <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Delivery Technician</label>
-                <select id="assign-delivery-tech-${orderId}" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
+                <select id="assign-delivery-tech-${orderId}" class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal">
                     ${techOptions}
                 </select>
             </div>
-            <div class="flex gap-2 justify-end pt-1">
-                <button onclick="loadDashboard()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
-                <button onclick="submitAssignDelivery('${orderId}')" class="px-3 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Confirm Tech</button>
+            <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
+                <button onclick="closeAllDashboardModals()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitAssignDelivery('${orderId}')" class="px-4 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Confirm Tech</button>
             </div>
         </div>
     `;
+    createDashboardModal(`assignDeliveryModal-${orderId}`, contentHtml, 'max-w-md');
 }
 
 async function submitAssignDelivery(orderId) {
@@ -1128,25 +1159,28 @@ async function submitAssignDelivery(orderId) {
 }
 
 function showDiagnosisForm(orderId) {
-    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
-    if (!inlineContainer) return;
-    
-    inlineContainer.innerHTML = `
-        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 mt-3 w-full text-left">
-            <div class="flex items-center justify-between border-b border-white/5 pb-1.5">
-                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-stethoscope mr-1"></i> Lab Diagnosis Logs</span>
-                <span class="text-[9px] text-gray-500">RepairMaster Bench</span>
+    const contentHtml = `
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 border-b border-white/5 pb-2">
+                <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-stethoscope"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-teal-400 uppercase tracking-wider">Lab Diagnosis Logs</h3>
+                    <p class="text-[10px] text-gray-400">RepairMaster Bench Desk</p>
+                </div>
             </div>
             <div>
                 <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Diagnosis Notes &amp; Test Results</label>
-                <textarea id="diag-notes-${orderId}" rows="3" placeholder="Describe hardware test results, motherboard diagnostics, or microscopic inspection notes..." class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none resize-none focus:border-teal"></textarea>
+                <textarea id="diag-notes-${orderId}" rows="4" placeholder="Describe hardware test results, motherboard diagnostics, or microscopic inspection notes..." class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none resize-none focus:border-teal"></textarea>
             </div>
-            <div class="flex gap-2 justify-end pt-1">
-                <button onclick="loadDashboard()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
-                <button onclick="submitDiagnosis('${orderId}')" class="px-3 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Save Logs</button>
+            <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
+                <button onclick="closeAllDashboardModals()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitDiagnosis('${orderId}')" class="px-4 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Save Logs</button>
             </div>
         </div>
     `;
+    createDashboardModal(`diagModal-${orderId}`, contentHtml, 'max-w-md');
 }
 
 async function submitDiagnosis(orderId) {
@@ -1163,31 +1197,34 @@ async function submitDiagnosis(orderId) {
 }
 
 function showAddPartForm(orderId) {
-    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
-    if (!inlineContainer) return;
-    
-    inlineContainer.innerHTML = `
-        <div class="bg-slate-950 p-4 rounded-xl border border-teal-500/30 space-y-3 mt-3 w-full text-left">
-            <div class="flex items-center justify-between border-b border-white/5 pb-1.5">
-                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-puzzle-piece mr-1"></i> Request Additional Part</span>
-                <span class="text-[9px] text-gray-500">Bench Lab Extra</span>
+    const contentHtml = `
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 border-b border-white/5 pb-2">
+                <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-puzzle-piece"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-teal-400 uppercase tracking-wider">Request Additional Part</h3>
+                    <p class="text-[10px] text-gray-400">Bench Lab extra component log</p>
+                </div>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="space-y-3">
                 <div>
                     <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Part / Service Name</label>
-                    <input type="text" id="add-part-name-${orderId}" placeholder="e.g. Back Glass panel" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal" />
+                    <input type="text" id="add-part-name-${orderId}" placeholder="e.g. Back Glass panel" class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal" />
                 </div>
                 <div>
                     <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Estimated Cost (₹)</label>
-                    <input type="number" id="add-part-price-${orderId}" placeholder="e.g. 1500" class="w-full bg-slate-900 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal" />
+                    <input type="number" id="add-part-price-${orderId}" placeholder="e.g. 1500" class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal" />
                 </div>
             </div>
-            <div class="flex gap-2 justify-end pt-1">
-                <button onclick="loadDashboard()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
-                <button onclick="submitAddPart('${orderId}')" class="px-3 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Submit Request</button>
+            <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
+                <button onclick="closeAllDashboardModals()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
+                <button onclick="submitAddPart('${orderId}')" class="px-4 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Submit Request</button>
             </div>
         </div>
     `;
+    createDashboardModal(`addPartModal-${orderId}`, contentHtml, 'max-w-md');
 }
 
 async function submitAddPart(orderId) {
@@ -1266,9 +1303,6 @@ function showQuotationForm(orderId, basePrice, customPartsStr) {
 }
 
 function renderQuotationFormInlineEditable(orderId) {
-    const inlineContainer = document.getElementById(`inline-form-container-${orderId}`);
-    if (!inlineContainer) return;
-    
     const partsList = window.editingQuotationParts[orderId] || [];
     const serviceFee = window.editingQuotationServiceFee[orderId] || 0;
     const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 0;
@@ -1315,17 +1349,22 @@ function renderQuotationFormInlineEditable(orderId) {
         additionalPartsHtml = `<p class="text-xs text-gray-600 italic py-1">No additional diagnosed components listed yet.</p>`;
     }
     
-    inlineContainer.innerHTML = `
-        <div class="bg-slate-950 p-5 rounded-xl border border-teal-500/30 space-y-4 mt-3 w-full text-left shadow-2xl">
-            <div class="flex items-center justify-between border-b border-white/5 pb-2">
-                <span class="text-xs font-bold text-teal-400 uppercase tracking-wider"><i class="fa-solid fa-file-invoice-dollar mr-1"></i> Finalize Customer Quotation Breakdown</span>
-                <span class="text-[9px] text-gray-500 font-medium">Coordinator Desk</span>
+    const contentHtml = `
+        <div class="space-y-4">
+            <div class="flex items-center gap-2 border-b border-white/5 pb-2">
+                <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                </div>
+                <div>
+                    <h3 class="text-sm font-bold text-teal-400 uppercase tracking-wider">Finalize Customer Quotation</h3>
+                    <p class="text-[10px] text-gray-400 font-medium">Coordinator Desk Breakdown</p>
+                </div>
             </div>
             
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                     <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">🩺 Diagnosis Charge</label>
-                    <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg p-2 focus-within:border-teal transition">
+                    <div class="flex items-center bg-slate-950 border border-white/10 rounded-lg p-2 focus-within:border-teal transition">
                         <span class="text-xs text-gray-500 mr-1.5">₹</span>
                         <input type="number" id="quote-diag-price-${orderId}" value="${diagnosisCharge}" oninput="updateQuotationDiagnosisChargeEditable('${orderId}', this.value)" class="w-full bg-transparent border-none text-white text-xs font-bold outline-none" />
                     </div>
@@ -1333,7 +1372,7 @@ function renderQuotationFormInlineEditable(orderId) {
                 
                 <div>
                     <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">🔧 Service &amp; Labor Fee</label>
-                    <div class="flex items-center bg-slate-900 border border-white/10 rounded-lg p-2 focus-within:border-teal transition">
+                    <div class="flex items-center bg-slate-950 border border-white/10 rounded-lg p-2 focus-within:border-teal transition">
                         <span class="text-xs text-gray-500 mr-1.5">₹</span>
                         <input type="number" id="quote-service-price-${orderId}" value="${serviceFee}" oninput="updateQuotationServiceFeeEditable('${orderId}', this.value)" class="w-full bg-transparent border-none text-white text-xs font-bold outline-none" />
                     </div>
@@ -1347,7 +1386,7 @@ function renderQuotationFormInlineEditable(orderId) {
                         <i class="fa-solid fa-plus text-[8px]"></i> Add Old Part
                     </button>
                 </div>
-                <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                     ${originalPartsHtml}
                 </div>
             </div>
@@ -1359,7 +1398,7 @@ function renderQuotationFormInlineEditable(orderId) {
                         <i class="fa-solid fa-plus text-[8px]"></i> Add New Part
                     </button>
                 </div>
-                <div class="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+                <div class="space-y-1.5 max-h-36 overflow-y-auto pr-1">
                     ${additionalPartsHtml}
                 </div>
             </div>
@@ -1369,7 +1408,7 @@ function renderQuotationFormInlineEditable(orderId) {
                 <div class="text-sm font-black text-emerald-400">₹${liveTotal.toLocaleString('en-IN')}</div>
             </div>
             
-            <div class="flex gap-2 justify-end">
+            <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
                 <button onclick="cancelQuotationEdit('${orderId}')" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
                 <button onclick="submitFinalizedQuotation('${orderId}')" class="px-4 py-1.5 rounded bg-teal text-slate-950 text-xs font-black hover:bg-tealAccent transition shadow-md flex items-center gap-1">
                     <i class="fa-solid fa-paper-plane text-[10px]"></i> Send Quotation
@@ -1377,6 +1416,8 @@ function renderQuotationFormInlineEditable(orderId) {
             </div>
         </div>
     `;
+    
+    createDashboardModal(`quoteModal-${orderId}`, contentHtml, 'max-w-xl');
 }
 
 function updateQuotationPartPrice(orderId, index, value) {
@@ -1691,6 +1732,7 @@ async function updateProfile() {
 
 // ─── 9. LIVE DASHBOARD RENDERER ───
 async function loadDashboard() {
+    closeAllDashboardModals();
     const container = document.getElementById('dashboardContent');
     if (!container) return;
 
@@ -2607,9 +2649,122 @@ async function signInWithGoogle() {
 }
 
 function toggleMobileMenu() {
-    const mobileNav = document.getElementById('mobileNav');
-    if (mobileNav) mobileNav.classList.toggle('hidden');
+    let mobileDrawer = document.getElementById('mobileNavDrawer');
+    if (!mobileDrawer) {
+        mobileDrawer = document.createElement('div');
+        mobileDrawer.id = 'mobileNavDrawer';
+        mobileDrawer.className = 'fixed inset-0 z-50 hidden';
+        mobileDrawer.innerHTML = `
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300" onclick="toggleMobileMenu()"></div>
+            <!-- Drawer Body -->
+            <div class="fixed inset-y-0 right-0 w-80 bg-[#0A0F1D] border-l border-slate-800 shadow-2xl p-6 flex flex-col justify-between z-10 transition-transform duration-300 transform translate-x-full" id="mobileDrawerBody">
+                <div class="space-y-6">
+                    <!-- Drawer Header -->
+                    <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-tealAccent uppercase tracking-wider font-display">Navigation Menu</span>
+                        </div>
+                        <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white text-lg transition">✕</button>
+                    </div>
+
+                    <!-- Navigation Links -->
+                    <nav class="flex flex-col gap-3 text-sm font-medium">
+                        <a href="index.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-index">
+                            <i class="fa-solid fa-house text-tealAccent/80"></i> Home
+                        </a>
+                        <a href="request.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-request">
+                            <i class="fa-solid fa-screwdriver-wrench text-tealAccent/80"></i> Repair Request
+                        </a>
+                        <a href="app.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-app">
+                            <i class="fa-solid fa-mobile-screen text-tealAccent/80"></i> Download App
+                        </a>
+                        <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
+                            <i class="fa-solid fa-chart-line text-tealAccent/80"></i> Dashboard
+                        </a>
+                    </nav>
+                </div>
+
+                <!-- Footer (Auth / User Actions) -->
+                <div class="border-t border-white/5 pt-4 space-y-3" id="mobileDrawerAuthBlock">
+                </div>
+            </div>
+        `;
+        document.body.appendChild(mobileDrawer);
+    }
+
+    // Always update auth section dynamically based on current user state!
+    const authBlock = document.getElementById('mobileDrawerAuthBlock');
+    if (authBlock) {
+        if (currentUser) {
+            const username = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
+            const initials = username.substring(0, 2).toUpperCase();
+            authBlock.innerHTML = `
+                <div class="space-y-2">
+                    <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800">
+                        <div class="w-9 h-9 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-bold text-xs flex items-center justify-center">
+                            ${initials}
+                        </div>
+                        <div class="min-w-0">
+                            <p class="text-xs font-bold text-white truncate">${username}</p>
+                            <p class="text-[10px] text-teal-400">Registered DTC Member</p>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-regular fa-user"></i> Profile
+                        </button>
+                        <button onclick="logoutUser(); toggleMobileMenu();" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
+                            <i class="fa-solid fa-power-off"></i> Logout
+                        </button>
+                    </div>
+                </div>
+            `;
+        } else {
+            authBlock.innerHTML = `
+                <div class="flex flex-col gap-2">
+                    <a href="login.html" class="w-full bg-teal text-slate-950 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 hover:bg-tealAccent transition" onclick="toggleMobileMenu()">
+                        <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                    </a>
+                    <a href="signup.html" class="w-full bg-slate-900 border border-slate-800 text-gray-300 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-850 transition" onclick="toggleMobileMenu()">
+                        <i class="fa-solid fa-user-plus"></i> Sign Up
+                    </a>
+                </div>
+            `;
+        }
+    }
+
+    // Always update active navigation highlight!
+    const path = window.location.pathname.toLowerCase();
+    let activeId = 'mLink-index';
+    if (path.includes('request')) activeId = 'mLink-request';
+    else if (path.includes('app')) activeId = 'mLink-app';
+    else if (path.includes('dashboard')) activeId = 'mLink-dashboard';
+    
+    document.querySelectorAll('.mobile-nav-link').forEach(link => {
+        if (link.id === activeId) {
+            link.className = 'mobile-nav-link flex items-center gap-3 text-teal font-extrabold p-3 rounded-xl bg-teal-500/10 border border-teal-500/20 transition';
+        } else {
+            link.className = 'mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition';
+        }
+    });
+
+    const isHidden = mobileDrawer.classList.contains('hidden');
+    const body = document.getElementById('mobileDrawerBody');
+    if (isHidden) {
+        mobileDrawer.classList.remove('hidden');
+        // trigger reflow then slide in
+        setTimeout(() => {
+            if (body) body.classList.remove('translate-x-full');
+        }, 10);
+    } else {
+        if (body) body.classList.add('translate-x-full');
+        setTimeout(() => {
+            mobileDrawer.classList.add('hidden');
+        }, 300);
+    }
 }
+window.toggleMobileMenu = toggleMobileMenu;
 
 // Carousel controls
 let currentSlide = 0;
