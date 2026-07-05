@@ -239,43 +239,45 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     }
 
     // Customer & Guest Actions
-    const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
-    if (isClient) {
-        if (status === 'Quotation-Sent') {
-    actions += `
-        <button onclick="viewQuotation('${o.id}')" class="action-btn btn-confirm">View Quotation</button>
-    `;
-} else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
-            const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
+const isClient = isGuestMode || (currentUser && o.user_id === currentUser.id && !isAdmin && !isCoordinator && !isTechnician && !isRepairMaster);
+if (isClient) {
+    if (status === 'Quotation-Sent') {
+        actions += `
+            <button onclick="viewQuotation('${o.id}')" class="action-btn btn-confirm">View Quotation</button>
+        `;
+    } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
+        const labelPay = status === 'Rejected' 
+            ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})`
+            : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
+        actions += `
+            <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
+        `;
+    } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
+        if (!o.customer_rating) {
             actions += `
-                <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
+                <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left max-w-sm w-full font-display">
+                    <p class="text-xs font-bold text-white mb-2"><i class="fa-regular fa-star text-teal mr-1"></i> Rate Your Doorstep Experience</p>
+                    <div class="flex gap-1 mb-2">
+                        <button onclick="this.parentElement.setAttribute('data-rating', '1'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 1 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                        <button onclick="this.parentElement.setAttribute('data-rating', '2'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 2 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                        <button onclick="this.parentElement.setAttribute('data-rating', '3'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 3 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                        <button onclick="this.parentElement.setAttribute('data-rating', '4'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 4 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                        <button onclick="this.parentElement.setAttribute('data-rating', '5'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < 5 ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
+                    </div>
+                    <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
+                    <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
+                </div>
             `;
-        } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
-            // If they have not left a rating yet, allow writing a review!
-            if (!o.customer_rating) {
-                actions += `
-                    <div class="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-800 text-left max-w-sm w-full">
-                        <p class="text-xs font-bold text-white mb-2"><i class="fa-regular fa-star text-tealAccent mr-1"></i> Rate Your Doorstep Experience</p>
-                        <div class="flex gap-1 mb-2">
-                            ${[1, 2, 3, 4, 5].map(star => `
-                                <button onclick="this.parentElement.setAttribute('data-rating', '${star}'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < ${star} ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
-                            `).join('')}
-                        </div>
-                        <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
-                        <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
-                    </div>
-                `;
-            } else {
-                actions += `
-                    <div class="mt-2 text-xs text-amber-400 font-medium">
-                        <span>Your Rating: ${'⭐'.repeat(o.customer_rating)}</span>
-                        ${o.customer_review ? `<p class="text-gray-400 italic mt-1">"${o.customer_review}"</p>` : ''}
-                    </div>
-                `;
-            }
+        } else {
+            actions += `
+                <div class="mt-2 text-xs text-amber-400 font-medium font-display">
+                    <span>Your Rating: ${'⭐'.repeat(o.customer_rating)}</span>
+                    ${o.customer_review ? `<p class="text-gray-400 italic mt-1">"${o.customer_review}"</p>` : ''}
+                </div>
+            `;
         }
     }
-
+}
     let otpNoticeHtml = '';
     if (isClient) {
         if (status === 'Pickup-Pending' && o.pickup_otp) {
