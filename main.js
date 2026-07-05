@@ -947,8 +947,8 @@ async function initiatePickup(orderId) {
             .update({ pickup_otp: otp, status: 'Pickup-Pending' })
             .eq('id', orderId);
         if (error) throw error;
-        alert(`🔒 Handover Security OTP: ${otp}\nProvide this code to the customer to authorize the safe handover.`);
-        showToast('🔒 Handover OTP generated: ' + otp, 'success');
+        // ✅ Removed the alert – technician should not see the OTP
+        showToast('🔒 Pickup initiated. Customer will receive the OTP for handover.', 'success');
         loadDashboard();
     } catch (err) {
         showToast('Pickup generation failed: ' + err.message, 'error');
