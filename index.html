@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RepairMaster – Premium Doorstep & Lab Repairs</title>
-    <link rel="icon" href="data:," />
+    <link rel="icon" type="image/jpg" href="app/src/main/res/drawable/img_maintenance_mode_1782766826537.jpg" />
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Custom Theme Styling Config -->
@@ -12,7 +12,6 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
-        /* ─── All your existing styles (unchanged) ─── */
         * {
             margin: 0;
             padding: 0;
@@ -194,6 +193,20 @@
         }
         .mobile-menu {
             display: none;
+        }
+        @media (max-width: 768px) {
+            .mobile-menu {
+                display: block;
+            }
+            .desktop-nav {
+                display: none;
+            }
+            .carousel-slide {
+                padding: 0 5%;
+            }
+            .carousel-content h1 {
+                font-size: 2.2rem;
+            }
         }
         .glass-card {
             background: rgba(255, 255, 255, 0.03);
@@ -380,36 +393,9 @@
             gap: 14px;
             backdrop-filter: blur(4px);
         }
-
-        /* ─── RESPONSIVE MEDIA QUERIES (improved) ─── */
-        @media (max-width: 768px) {
-            .mobile-menu {
-                display: block;
-            }
-            .desktop-nav {
-                display: none;
-                flex-direction: column;
-                gap: 12px;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                width: 100%;
-                background: #0A0F1D;
-                padding: 20px;
-                border-bottom: 1px solid rgba(255,255,255,0.05);
-            }
-            .desktop-nav.open {
-                display: flex;
-            }
-            .carousel-container {
-                height: 70vh;
-                min-height: 400px;
-            }
-            .carousel-slide {
-                padding: 0 5%;
-            }
-            .carousel-content h1 {
-                font-size: 2.2rem;
+        @media (max-width: 640px) {
+            .container-custom {
+                padding: 0 16px;
             }
             .calc-container {
                 padding: 20px;
@@ -417,102 +403,9 @@
             .glass-card {
                 padding: 20px;
             }
-            .container-custom {
-                padding: 0 16px;
-            }
-            .grid-cols-2 {
-                grid-template-columns: 1fr;
-            }
-        }
-        @media (max-width: 640px) {
             .carousel-container {
-                height: 60vh;
-                min-height: 300px;
-            }
-            .carousel-content h1 {
-                font-size: 1.8rem;
-            }
-            .carousel-content p {
-                font-size: 1rem;
-            }
-            .btn-teal, .btn-outline {
-                padding: 10px 20px;
-                font-size: 14px;
-            }
-            .calc-container {
-                padding: 16px;
-            }
-            .offer-card {
-                padding: 16px;
-            }
-            .footer .container-custom {
-                grid-template-columns: 1fr;
-                gap: 20px;
-            }
-            .bottom-nav {
-                font-size: 10px;
-            }
-        }
-
-        /* ─── Other existing styles ─── */
-        .hidden {
-            display: none !important;
-        }
-        .toast {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1a2a3a;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 9999;
-            max-width: 90%;
-            text-align: center;
-        }
-        .toast.show {
-            opacity: 1;
-        }
-        .bottom-nav {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(7, 11, 20, 0.95);
-            border-top: 1px solid rgba(255,255,255,0.1);
-            backdrop-filter: blur(12px);
-            padding: 8px 0;
-            z-index: 50;
-            justify-content: space-around;
-        }
-        .bottom-nav a {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            color: rgba(255,255,255,0.4);
-            font-size: 10px;
-            text-decoration: none;
-            transition: color 0.3s;
-        }
-        .bottom-nav a.active {
-            color: #14B8A6;
-        }
-        .bottom-nav a i {
-            font-size: 20px;
-            margin-bottom: 2px;
-        }
-        @media (max-width: 768px) {
-            .bottom-nav {
-                display: flex;
-            }
-            body {
-                padding-bottom: 70px;
+                height: 70vh;
+                min-height: 400px;
             }
         }
     </style>
@@ -531,28 +424,39 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!--  HEADER                                             -->
     <!-- ════════════════════════════════════════════════════ -->
-    <header class="container-custom py-3 md:py-4 flex items-center justify-between gap-2 md:gap-4 sticky top-0 z-40 bg-[#0A0F1D]/85 backdrop-blur-md border-b border-white/5 relative">
+    <header class="container-custom py-3 md:py-4 flex items-center justify-between gap-2 md:gap-4 sticky top-0 z-40 bg-[#0A0F1D]/85 backdrop-blur-md border-b border-white/5">
         <div class="flex items-center gap-2 md:gap-4 cursor-pointer select-none" onclick="window.location.href='index.html'">
-            <!-- Logo Icon Container -->
+            <!-- Logo Icon Container styled to match the mockup perfectly -->
             <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-12 w-12 md:h-[68px] md:w-[68px] shadow-[0_0_15px_rgba(20,184,166,0.15)] shrink-0 transition-transform duration-300 hover:scale-105">
                 <img src="app/src/main/res/drawable/img_maintenance_mode_1782766826537.jpg" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
             </div>
+            
+            <!-- Vertical Divider -->
             <div class="h-10 md:h-[62px] w-[1.5px] bg-teal/60 shrink-0"></div>
+            
+            <!-- Branding Text Block -->
             <div class="flex flex-col justify-center relative pr-4 md:pr-8">
                 <div class="font-display text-lg sm:text-xl md:text-[30px] font-bold tracking-tight leading-none text-white">
                     Repair<span class="text-teal">Master</span>
                 </div>
+                <!-- Horizontal Line -->
                 <div class="w-full h-[1.5px] bg-teal/60 my-1 md:my-1.5"></div>
+                <!-- Tagline -->
                 <div class="text-[9px] sm:text-[11px] md:text-[14px] font-semibold text-white leading-none tracking-normal">
                     Direct To Consumer
                 </div>
+                <!-- Powered By -->
                 <div class="text-[7px] sm:text-[9px] md:text-[11px] text-white/90 italic mt-0.5 md:mt-1 leading-none">
                     powered by <span class="text-teal font-medium not-italic">cm2us.com</span>
                 </div>
+                
+                <!-- Sparkles Sparkle on the Right of the text -->
                 <div class="absolute right-0 bottom-1 flex flex-col items-center gap-1">
+                    <!-- Large Sparkle -->
                     <svg class="w-3 h-3 md:w-3.5 md:h-3.5 text-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
                     </svg>
+                    <!-- Small Sparkle -->
                     <svg class="w-1.5 h-1.5 md:w-2 md:h-2 text-teal/80 translate-x-1.5 md:translate-x-2 -translate-y-1 animate-pulse" viewBox="0 0 24 24" fill="currentColor" style="animation-delay: 0.5s;">
                         <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
                     </svg>
@@ -560,28 +464,28 @@
             </div>
         </div>
 
-        <!-- Desktop Navigation -->
+        <!-- Desktop Navigation tabs -->
         <nav class="desktop-nav flex items-center gap-8 text-sm font-medium" id="mainNav">
             <a href="index.html" class="nav-link active">Home</a>
             <a href="request.html" class="nav-link">Repair Request</a>
             <a href="app.html" class="nav-link">Download</a>
             <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="#" class="nav-link" onclick="showLogin()">Login</a>
-            <a href="#" class="nav-link" onclick="showSignup()">Sign Up</a>
+            <a href="login.html" class="nav-link" id="navLogin">Login</a>
+            <a href="signup.html" class="nav-link" id="navSignup">Sign Up</a>
             <span id="navUserInfo" class="hidden flex items-center gap-4">
                 <span class="text-sm text-gray-300 font-bold" id="navUserName">User</span>
                 <button onclick="logoutUser()" class="text-sm text-red-400 hover:text-red-300 transition font-bold">Logout</button>
             </span>
         </nav>
 
-        <!-- Mobile Menu Toggle -->
+        <!-- Mobile Menu Toggle Button -->
         <button class="mobile-menu text-white text-2xl" onclick="toggleMobileMenu()">
             <i class="fa-solid fa-bars"></i>
         </button>
     </header>
 
     <!-- ════════════════════════════════════════════════════ -->
-    <!--  MAIN CONTENT                                       -->
+    <!--  PAGE: HOME                                         -->
     <!-- ════════════════════════════════════════════════════ -->
     <main>
         <!-- Carousel Slider -->
@@ -647,7 +551,7 @@
             </div>
         </div>
 
-        <!-- City Notice & Maintenance -->
+        <!-- City Notice & Maintenance Block -->
         <div class="container-custom -mt-12 relative z-10 mb-12">
             <div class="city-notice mb-4">
                 <i class="fa-solid fa-location-dot"></i>
@@ -664,7 +568,7 @@
             </div>
         </div>
 
-        <!-- Calculator Section -->
+        <!-- Dynamic Estimation Calculator Widget -->
         <div id="calculator-section" class="container-custom py-12">
             <div class="text-center space-y-3 mb-12">
                 <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
@@ -676,42 +580,54 @@
             </div>
             <div class="calc-container">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Left: Dropdowns -->
+                    <!-- Dropdowns / Options -->
                     <div class="space-y-6">
                         <div class="form-group">
                             <label>1. Select Brand</label>
-                            <select id="brandSelect"><option value="">— Select Brand —</option></select>
+                            <select id="brandSelect" onchange="updateModels()">
+                                <option value="">— Select Brand —</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>2. Choose Model</label>
-                            <select id="modelSelect"><option value="">— Select Model —</option></select>
+                            <select id="modelSelect" onchange="updateRepairTypes()">
+                                <option value="">— Select Model —</option>
+                            </select>
                         </div>
                         <div class="form-group">
                             <label>3. Select Repair Action</label>
-                            <select id="repairTypeSelect"><option value="">— Select Repair —</option></select>
+                            <select id="repairTypeSelect" onchange="updatePartsSurvey()">
+                                <option value="">— Select Repair —</option>
+                            </select>
                         </div>
                         <div class="form-group">
-                            <label>4. Component Quality</label>
-                            <select id="qualitySelect">
-                                <option value="standard">Standard Grade Spares</option>
-                                <option value="premium">Premium Grade Spares</option>
+                            <label>4. Component Quality Grade</label>
+                            <select id="qualitySelect" onchange="updatePartsSurvey()">
+                                <option value="standard">Standard Grade Spares (Affordable &amp; Durable)</option>
+                                <option value="premium">Premium Grade Spares (OEM Equivalent Glass/OLED)</option>
                             </select>
                         </div>
                         <div class="offer-toggle">
-                            <input type="checkbox" id="offerToggle">
+                            <input type="checkbox" id="offerToggle" onchange="updatePartsSurvey()">
                             <label for="offerToggle">
                                 Apply claim voucher? <span class="offer-badge">50% Off Service Fee</span>
                             </label>
                         </div>
                     </div>
 
-                    <!-- Right: Price Breakdown -->
+                    <!-- Live Breakdown Display -->
                     <div class="bg-navyBG/40 border border-grayBorder/40 rounded-2xl p-6 flex flex-col justify-between">
                         <div>
                             <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-teal"></i> Estimate Summary</h3>
-                            <div id="partsSurveyContainer" class="mb-6 text-sm text-gray-400">
-                                Select options to preview component breakdown.
+                            
+                            <!-- Dynamic Parts Breakdown list -->
+                            <div id="partsSurveyContainer" class="mb-6">
+                                <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 text-center text-grayText/50">
+                                    Select options to preview component breakdown.
+                                </div>
                             </div>
+
+                            <!-- Cost rows -->
                             <div class="space-y-2 border-t border-grayBorder/40 pt-4">
                                 <div class="price-row">
                                     <span class="text-grayText">Discounted Parts:</span>
@@ -731,24 +647,27 @@
                                 </div>
                             </div>
                         </div>
-                        <button id="bookServiceBtn" onclick="createOrder()" class="mt-6 w-full btn-teal py-3.5 rounded-xl font-extrabold hover:scale-[1.02] transition-all">
-                            <i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service
-                        </button>
+
+                        <div class="mt-6 flex gap-4">
+                            <button id="bookServiceBtn" onclick="createOrder()" class="flex-1 btn-teal text-center py-3.5 rounded-xl font-extrabold hover:scale-[1.02] transition-all">
+                                <i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Guest Tracker -->
+        <!-- GUEST QUICK STATUS TRACKER -->
         <section class="container-custom mb-16 relative z-20">
             <div class="bg-slate-900/90 border border-teal-500/20 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
                 <div class="absolute -right-20 -top-20 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
                 <div class="max-w-xl relative z-10">
                     <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-3 py-1 rounded-full font-bold mb-3">
-                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Instant Guest Tracker
+                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Instant Guest Tracker (No Password Needed)
                     </span>
                     <h3 class="text-xl md:text-2xl font-bold text-white font-display mb-2">Track Your Repair Request Instantly</h3>
-                    <p class="text-xs md:text-sm text-gray-400 mb-6">Enter your Reference ID and phone number to view live status.</p>
+                    <p class="text-xs md:text-sm text-gray-400 mb-6">Submitted a request without logging in? Enter your Reference ID (e.g., #RM-REQ-...) and registered phone number to view live status, accept/reject quotations, make escrow payments, view OTPs, or rate us.</p>
                 </div>
                 <form id="guestTrackForm" onsubmit="trackOrderGuest(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
                     <div>
@@ -765,11 +684,13 @@
                         </button>
                     </div>
                 </form>
+                
+                <!-- Track Result Display Area -->
                 <div id="guestTrackResult" class="hidden mt-8 border-t border-slate-800 pt-6"></div>
             </div>
         </section>
 
-        <!-- Warranty Badges -->
+        <!-- Warranty badges info -->
         <div class="container-custom mt-6">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div class="glass-card flex items-center gap-4">
@@ -793,7 +714,7 @@
             </div>
         </div>
 
-        <!-- Offers -->
+        <!-- Dynamic Offers Feed -->
         <div class="container-custom py-16">
             <div class="text-center space-y-3 mb-12">
                 <span class="inline-block bg-amber-500/10 text-amber-400 text-xs px-4 py-1 rounded-full font-bold">
@@ -846,7 +767,7 @@
         </div>
     </footer>
 
-    <!-- Mobile Bottom Nav -->
+    <!-- Mobile App Bottom Navigation Bar -->
     <div class="md:hidden fixed bottom-0 left-0 w-full bg-[#070b14]/95 border-t border-white/10 backdrop-blur-lg flex justify-around py-3 z-50 text-center font-display shadow-2xl">
         <a href="index.html" class="flex flex-col items-center text-[10px] text-teal">
             <i class="fa-solid fa-house text-base mb-1"></i>
@@ -866,366 +787,13 @@
         </a>
     </div>
 
-    <!-- ─── TOAST ─── -->
-    <div id="toast" class="toast"></div>
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed bottom-20 md:bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500"></div>
 
-    <!-- ─── LOGIN MODAL ─── -->
-    <div id="loginModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.6); z-index:999; justify-content:center; align-items:center; padding:20px;">
-        <div style="background:#1a2a3a; max-width:400px; width:100%; border-radius:20px; padding:24px; max-height:90vh; overflow-y:auto; color:#fff;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h2 style="font-size:20px; color:#fff;">Welcome Back</h2>
-                <button onclick="closeLoginModal()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#fff;">&times;</button>
-            </div>
-            <div class="tab-row" style="display:flex; gap:6px; background:#0A0F1D; border-radius:10px; padding:4px; margin-bottom:12px;">
-                <button class="active" data-tab="login2" style="flex:1; padding:10px; border:none; border-radius:8px; font-weight:600; background:#14B8A6; color:#fff; cursor:pointer;">Sign In</button>
-                <button data-tab="signup2" style="flex:1; padding:10px; border:none; border-radius:8px; font-weight:600; background:transparent; color:#aaa; cursor:pointer;">Sign Up</button>
-            </div>
-            <form id="loginForm2">
-                <input type="email" id="loginEmail2" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #2a3a4a; background:#0A0F1D; color:#fff;" required />
-                <input type="password" id="loginPassword2" placeholder="Password" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #2a3a4a; background:#0A0F1D; color:#fff;" required />
-                <button type="submit" class="btn-primary" style="width:100%; padding:14px; background:#14B8A6; color:#0A0F1D; border:none; border-radius:10px; font-weight:700; cursor:pointer;">Sign In</button>
-            </form>
-            <form id="signupForm2" style="display:none;">
-                <input type="text" id="signupName2" placeholder="Full Name" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #2a3a4a; background:#0A0F1D; color:#fff;" required />
-                <input type="email" id="signupEmail2" placeholder="Email" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #2a3a4a; background:#0A0F1D; color:#fff;" required />
-                <input type="tel" id="signupPhone2" placeholder="Phone Number" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #2a3a4a; background:#0A0F1D; color:#fff;" />
-                <input type="password" id="signupPassword2" placeholder="Password" style="width:100%; padding:12px; margin-bottom:10px; border-radius:10px; border:1px solid #2a3a4a; background:#0A0F1D; color:#fff;" required />
-                <button type="submit" class="btn-primary" style="width:100%; padding:14px; background:#14B8A6; color:#0A0F1D; border:none; border-radius:10px; font-weight:700; cursor:pointer;">Create Account</button>
-            </form>
-            <div style="margin-top:12px; text-align:center;">
-                <button onclick="signInWithGoogle()" style="background:none; border:none; color:#14B8A6; font-weight:600; cursor:pointer;">
-                    <i class="fa-brands fa-google"></i> Sign in with Google
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- ─── SCRIPTS ─── -->
+    <!-- Supabase SDK JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-    <script>
-        // ─── Supabase ───
-        const SUPABASE_URL = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- Multi-Page App Logic Controller -->
+    <script src="main.js"></script>
 
-        let allBrands = [], allDevices = [], allRepairTypes = [], allParts = [];
-
-        // ─── Toast ───
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            t.textContent = msg;
-            t.classList.add('show');
-            clearTimeout(t._hide);
-            t._hide = setTimeout(() => t.classList.remove('show'), 3000);
-        }
-
-        // ─── Mobile Menu ───
-        function toggleMobileMenu() {
-            document.getElementById('mainNav').classList.toggle('open');
-        }
-
-        // ─── Carousel ───
-        let currentSlide = 0;
-        const totalSlides = 5;
-        let slideInterval;
-
-        function goToSlide(index) {
-            const slides = document.querySelectorAll('.carousel-slide');
-            const dots = document.querySelectorAll('.carousel-dot');
-            slides.forEach((s, i) => s.classList.toggle('active', i === index));
-            dots.forEach((d, i) => d.classList.toggle('active', i === index));
-            currentSlide = index;
-        }
-
-        function nextSlide() {
-            goToSlide((currentSlide + 1) % totalSlides);
-        }
-
-        function startCarousel() {
-            if (slideInterval) clearInterval(slideInterval);
-            slideInterval = setInterval(nextSlide, 6000);
-        }
-
-        // ─── Login Modal ───
-        function showLogin() {
-            document.getElementById('loginModal').style.display = 'flex';
-            document.querySelector('[data-tab="login2"]').click();
-        }
-        function showSignup() {
-            document.getElementById('loginModal').style.display = 'flex';
-            document.querySelector('[data-tab="signup2"]').click();
-        }
-        function closeLoginModal() {
-            document.getElementById('loginModal').style.display = 'none';
-        }
-
-        document.querySelectorAll('#loginModal .tab-row button').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('#loginModal .tab-row button').forEach(b => {
-                    b.style.background = b === this ? '#14B8A6' : 'transparent';
-                    b.style.color = b === this ? '#fff' : '#aaa';
-                });
-                document.getElementById('loginForm2').style.display = this.dataset.tab === 'login2' ? 'block' : 'none';
-                document.getElementById('signupForm2').style.display = this.dataset.tab === 'signup2' ? 'block' : 'none';
-            });
-        });
-
-        // ─── Login handler ───
-        document.getElementById('loginForm2').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail2').value;
-            const password = document.getElementById('loginPassword2').value;
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) return showToast('Login failed: ' + error.message);
-            showToast('Welcome! Redirecting...');
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
-        });
-
-        // ─── Signup handler ───
-        document.getElementById('signupForm2').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('signupName2').value;
-            const email = document.getElementById('signupEmail2').value;
-            const phone = document.getElementById('signupPhone2').value;
-            const password = document.getElementById('signupPassword2').value;
-            const { data, error } = await supabase.auth.signUp({
-                email, password,
-                options: { data: { full_name: name, phone } }
-            });
-            if (error) return showToast('Signup failed: ' + error.message);
-            if (data.user) await supabase.from('user_roles').upsert([{ user_id: data.user.id, role_id: 5 }]);
-            showToast('Account created! Please sign in.');
-            document.querySelector('[data-tab="login2"]').click();
-        });
-
-        window.signInWithGoogle = async function() {
-            await supabase.auth.signInWithOAuth({ provider: 'google' });
-        };
-
-        // ─── Catalog Loader ───
-        async function loadCatalog() {
-            try {
-                const [b, d, rt, p] = await Promise.all([
-                    supabase.from('brands').select('*').order('name'),
-                    supabase.from('devices').select('*').order('name'),
-                    supabase.from('repair_types').select('*').order('label'),
-                    supabase.from('parts').select('*')
-                ]);
-                if (b.error) throw new Error('Brands error');
-                allBrands = b.data || [];
-                allDevices = d.data || [];
-                allRepairTypes = rt.data || [];
-                allParts = p.data || [];
-
-                if (allBrands.length === 0) useFallback();
-                else populateBrands();
-            } catch (e) {
-                console.warn('Supabase catalog failed, using fallback.');
-                useFallback();
-            }
-        }
-
-        function useFallback() {
-            allBrands = [
-                { id: 'b1', name: 'Apple' }, { id: 'b2', name: 'Samsung' },
-                { id: 'b3', name: 'Vivo' }, { id: 'b4', name: 'OnePlus' },
-                { id: 'b5', name: 'Xiaomi' }, { id: 'b6', name: 'Oppo' }
-            ];
-            allDevices = [
-                { id: 'd1', brand_id: 'b1', name: 'iPhone 15 Pro' },
-                { id: 'd2', brand_id: 'b1', name: 'iPhone 14' },
-                { id: 'd3', brand_id: 'b2', name: 'Galaxy S24 Ultra' },
-                { id: 'd4', brand_id: 'b2', name: 'Galaxy A55' },
-                { id: 'd5', brand_id: 'b3', name: 'V30 Pro' },
-                { id: 'd6', brand_id: 'b3', name: 'V29' }
-            ];
-            allRepairTypes = [
-                { id: 'rt1', name: 'screen', label: 'Screen Replacement' },
-                { id: 'rt2', name: 'battery', label: 'Battery Replacement' },
-                { id: 'rt3', name: 'chargingport', label: 'Charging Port' }
-            ];
-            allParts = [
-                { device_id: 'd5', repair_type_id: 'rt1', name: 'AMOLED Screen Panel Assembly', price: 6300 },
-                { device_id: 'd5', repair_type_id: 'rt2', name: 'Li-Po Battery', price: 1500 },
-                { device_id: 'd1', repair_type_id: 'rt1', name: 'OLED Display', price: 15000 },
-                { device_id: 'd1', repair_type_id: 'rt2', name: 'Battery', price: 4500 }
-            ];
-            populateBrands();
-        }
-
-        function populateBrands() {
-            const sel = document.getElementById('brandSelect');
-            sel.innerHTML = '<option value="">— Select Brand —</option>';
-            allBrands.forEach(b => {
-                const opt = document.createElement('option');
-                opt.value = b.id;
-                opt.textContent = b.name;
-                sel.appendChild(opt);
-            });
-            sel.addEventListener('change', updateModels);
-            updateModels();
-        }
-
-        function updateModels() {
-            const brandId = document.getElementById('brandSelect').value;
-            const sel = document.getElementById('modelSelect');
-            sel.innerHTML = '<option value="">— Select Model —</option>';
-            if (!brandId) { updateRepairTypes(); return; }
-            allDevices.filter(d => d.brand_id === brandId).forEach(d => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = d.name;
-                sel.appendChild(opt);
-            });
-            updateRepairTypes();
-        }
-
-        function updateRepairTypes() {
-            const sel = document.getElementById('repairTypeSelect');
-            sel.innerHTML = '<option value="">— Select Repair —</option>';
-            allRepairTypes.forEach(rt => {
-                const opt = document.createElement('option');
-                opt.value = rt.id;
-                opt.textContent = rt.label || rt.name;
-                sel.appendChild(opt);
-            });
-            updatePartsSurvey();
-        }
-
-        function updatePartsSurvey() {
-            const modelId = document.getElementById('modelSelect').value;
-            const repairId = document.getElementById('repairTypeSelect').value;
-            const quality = document.getElementById('qualitySelect').value;
-            const offer = document.getElementById('offerToggle').checked;
-            const parts = allParts.filter(p => p.device_id === modelId && p.repair_type_id === repairId);
-            const qm = quality === 'premium' ? 1 : 0.7;
-            const container = document.getElementById('partsSurveyContainer');
-
-            if (!modelId || !repairId || parts.length === 0) {
-                container.innerHTML = 'Select brand, model & repair to see parts.';
-                document.getElementById('partsTotalDisplay').textContent = '₹0.00';
-                document.getElementById('serviceFeeDisplay').textContent = '₹0.00';
-                document.getElementById('totalPriceDisplay').textContent = '₹0.00';
-                return;
-            }
-            let total = parts.reduce((s, p) => s + p.price * qm, 0);
-            const discounted = total * 0.9;
-            let service = discounted * 0.15;
-            if (offer) service *= 0.5;
-            const diagnosis = 250;
-            const final = discounted + service + diagnosis;
-
-            container.innerHTML = parts.map(p => `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>${p.name}</span><span>₹${(p.price * qm).toFixed(0)}</span></div>`).join('');
-            document.getElementById('partsTotalDisplay').textContent = '₹' + discounted.toFixed(0);
-            document.getElementById('serviceFeeDisplay').textContent = '₹' + service.toFixed(0);
-            document.getElementById('totalPriceDisplay').textContent = '₹' + final.toFixed(0);
-        }
-
-        document.getElementById('qualitySelect').addEventListener('change', updatePartsSurvey);
-        document.getElementById('offerToggle').addEventListener('change', updatePartsSurvey);
-        document.getElementById('modelSelect').addEventListener('change', updateRepairTypes);
-        document.getElementById('repairTypeSelect').addEventListener('change', updatePartsSurvey);
-
-        // ─── Create Order ───
-        window.createOrder = async function() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) { showToast('Please login first.'); showLogin(); return; }
-            showToast('Please book from your dashboard.');
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
-        };
-
-        // ─── Offers ───
-        async function fetchOffers() {
-            try {
-                const { data, error } = await supabase.from('offers').select('*').eq('active', true).limit(5);
-                if (error || !data || data.length === 0) throw new Error();
-                const container = document.getElementById('offersContainer');
-                container.innerHTML = data.map(o => `
-                    <div class="offer-item" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border-bottom:1px solid rgba(255,255,255,0.04);">
-                        <div><strong>${o.name}</strong><div style="font-size:12px;color:rgba(255,255,255,0.5);">${o.description || ''}</div></div>
-                        <span class="discount" style="font-weight:700;color:#F59E0B;">${o.discount_percent || 0}% OFF</span>
-                    </div>
-                `).join('');
-            } catch (e) {
-                const fallback = [
-                    { name: 'Monsoon Screen Guard', description: 'Free tempered glass with screen repair', discount_percent: 100 },
-                    { name: 'Battery Saver Deal', description: '15% off on battery replacements', discount_percent: 15 }
-                ];
-                const container = document.getElementById('offersContainer');
-                container.innerHTML = fallback.map(o => `
-                    <div class="offer-item" style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:rgba(255,255,255,0.03);border-radius:12px;border-bottom:1px solid rgba(255,255,255,0.04);">
-                        <div><strong>${o.name}</strong><div style="font-size:12px;color:rgba(255,255,255,0.5);">${o.description || ''}</div></div>
-                        <span class="discount" style="font-weight:700;color:#F59E0B;">${o.discount_percent}% OFF</span>
-                    </div>
-                `).join('');
-            }
-        }
-
-        // ─── Guest Tracking ───
-        window.trackOrderGuest = async function(e) {
-            e.preventDefault();
-            const orderId = document.getElementById('trackOrderId').value.trim();
-            const phone = document.getElementById('trackPhone').value.trim();
-            const container = document.getElementById('guestTrackResult');
-            container.classList.remove('hidden');
-            container.innerHTML = '<div class="text-center text-gray-400 py-4"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Searching...</div>';
-            const { data, error } = await supabase.from('orders').select('*').eq('order_number', orderId);
-            if (error || !data || data.length === 0) {
-                container.innerHTML = '<div class="text-red-400 text-center">Order not found.</div>';
-                return;
-            }
-            const o = data[0];
-            const dbPhone = (o.customer_phone || '').replace(/[^0-9]/g, '');
-            const cleanPhone = phone.replace(/[^0-9]/g, '');
-            if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) {
-                container.innerHTML = '<div class="text-red-400 text-center">Phone number mismatch.</div>';
-                return;
-            }
-            const dev = allDevices.find(d => d.id === o.device_id);
-            const deviceName = dev ? dev.name : 'Device';
-            const repair = allRepairTypes.find(r => r.id === o.repair_type_id);
-            const repairLabel = repair ? repair.label : 'Repair';
-            container.innerHTML = `
-                <div style="background:rgba(255,255,255,0.04);border-radius:12px;padding:16px;">
-                    <div style="display:flex;justify-content:space-between;">
-                        <strong style="color:#fff;">${deviceName}</strong>
-                        <span style="background:rgba(255,255,255,0.06);padding:2px 12px;border-radius:20px;font-size:12px;">${o.status}</span>
-                    </div>
-                    <div style="font-size:13px;color:rgba(255,255,255,0.6);">${repairLabel}</div>
-                    <div style="font-size:13px;color:#14B8A6;">₹${(o.total_price || 0).toFixed(0)}</div>
-                </div>
-            `;
-        };
-
-        // ─── Init ───
-        document.addEventListener('DOMContentLoaded', function() {
-            loadCatalog();
-            fetchOffers();
-            startCarousel();
-
-            // If already logged in, redirect to dashboard
-            supabase.auth.getUser().then(({ data }) => {
-                if (data?.user) {
-                    // But only if we are on the home page – redirect only if not already on dashboard.
-                    if (!window.location.pathname.includes('dashboard.html')) {
-                        window.location.href = 'dashboard.html';
-                    }
-                }
-            }).catch(() => {});
-        });
-
-        // Make functions globally accessible for inline onclick attributes
-        window.goToSlide = goToSlide;
-        window.toggleMobileMenu = toggleMobileMenu;
-        window.showLogin = showLogin;
-        window.showSignup = showSignup;
-        window.closeLoginModal = closeLoginModal;
-        window.signInWithGoogle = signInWithGoogle;
-        window.trackOrderGuest = trackOrderGuest;
-        window.createOrder = createOrder;
-        window.updateModels = updateModels;
-        window.updateRepairTypes = updateRepairTypes;
-        window.updatePartsSurvey = updatePartsSurvey;
-    </script>
 </body>
 </html>
