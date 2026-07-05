@@ -874,6 +874,15 @@ async function assignOrderRoles(orderId) {
             </div>
         `;
         document.body.appendChild(modal);
+// Attach live update listeners to static editable fields
+document.getElementById('editPartsTotal')?.addEventListener('input', updateQuotationTotal);
+document.getElementById('editServiceFee')?.addEventListener('input', updateQuotationTotal);
+document.getElementById('editDiagnosisCharge')?.addEventListener('input', updateQuotationTotal);
+
+// Attach listeners to additional part inputs (they are dynamically created)
+document.querySelectorAll('.part-price-input, .part-name-input').forEach(el => {
+    el.addEventListener('input', updateQuotationTotal);
+});
     } catch (err) {
         showToast('Failed to load staff: ' + err.message, 'error');
     }
