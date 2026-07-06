@@ -11,8 +11,6 @@
     <script src="style.js"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- ✅ ADD THIS LINE -->
-<link rel="stylesheet" href="dashboard.css" />
     <style>
         body {
             background: #0A0F1D;
@@ -177,9 +175,9 @@
         </nav>
 
         <!-- Mobile Menu Toggle Button -->
-       <button class="mobile-menu-btn text-white text-2xl" onclick="toggleMobileSidebar()">
-    <i class="fa-solid fa-bars"></i>
-</button>
+        <button class="mobile-menu text-white text-2xl" onclick="toggleMobileMenu()">
+            <i class="fa-solid fa-bars"></i>
+        </button>
     </header>
 
     <!-- MAIN DASHBOARD HUB -->
@@ -200,25 +198,25 @@
         </div>
 
         <!-- Metric Stat Cards -->
-       <!-- Metric Stat Cards (clickable) -->
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-    <div class="stat-card bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center" data-filter="all" onclick="filterByStatus('all')" style="cursor:pointer;">
-        <div class="text-3xl font-black text-teal" id="statTotal">0</div>
-        <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Total Tickets</div>
-    </div>
-    <div class="stat-card bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center" data-filter="Pending" onclick="filterByStatus('Pending')" style="cursor:pointer;">
-        <div class="text-3xl font-black text-amber-400" id="statPending">0</div>
-        <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Pending Assignment</div>
-    </div>
-    <div class="stat-card bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center" data-filter="Pickup" onclick="filterByStatus('Pickup')" style="cursor:pointer;">
-        <div class="text-3xl font-black text-blue-400" id="statInProgress">0</div>
-        <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Active Handover</div>
-    </div>
-    <div class="stat-card bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center" data-filter="Completed" onclick="filterByStatus('Completed')" style="cursor:pointer;">
-        <div class="text-3xl font-black text-emerald-400" id="statCompleted">0</div>
-        <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Completed &amp; Fixed</div>
-    </div>
-</div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
+                <div class="text-3xl font-black text-teal" id="statTotal">0</div>
+                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Total Tickets</div>
+            </div>
+            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
+                <div class="text-3xl font-black text-amber-400" id="statPending">0</div>
+                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Pending Assignment</div>
+            </div>
+            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
+                <div class="text-3xl font-black text-blue-400" id="statInProgress">0</div>
+                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Active Handover</div>
+            </div>
+            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
+                <div class="text-3xl font-black text-emerald-400" id="statCompleted">0</div>
+                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Completed &amp; Fixed</div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left: Orders / Tickets Section (Expanded to Full Width) -->
             <div class="lg:col-span-3 space-y-6">
@@ -400,51 +398,5 @@ CREATE TRIGGER on_auth_user_created
     <!-- Supabase Client & Multi-Page script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script src="main.js"></script>
-    <script>
-        
-    // ─── Mobile menu toggle for dashboard ───
-    function toggleMobileMenu() {
-        const nav = document.getElementById('mainNav');
-        if (nav) nav.classList.toggle('open');
-    }
-
-    // ─── Filter by status on stat card click ───
-    function filterByStatus(status) {
-        const filterStatus = document.getElementById('filterStatus');
-        if (filterStatus) {
-            filterStatus.value = status === 'all' ? 'All' : status;
-            filterStatus.dispatchEvent(new Event('change'));
-        }
-        document.querySelectorAll('.stat-card').forEach(card => {
-            card.classList.toggle('active-filter', card.dataset.filter === status);
-        });
-        if (status === 'all') {
-            document.querySelectorAll('.stat-card').forEach(card => {
-                card.classList.remove('active-filter');
-            });
-        }
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        const filterStatus = document.getElementById('filterStatus');
-        if (filterStatus) {
-            filterStatus.addEventListener('change', function() {
-                const val = this.value;
-                document.querySelectorAll('.stat-card').forEach(card => {
-                    const isActive = card.dataset.filter === val || (val === 'All' && card.dataset.filter === 'all');
-                    card.classList.toggle('active-filter', isActive);
-                });
-                if (val === 'All') {
-                    document.querySelectorAll('.stat-card').forEach(card => {
-                        card.classList.remove('active-filter');
-                    });
-                }
-                if (typeof applyDashboardFilters === 'function') {
-                    applyDashboardFilters();
-                }
-            });
-        }
-    });
-</script>
 </body>
 </html>
