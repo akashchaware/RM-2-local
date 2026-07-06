@@ -1994,7 +1994,11 @@ async function closeTicket(orderId, enteredOtp) {
             showToast('❌ Invalid verification OTP. Authentication failed.', 'error');
             return;
         }
-        await supabase.from('orders').update({ pickup_otp: 'VERIFIED', status: 'Completed' }).eq('id', orderId);
+        await supabase.from('orders').update({
+            pickup_otp: 'VERIFIED',
+            status: 'Completed',
+            payment_status: 'Paid'   // Mark as paid for COD
+        }).eq('id', orderId);
         showToast('🔒 Delivery Handover Verified! Ticket Closed successfully.', 'success');
         loadDashboard();
     } catch (err) {
