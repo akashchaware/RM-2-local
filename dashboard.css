@@ -239,3 +239,31 @@
     border: 2px solid #14B8A6;
     background: rgba(20,184,166,0.08);
 }
+/* ─── Mobile Sidebar ─── */
+#mobileSidebar {
+    transition: transform 0.3s ease-in-out;
+    z-index: 60;
+}
+#sidebarOverlay {
+    z-index: 50;
+}
+
+@media (min-width: 769px) {
+    .mobile-menu-btn {
+        display: none !important;
+    }
+    #mobileUserAvatar {
+        display: none !important;
+    }
+}
+@media (max-width: 768px) {
+    .desktop-nav {
+        display: none !important;
+    }
+    #mobileUserAvatar {
+        display: flex !important;
+    }
+    .mobile-menu-btn {
+        display: block !important;
+    }
+}
