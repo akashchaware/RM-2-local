@@ -4,8 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RepairMaster – Doorstep Repair</title>
+    <link rel="icon" href="img_maintenance_mode_active.png.png" type="image/png" />
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <style>
+        /* ─── RESET & BASE ─── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0A0F1D;
@@ -14,7 +17,11 @@
             padding: 16px;
             max-width: 480px;
             margin: 0 auto;
+            padding-bottom: 80px;
         }
+        a { text-decoration: none; color: inherit; }
+
+        /* ─── HEADER ─── */
         .header {
             display: flex;
             align-items: center;
@@ -22,10 +29,28 @@
             margin-bottom: 20px;
         }
         .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo img {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            object-fit: cover;
+            border: 2px solid rgba(20, 184, 166, 0.3);
+        }
+        .logo-text {
             font-size: 22px;
             font-weight: 900;
         }
-        .logo span { color: #14B8A6; }
+        .logo-text span { color: #14B8A6; }
+        .logo-sub {
+            font-size: 10px;
+            color: rgba(255,255,255,0.5);
+            display: block;
+            margin-top: 2px;
+        }
         .nav-links {
             display: flex;
             gap: 12px;
@@ -33,12 +58,80 @@
         }
         .nav-links a {
             color: rgba(255,255,255,0.6);
-            text-decoration: none;
+            transition: 0.3s;
         }
         .nav-links .login {
             color: #14B8A6;
             font-weight: 600;
         }
+
+        /* ─── CAROUSEL ─── */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 260px;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            background: #0A0F1D;
+        }
+        .carousel-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.8s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .carousel-slide.active {
+            opacity: 1;
+        }
+        .carousel-slide .overlay {
+            background: rgba(10, 15, 29, 0.6);
+            padding: 16px 20px;
+            border-radius: 12px;
+            text-align: center;
+            max-width: 90%;
+            backdrop-filter: blur(4px);
+        }
+        .carousel-slide .overlay h2 {
+            font-size: 22px;
+            font-weight: 800;
+            margin-bottom: 6px;
+        }
+        .carousel-slide .overlay p {
+            font-size: 13px;
+            opacity: 0.9;
+        }
+        .carousel-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .carousel-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .carousel-dot.active {
+            background: #14B8A6;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        /* ─── HERO ─── */
         .hero {
             background: linear-gradient(135deg, #0D9488, #0a6b66);
             border-radius: 16px;
@@ -76,9 +169,9 @@
             border: none;
             cursor: pointer;
             margin: 4px;
-            text-decoration: none;
-            display: inline-block;
         }
+
+        /* ─── CITY NOTICE ─── */
         .city-notice {
             background: rgba(245, 158, 11, 0.12);
             border: 1px solid rgba(245, 158, 11, 0.2);
@@ -90,6 +183,8 @@
             display: inline-block;
             margin-bottom: 12px;
         }
+
+        /* ─── MAINTENANCE BANNER ─── */
         .maintenance-banner {
             background: rgba(13, 148, 136, 0.06);
             border: 1px solid rgba(13, 148, 136, 0.15);
@@ -107,6 +202,8 @@
             font-size: 20px;
             margin-top: 2px;
         }
+
+        /* ─── CARDS ─── */
         .card {
             background: rgba(255,255,255,0.03);
             border-radius: 16px;
@@ -120,6 +217,8 @@
             margin-bottom: 12px;
             color: #14B8A6;
         }
+
+        /* ─── BADGES ─── */
         .badge-row {
             display: flex;
             gap: 10px;
@@ -134,6 +233,8 @@
             font-weight: 600;
             color: rgba(255,255,255,0.7);
         }
+
+        /* ─── CALCULATOR ─── */
         select {
             width: 100%;
             padding: 12px;
@@ -179,6 +280,56 @@
             color: rgba(255,255,255,0.7);
             font-size: 14px;
         }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: #14B8A6;
+            color: #0A0F1D;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background: #0D9488; }
+
+        /* ─── OFFERS ─── */
+        .offer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .offer-item:last-child { border-bottom: none; }
+        .offer-item .discount {
+            color: #F59E0B;
+            font-weight: 700;
+        }
+
+        /* ─── GUEST TRACKING ─── */
+        .track-input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 15px;
+            margin-bottom: 10px;
+        }
+        .track-btn {
+            width: 100%;
+            padding: 12px;
+            background: #0D9488;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        /* ─── BOTTOM NAV ─── */
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -198,8 +349,7 @@
             align-items: center;
             color: rgba(255,255,255,0.4);
             font-size: 10px;
-            text-decoration: none;
-            transition: color 0.3s;
+            transition: 0.3s;
         }
         .bottom-nav a.active {
             color: #14B8A6;
@@ -208,34 +358,14 @@
             font-size: 20px;
             margin-bottom: 2px;
         }
-        body { padding-bottom: 70px; }
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
-            background: #14B8A6;
-            color: #0A0F1D;
-            border: none;
-            border-radius: 10px;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        .btn-primary:hover { background: #0D9488; }
-        #partsSurveyContainer {
-            font-size: 13px;
-            color: rgba(255,255,255,0.5);
-            margin: 6px 0;
-        }
-        .part-item {
-            display: flex;
-            justify-content: space-between;
-            padding: 4px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            font-size: 13px;
-        }
-        .part-item .part-price {
-            color: #14B8A6;
-            font-weight: 600;
+
+        /* ─── FOOTER ─── */
+        .footer {
+            border-top: 1px solid rgba(255,255,255,0.05);
+            padding: 20px 0 10px;
+            text-align: center;
+            font-size: 11px;
+            color: rgba(255,255,255,0.3);
         }
     </style>
 </head>
@@ -243,12 +373,53 @@
 
     <!-- ─── HEADER ─── -->
     <div class="header">
-        <div class="logo">Repair<span>Master</span></div>
+        <div class="logo">
+            <img src="img_maintenance_mode_active.png.png" alt="RepairMaster" />
+            <div>
+                <div class="logo-text">Repair<span>Master</span></div>
+                <span class="logo-sub">Direct To Consumer</span>
+            </div>
+        </div>
         <div class="nav-links">
             <a href="login.html" class="login">Login</a>
             <a href="signup.html">Sign Up</a>
         </div>
     </div>
+
+    <!-- ─── CAROUSEL ─── -->
+    <div class="carousel-container" id="carousel">
+        <div class="carousel-slide active" style="background-image: url('technician-device-1.png');">
+            <div class="overlay">
+                <h2>🚀 Doorstep Pickup</h2>
+                <p>We come to you – OTP verified handover</p>
+            </div>
+        </div>
+        <div class="carousel-slide" style="background-image: url('technician-scooty.png');">
+            <div class="overlay">
+                <h2>🛵 Fast Delivery</h2>
+                <p>Real‑time GPS tracking · Certified technicians</p>
+            </div>
+        </div>
+        <div class="carousel-slide" style="background-image: url('technician-device-2.png');">
+            <div class="overlay">
+                <h2>🔧 Expert Repairs</h2>
+                <p>State‑of‑the‑art workshop · Genuine parts</p>
+            </div>
+        </div>
+        <div class="carousel-slide" style="background-image: url('device-generic.png');">
+            <div class="overlay">
+                <h2>📱 All Brands</h2>
+                <p>Apple · Samsung · Vivo · OnePlus & more</p>
+            </div>
+        </div>
+        <div class="carousel-slide" style="background-image: url('img_maintenance_mode_active.png.png');">
+            <div class="overlay">
+                <h2>🔒 Maintenance Mode</h2>
+                <p>Your data privacy is our priority</p>
+            </div>
+        </div>
+    </div>
+    <div class="carousel-dots" id="carouselDots"></div>
 
     <!-- ─── HERO ─── -->
     <div class="hero">
@@ -285,7 +456,6 @@
     <div id="calculator" class="card">
         <div class="card-title"><i class="fa-solid fa-calculator"></i> Estimate Your Repair</div>
 
-        <!-- Dropdowns -->
         <select id="brandSelect"><option value="">— Brand —</option></select>
         <select id="modelSelect"><option value="">— Model —</option></select>
         <select id="repairTypeSelect"><option value="">— Repair —</option></select>
@@ -314,6 +484,31 @@
         <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:8px;text-align:center;">You'll be prompted to login before booking.</p>
     </div>
 
+    <!-- ─── HOT DEALS ─── -->
+    <div class="card">
+        <div class="card-title"><i class="fa-solid fa-fire" style="color:#F59E0B;"></i> Hot Deals</div>
+        <div id="offersContainer">
+            <div style="text-align:center;color:rgba(255,255,255,0.4);padding:10px;">Loading offers...</div>
+        </div>
+    </div>
+
+    <!-- ─── GUEST TRACKING ─── -->
+    <div class="card">
+        <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Track Your Order</div>
+        <form id="trackForm" onsubmit="trackOrderGuest(event)">
+            <input type="text" id="trackOrderId" class="track-input" placeholder="Order ID (e.g. RM-REQ-XXXX)" required />
+            <input type="tel" id="trackPhone" class="track-input" placeholder="Phone Number" required />
+            <button type="submit" class="track-btn">Track</button>
+        </form>
+        <div id="guestTrackResult" style="margin-top:10px;"></div>
+    </div>
+
+    <!-- ─── FOOTER ─── -->
+    <div class="footer">
+        <p>© 2026 RepairMaster – Direct To Consumer Support. Wardha Hub.</p>
+        <p style="margin-top:4px;">Powered by <span style="color:#14B8A6;">cm2us.com</span></p>
+    </div>
+
     <!-- ─── BOTTOM NAV ─── -->
     <div class="bottom-nav">
         <a href="homepage.html" class="active"><i class="fa-solid fa-house"></i> Home</a>
@@ -326,10 +521,93 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script src="homepage.js"></script>
     <script>
-        // Ensure calculator loads after DOM
+        // ─── Carousel ───
+        (function() {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dots = document.getElementById('carouselDots');
+            let current = 0;
+            let interval;
+
+            // Create dots
+            slides.forEach((_, i) => {
+                const dot = document.createElement('button');
+                dot.className = 'carousel-dot' + (i === 0 ? ' active' : '');
+                dot.addEventListener('click', () => goTo(i));
+                dots.appendChild(dot);
+            });
+
+            function goTo(index) {
+                slides.forEach((s, i) => s.classList.toggle('active', i === index));
+                document.querySelectorAll('.carousel-dot').forEach((d, i) => d.classList.toggle('active', i === index));
+                current = index;
+            }
+
+            function nextSlide() {
+                goTo((current + 1) % slides.length);
+            }
+
+            function startCarousel() {
+                if (interval) clearInterval(interval);
+                interval = setInterval(nextSlide, 5000);
+            }
+
+            // Expose to global for inline calls if needed
+            window.goToSlide = goTo;
+            startCarousel();
+
+            // Restart on visibility change
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    clearInterval(interval);
+                } else {
+                    startCarousel();
+                }
+            });
+        })();
+
+        // ─── Init calculator ───
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof populateBrands === 'function') populateBrands();
+            if (typeof fetchOffers === 'function') fetchOffers();
         });
+
+        // ─── Guest tracking (basic) ───
+        window.trackOrderGuest = async function(e) {
+            e.preventDefault();
+            const orderId = document.getElementById('trackOrderId').value.trim();
+            const phone = document.getElementById('trackPhone').value.trim();
+            const container = document.getElementById('guestTrackResult');
+            if (!orderId || !phone) { container.innerHTML = '<div style="color:#e74c3c;">Please fill both fields.</div>'; return; }
+            container.innerHTML = '<div style="color:rgba(255,255,255,0.5);">Searching...</div>';
+            try {
+                const { data, error } = await supabase.from('orders').select('*').eq('order_number', orderId);
+                if (error || !data || data.length === 0) {
+                    container.innerHTML = '<div style="color:#e74c3c;">Order not found.</div>';
+                    return;
+                }
+                const o = data[0];
+                const dbPhone = (o.customer_phone || '').replace(/[^0-9]/g, '');
+                const cleanPhone = phone.replace(/[^0-9]/g, '');
+                if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) {
+                    container.innerHTML = '<div style="color:#e74c3c;">Phone number mismatch.</div>';
+                    return;
+                }
+                const devName = (o.device_id) ? 'Device' : 'Device';
+                const repairLabel = (o.repair_type_id) ? 'Repair' : 'Repair';
+                container.innerHTML = `
+                    <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;margin-top:6px;">
+                        <div style="display:flex;justify-content:space-between;">
+                            <strong>${devName}</strong>
+                            <span style="background:rgba(255,255,255,0.1);padding:2px 10px;border-radius:12px;">${o.status || 'Pending'}</span>
+                        </div>
+                        <div style="color:rgba(255,255,255,0.6);font-size:13px;">${repairLabel}</div>
+                        <div style="font-weight:600;color:#14B8A6;">₹${(o.total_price || 0).toFixed(0)}</div>
+                    </div>
+                `;
+            } catch (err) {
+                container.innerHTML = '<div style="color:#e74c3c;">Error: ' + err.message + '</div>';
+            }
+        };
     </script>
 </body>
 </html>
