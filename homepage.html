@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>RepairMaster – Doorstep Repair</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- Keep your existing styles if you want, or use the built‑in styles below -->
     <style>
-        /* ─── RESET ─── */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             background: #0A0F1D;
@@ -17,8 +15,6 @@
             max-width: 480px;
             margin: 0 auto;
         }
-
-        /* ─── HEADER ─── */
         .header {
             display: flex;
             align-items: center;
@@ -43,8 +39,6 @@
             color: #14B8A6;
             font-weight: 600;
         }
-
-        /* ─── HERO ─── */
         .hero {
             background: linear-gradient(135deg, #0D9488, #0a6b66);
             border-radius: 16px;
@@ -82,9 +76,9 @@
             border: none;
             cursor: pointer;
             margin: 4px;
+            text-decoration: none;
+            display: inline-block;
         }
-
-        /* ─── CITY NOTICE ─── */
         .city-notice {
             background: rgba(245, 158, 11, 0.12);
             border: 1px solid rgba(245, 158, 11, 0.2);
@@ -96,8 +90,6 @@
             display: inline-block;
             margin-bottom: 12px;
         }
-
-        /* ─── MAINTENANCE BANNER ─── */
         .maintenance-banner {
             background: rgba(13, 148, 136, 0.06);
             border: 1px solid rgba(13, 148, 136, 0.15);
@@ -115,8 +107,6 @@
             font-size: 20px;
             margin-top: 2px;
         }
-
-        /* ─── CARDS ─── */
         .card {
             background: rgba(255,255,255,0.03);
             border-radius: 16px;
@@ -130,8 +120,6 @@
             margin-bottom: 12px;
             color: #14B8A6;
         }
-
-        /* ─── BADGES ─── */
         .badge-row {
             display: flex;
             gap: 10px;
@@ -146,8 +134,6 @@
             font-weight: 600;
             color: rgba(255,255,255,0.7);
         }
-
-        /* ─── CALCULATOR DROPDOWNS ─── */
         select {
             width: 100%;
             padding: 12px;
@@ -158,6 +144,7 @@
             font-size: 15px;
             margin-bottom: 10px;
         }
+        select option { background: #0A0F1D; }
         .price-breakdown {
             background: rgba(255,255,255,0.03);
             border-radius: 10px;
@@ -177,8 +164,21 @@
             font-size: 18px;
             color: #14B8A6;
         }
-
-        /* ─── BOTTOM NAV ─── */
+        .checkbox-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 8px 0;
+        }
+        .checkbox-row input {
+            width: 18px;
+            height: 18px;
+            accent-color: #14B8A6;
+        }
+        .checkbox-row label {
+            color: rgba(255,255,255,0.7);
+            font-size: 14px;
+        }
         .bottom-nav {
             position: fixed;
             bottom: 0;
@@ -209,6 +209,34 @@
             margin-bottom: 2px;
         }
         body { padding-bottom: 70px; }
+        .btn-primary {
+            width: 100%;
+            padding: 14px;
+            background: #14B8A6;
+            color: #0A0F1D;
+            border: none;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .btn-primary:hover { background: #0D9488; }
+        #partsSurveyContainer {
+            font-size: 13px;
+            color: rgba(255,255,255,0.5);
+            margin: 6px 0;
+        }
+        .part-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-size: 13px;
+        }
+        .part-item .part-price {
+            color: #14B8A6;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
@@ -228,7 +256,7 @@
         <p>Direct To Consumer – Smart, Fast &amp; Reliable Repairs</p>
         <div>
             <button class="btn-teal" onclick="document.getElementById('calculator').scrollIntoView()">Get Estimate</button>
-            <a href="request.html" class="btn-outline" style="display:inline-block;">Request Repair</a>
+            <a href="request.html" class="btn-outline">Request Repair</a>
         </div>
     </div>
 
@@ -257,7 +285,7 @@
     <div id="calculator" class="card">
         <div class="card-title"><i class="fa-solid fa-calculator"></i> Estimate Your Repair</div>
 
-        <!-- Your existing calculator dropdowns (kept from your current homepage) -->
+        <!-- Dropdowns -->
         <select id="brandSelect"><option value="">— Brand —</option></select>
         <select id="modelSelect"><option value="">— Model —</option></select>
         <select id="repairTypeSelect"><option value="">— Repair —</option></select>
@@ -265,12 +293,13 @@
             <option value="standard">Standard</option>
             <option value="premium">Premium</option>
         </select>
-        <div class="checkbox-row" style="display:flex; gap:8px; align-items:center; margin:8px 0;">
+
+        <div class="checkbox-row">
             <input type="checkbox" id="offerToggle" />
-            <label for="offerToggle" style="color:rgba(255,255,255,0.7);">Apply 50% service discount</label>
+            <label for="offerToggle">Apply 50% service discount</label>
         </div>
 
-        <div id="partsSurveyContainer" style="font-size:13px; color:rgba(255,255,255,0.5); margin:6px 0;">Select repair to see parts.</div>
+        <div id="partsSurveyContainer">Select brand, model &amp; repair to see parts.</div>
 
         <div class="price-breakdown">
             <div class="price-row"><span>Parts (10% off)</span><strong id="partsTotalDisplay">₹0.00</strong></div>
@@ -279,9 +308,10 @@
             <div class="price-row total"><span>Total</span><strong id="totalPriceDisplay">₹0.00</strong></div>
         </div>
 
-        <button class="btn-teal" style="width:100%; padding:14px; border-radius:10px;" onclick="createOrder()">
+        <button class="btn-primary" onclick="createOrder()">
             <i class="fa-regular fa-calendar-check"></i> Book Service
         </button>
+        <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:8px;text-align:center;">You'll be prompted to login before booking.</p>
     </div>
 
     <!-- ─── BOTTOM NAV ─── -->
@@ -296,11 +326,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script src="homepage.js"></script>
     <script>
-        // Ensure the calculator functions are available
+        // Ensure calculator loads after DOM
         document.addEventListener('DOMContentLoaded', function() {
             if (typeof populateBrands === 'function') populateBrands();
         });
     </script>
-
 </body>
 </html>
