@@ -401,11 +401,50 @@ CREATE TRIGGER on_auth_user_created
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
     <script src="main.js"></script>
     <script>
+        
     // ─── Mobile menu toggle for dashboard ───
     function toggleMobileMenu() {
         const nav = document.getElementById('mainNav');
         if (nav) nav.classList.toggle('open');
     }
+
+    // ─── Filter by status on stat card click ───
+    function filterByStatus(status) {
+        const filterStatus = document.getElementById('filterStatus');
+        if (filterStatus) {
+            filterStatus.value = status === 'all' ? 'All' : status;
+            filterStatus.dispatchEvent(new Event('change'));
+        }
+        document.querySelectorAll('.stat-card').forEach(card => {
+            card.classList.toggle('active-filter', card.dataset.filter === status);
+        });
+        if (status === 'all') {
+            document.querySelectorAll('.stat-card').forEach(card => {
+                card.classList.remove('active-filter');
+            });
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterStatus = document.getElementById('filterStatus');
+        if (filterStatus) {
+            filterStatus.addEventListener('change', function() {
+                const val = this.value;
+                document.querySelectorAll('.stat-card').forEach(card => {
+                    const isActive = card.dataset.filter === val || (val === 'All' && card.dataset.filter === 'all');
+                    card.classList.toggle('active-filter', isActive);
+                });
+                if (val === 'All') {
+                    document.querySelectorAll('.stat-card').forEach(card => {
+                        card.classList.remove('active-filter');
+                    });
+                }
+                if (typeof applyDashboardFilters === 'function') {
+                    applyDashboardFilters();
+                }
+            });
+        }
+    });
 </script>
 </body>
 </html>
