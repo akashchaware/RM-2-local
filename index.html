@@ -3,1246 +3,718 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>RepairMaster – Premium Doorstep & Lab Repairs</title>
-    <link rel="icon" href="img_maintenance_mode_active.png.png" type="image/png" />
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <title>RepairMaster — v3.0 Coming Soon</title>
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
     <style>
+        /* ── Reset & Base ── */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        html {
-            scroll-behavior: smooth;
-        }
+
         body {
-            background: #0A0F1D;
-            color: #E8EDF5;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-font-smoothing: antialiased;
-            overflow-x: hidden;
-            padding-bottom: 70px;
-        }
-        .container-custom {
-            max-width: 1280px;
-            margin: 0 auto;
-            padding: 0 24px;
-        }
-        .text-teal {
-            color: #14B8A6;
-        }
-        .btn-teal {
-            background: linear-gradient(135deg, #0D9488, #14B8A6);
-            color: #0A0F1D;
-            font-weight: 700;
-            padding: 14px 32px;
-            border-radius: 40px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: inline-block;
-            text-align: center;
-            text-decoration: none;
-            box-shadow: 0 4px 24px rgba(13, 148, 136, 0.3);
-        }
-        .btn-teal:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 36px rgba(13, 148, 136, 0.45);
-        }
-        .btn-outline {
-            background: transparent;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            color: #fff;
-            padding: 12px 28px;
-            border-radius: 40px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            display: inline-block;
-            text-decoration: none;
-        }
-        .btn-outline:hover {
-            border-color: #14B8A6;
-            background: rgba(13, 148, 136, 0.08);
-        }
-        .rm-logo {
-            background: linear-gradient(135deg, #0D9488, #14B8A6);
-            width: 48px;
-            height: 48px;
-            border-radius: 14px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: #f0f4fc;
             display: flex;
-            align-items: center;
             justify-content: center;
-            font-weight: 900;
-            font-size: 22px;
-            color: #0A0F1D;
-            box-shadow: 0 8px 30px rgba(13, 148, 136, 0.3);
-            flex-shrink: 0;
-        }
-        /* ─── HEADER ─── */
-        .header {
-            display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 16px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 20px;
-            position: sticky;
-            top: 0;
-            z-index: 40;
-            background: rgba(10, 15, 29, 0.85);
-            backdrop-filter: blur(12px);
+            min-height: 100vh;
+            padding: 1.5rem;
+            color: #1a1e2b;
         }
-        .header .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            cursor: pointer;
-        }
-        .header .logo img {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            object-fit: cover;
-            border: 2px solid rgba(20, 184, 166, 0.3);
-        }
-        .header .logo-text {
-            font-size: 20px;
-            font-weight: 900;
-            color: #fff;
-        }
-        .header .logo-text span { color: #14B8A6; }
-        .header .logo-sub {
-            font-size: 10px;
-            color: rgba(255, 255, 255, 0.5);
-            display: block;
-            margin-top: 2px;
-        }
-        .desktop-nav {
-            display: flex;
-            align-items: center;
-            gap: 24px;
-        }
-        .desktop-nav a {
-            color: rgba(255, 255, 255, 0.6);
-            text-decoration: none;
-            font-size: 14px;
-            font-weight: 500;
-            transition: color 0.3s;
-            border-bottom: 2px solid transparent;
-            padding-bottom: 4px;
-        }
-        .desktop-nav a:hover,
-        .desktop-nav a.active {
-            color: #14B8A6;
-            border-bottom-color: #14B8A6;
-        }
-        .desktop-nav .login-btn {
-            color: #14B8A6;
-            font-weight: 600;
-        }
-        /* ─── MOBILE HEADER ─── */
-        .mobile-header-right {
-            display: none;
-            align-items: center;
-            gap: 12px;
-        }
-        #mobileUserAvatar {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            background: rgba(20, 184, 166, 0.15);
-            border: 2px solid rgba(20, 184, 166, 0.3);
-            color: #14B8A6;
-            font-weight: 700;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-        }
-        .mobile-menu-btn {
-            display: none;
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        /* ─── MOBILE SIDEBAR ─── */
-        #mobileSidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 300px;
-            background: #0A0F1D;
-            border-right: 1px solid rgba(255, 255, 255, 0.05);
-            z-index: 60;
-            transform: translateX(-100%);
-            transition: transform 0.3s ease-in-out;
-            overflow-y: auto;
-            padding: 24px 20px;
-        }
-        #mobileSidebar.open {
-            transform: translateX(0);
-        }
-        #sidebarOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 55;
-            display: none;
-        }
-        #sidebarOverlay.show {
-            display: block;
-        }
-        .sidebar-close {
-            display: flex;
-            justify-content: flex-end;
-        }
-        .sidebar-close button {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        .sidebar-user {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 16px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            margin-bottom: 16px;
-        }
-        .sidebar-user .avatar {
-            width: 56px;
-            height: 56px;
-            border-radius: 50%;
-            background: rgba(20, 184, 166, 0.2);
-            border: 2px solid rgba(20, 184, 166, 0.3);
-            color: #14B8A6;
-            font-weight: 700;
-            font-size: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .sidebar-user .info .name {
-            font-size: 18px;
-            font-weight: 700;
-            color: #fff;
-        }
-        .sidebar-user .info .role {
-            font-size: 13px;
-            color: #14B8A6;
-        }
-        .sidebar-nav {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            margin: 16px 0;
-        }
-        .sidebar-nav a {
-            padding: 12px 16px;
-            border-radius: 12px;
-            color: rgba(255, 255, 255, 0.7);
-            text-decoration: none;
-            transition: all 0.2s;
-            font-size: 15px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .sidebar-nav a:hover,
-        .sidebar-nav a.active {
-            background: rgba(20, 184, 166, 0.1);
-            color: #14B8A6;
-        }
-        .sidebar-nav a i { width: 20px; }
-        .sidebar-role {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 12px;
-            padding: 12px 16px;
-            margin: 12px 0;
-        }
-        .sidebar-role select {
-            width: 100%;
-            background: transparent;
-            border: none;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 600;
-            outline: none;
-            cursor: pointer;
-        }
-        .sidebar-role select option { background: #0A0F1D; }
-        .sidebar-actions {
-            margin-top: auto;
-            padding-top: 16px;
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .sidebar-actions button {
-            width: 100%;
-            padding: 12px;
-            border-radius: 12px;
-            border: none;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-        .btn-profile {
-            background: rgba(20, 184, 166, 0.1);
-            color: #14B8A6;
-        }
-        .btn-profile:hover { background: rgba(20, 184, 166, 0.2); }
-        .btn-logout {
-            background: rgba(239, 68, 68, 0.1);
-            color: #ef4444;
-        }
-        .btn-logout:hover { background: rgba(239, 68, 68, 0.2); }
 
-        /* ─── CAROUSEL ─── */
-        .carousel-container {
-            position: relative;
+        /* ── Phone Frame ── */
+        .phone-frame {
+            max-width: 420px;
             width: 100%;
-            height: 85vh;
-            min-height: 480px;
+            background: #ffffff;
+            border-radius: 40px;
+            box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.25);
             overflow: hidden;
-            border-radius: 0;
-        }
-        .carousel-slide {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            opacity: 0;
-            transition: opacity 1.2s ease-in-out;
-            background-size: cover;
-            background-position: center;
-            display: flex;
-            align-items: center;
-            padding: 0 8%;
-        }
-        .carousel-slide.active {
-            opacity: 1;
-            z-index: 2;
-        }
-        .carousel-slide::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, rgba(10, 15, 29, 0.88) 25%, rgba(10, 15, 29, 0.3) 80%);
-            z-index: 1;
-        }
-        .carousel-content {
-            position: relative;
-            z-index: 3;
-            max-width: 620px;
-            color: #fff;
-        }
-        .carousel-content h1 {
-            font-size: clamp(2.6rem, 6vw, 4.8rem);
-            font-weight: 800;
-            line-height: 1.08;
-            margin-bottom: 0.75rem;
-        }
-        .carousel-content p {
-            font-size: 1.15rem;
-            color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 2rem;
-            max-width: 480px;
-            line-height: 1.6;
-        }
-        .carousel-dots {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 5;
-            display: flex;
-            gap: 12px;
-        }
-        .carousel-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.25);
-            border: none;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        .carousel-dot.active {
-            background: #14B8A6;
-            box-shadow: 0 0 24px rgba(13, 148, 136, 0.5);
-            transform: scale(1.2);
+            padding: 1.5rem 1.25rem 0.75rem;
+            transition: all 0.2s;
         }
 
-        /* ─── CARDS ─── */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 24px;
-            padding: 28px 32px;
-            transition: all 0.3s ease;
-        }
-        .glass-card:hover {
-            border-color: rgba(13, 148, 136, 0.25);
-            transform: translateY(-2px);
-        }
-        .card {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 20px;
-        }
-        .card-title {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #14B8A6;
-        }
-
-        /* ─── CALCULATOR ─── */
-        .calc-container {
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 28px;
-            padding: 30px 24px;
-            backdrop-filter: blur(4px);
-        }
-        select {
-            width: 100%;
-            padding: 14px 16px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 14px;
-            color: #fff;
-            font-size: 15px;
-            outline: none;
-            transition: all 0.3s ease;
-            appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='rgba(255,255,255,0.4)' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 16px center;
-            padding-right: 40px;
-            margin-bottom: 12px;
-        }
-        select:focus {
-            border-color: rgba(13, 148, 136, 0.5);
-            background: rgba(255, 255, 255, 0.08);
-            box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.12);
-        }
-        select option { background: #121B33; color: #fff; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.4);
-            margin-bottom: 4px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .price-breakdown {
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 12px;
-            padding: 16px;
-            margin: 16px 0;
-        }
-        .price-row {
+        /* ── Status Bar ── */
+        .status-bar {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
-            font-size: 14px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #8e94a5;
+            letter-spacing: 0.3px;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #f0f2f7;
+            margin-bottom: 1rem;
         }
-        .price-row:last-child { border-bottom: none; }
-        .price-row.total {
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            padding-top: 12px;
+        .status-bar .time {
             font-weight: 700;
-            font-size: 18px;
-            color: #14B8A6;
+            color: #1a1e2b;
         }
-        .offer-toggle {
+        .status-bar .icons i {
+            margin-left: 6px;
+            font-size: 0.7rem;
+        }
+
+        /* ── Brand ── */
+        .brand-header {
             display: flex;
-            align-items: center;
-            gap: 12px;
-            background: rgba(245, 158, 11, 0.06);
-            border: 1px solid rgba(245, 158, 11, 0.12);
-            padding: 10px 16px;
-            border-radius: 14px;
-            margin: 12px 0;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 0.3rem;
         }
-        .offer-toggle input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #F59E0B;
-            cursor: pointer;
+        .brand-name {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #0a1a3a;
+            line-height: 1.1;
         }
-        .offer-toggle label {
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 13px;
-            cursor: pointer;
+        .brand-name span {
+            color: #2d7aff;
+        }
+        .brand-tagline {
+            font-size: 0.65rem;
+            font-weight: 600;
+            color: #2d7aff;
+            background: #eef4ff;
+            padding: 0.15rem 0.7rem;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-top: 0.15rem;
+        }
+
+        /* ── Coming Soon Badge ── */
+        .coming-soon-badge {
+            background: #0a1a3a;
+            color: #fff;
+            display: inline-block;
+            padding: 0.25rem 1rem;
+            border-radius: 30px;
+            font-size: 0.65rem;
+            font-weight: 600;
+            letter-spacing: 0.4px;
+            margin: 0.4rem 0 0.8rem 0;
+        }
+        .coming-soon-badge i {
+            margin-right: 6px;
+            font-size: 0.6rem;
+        }
+
+        /* ── Feature Row (updated) ── */
+        .feature-row {
             display: flex;
-            align-items: center;
-            gap: 8px;
+            gap: 0.6rem;
+            margin: 0.6rem 0 1rem 0;
             flex-wrap: wrap;
         }
-        .offer-toggle .offer-badge {
-            background: #F59E0B;
-            color: #0A0F1D;
-            padding: 2px 14px;
-            border-radius: 40px;
-            font-size: 10px;
-            font-weight: 700;
+        .feature-item {
+            flex: 1;
+            min-width: 80px;
+            background: #f8faff;
+            border-radius: 16px;
+            padding: 0.7rem 0.4rem;
+            text-align: center;
+            border: 1px solid #eef2f9;
+            transition: 0.2s;
         }
-        .btn-primary {
-            width: 100%;
-            padding: 14px;
-            background: #14B8A6;
-            color: #0A0F1D;
-            border: none;
-            border-radius: 12px;
-            font-weight: 700;
-            font-size: 16px;
-            cursor: pointer;
-            transition: 0.3s;
+        .feature-item i {
+            font-size: 1.2rem;
+            color: #2d7aff;
+            display: block;
+            margin-bottom: 0.2rem;
         }
-        .btn-primary:hover { background: #0D9488; }
-
-        /* ─── CITY NOTICE ─── */
-        .city-notice {
-            background: rgba(245, 158, 11, 0.08);
-            border: 1px solid rgba(245, 158, 11, 0.15);
-            color: #fbbf24;
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 13px;
+        .feature-item .label {
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: #1a1e2b;
+            letter-spacing: -0.2px;
+        }
+        .feature-item .sub {
+            font-size: 0.5rem;
+            color: #7b839b;
             font-weight: 500;
+            margin-top: 0.1rem;
+        }
+
+        /* ── Status Chips ── */
+        .status-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin: 0.5rem 0 1rem 0;
+        }
+        .chip {
+            background: #f0f4fe;
+            border-radius: 30px;
+            padding: 0.25rem 0.8rem;
+            font-size: 0.55rem;
+            font-weight: 600;
+            color: #1a2a4a;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
-            margin-bottom: 16px;
+            gap: 6px;
+            letter-spacing: 0.2px;
         }
-        /* ─── MAINTENANCE BANNER ─── */
-        .maintenance-banner {
-            background: rgba(13, 148, 136, 0.06);
-            border: 1px solid rgba(13, 148, 136, 0.15);
-            border-left: 4px solid #14B8A6;
-            padding: 14px 20px;
-            border-radius: 16px;
-            display: flex;
-            align-items: flex-start;
-            gap: 14px;
-            backdrop-filter: blur(4px);
-            margin-bottom: 20px;
+        .chip i {
+            color: #2d7aff;
+            font-size: 0.6rem;
         }
-        .maintenance-banner i { color: #14B8A6; font-size: 20px; margin-top: 2px; }
+        .chip .dot {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #2d7aff;
+            margin-right: 2px;
+        }
+        .chip .dot.green {
+            background: #22b573;
+        }
 
-        /* ─── BADGES ─── */
-        .badge-row {
+        /* ── Download CTA ── */
+        .download-btn {
+            background: #0a1a3a;
+            color: #fff;
+            border: none;
+            border-radius: 40px;
+            padding: 0.65rem 1.6rem;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            cursor: default;
+            box-shadow: 0 8px 20px -6px rgba(10, 26, 58, 0.25);
+            margin: 0.2rem 0 0.8rem 0;
+        }
+        .download-btn i {
+            font-size: 0.95rem;
+        }
+
+        /* ── NEW: Hot Deals / Offers Section ── */
+        .offers-section {
+            background: linear-gradient(135deg, #fef7e8 0%, #fff4e0 100%);
+            border-radius: 18px;
+            padding: 0.8rem 1rem;
+            border: 1px solid #fae6c8;
+            margin: 0.5rem 0 0.8rem 0;
             display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .offers-section .offer-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .offers-section .offer-left i {
+            font-size: 1.4rem;
+            color: #e67e22;
+        }
+        .offers-section .offer-text {
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #7a4a1a;
+        }
+        .offers-section .offer-text .highlight {
+            color: #d35400;
+            font-weight: 800;
+        }
+        .offers-section .offer-tag {
+            background: #d35400;
+            color: #fff;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 0.15rem 0.8rem;
+            border-radius: 30px;
+            letter-spacing: 0.3px;
+        }
+        .offers-section .offer-tag i {
+            margin-right: 4px;
+            font-size: 0.5rem;
+        }
+
+        /* ── NEW: Calculator / Estimator Widget ── */
+        .calculator-card {
+            background: #f8faff;
+            border-radius: 18px;
+            padding: 0.9rem 1rem 1rem 1rem;
+            border: 1px solid #eef2f9;
+            margin: 0.5rem 0 0.8rem 0;
+        }
+        .calculator-card .calc-title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #0a1a3a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0.6rem;
+        }
+        .calculator-card .calc-title i {
+            color: #2d7aff;
+            font-size: 0.9rem;
+        }
+        .calc-row {
+            display: flex;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .calc-row select,
+        .calc-row input {
+            flex: 1;
+            min-width: 80px;
+            padding: 0.4rem 0.6rem;
+            border-radius: 12px;
+            border: 1px solid #dce1ed;
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: #1a1e2b;
+            background: #fff;
+            outline: none;
+            transition: 0.2s;
+        }
+        .calc-row select:focus,
+        .calc-row input:focus {
+            border-color: #2d7aff;
+            box-shadow: 0 0 0 3px rgba(45, 122, 255, 0.15);
+        }
+        .calc-row .calc-result {
+            background: #0a1a3a;
+            color: #fff;
+            padding: 0.35rem 0.9rem;
+            border-radius: 30px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+        .calc-row .calc-result span {
+            color: #ffd966;
+        }
+        .calc-note {
+            font-size: 0.5rem;
+            color: #7b839b;
+            margin-top: 0.4rem;
+            text-align: right;
+            padding-right: 0.2rem;
+        }
+
+        /* ── NEW: Seamless Booking Estimate ── */
+        .booking-estimate {
+            background: #eef6ff;
+            border-radius: 18px;
+            padding: 0.8rem 1rem;
+            border: 1px solid #d6e4ff;
+            margin: 0.5rem 0 1rem 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+        }
+        .booking-estimate .left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .booking-estimate .left i {
+            font-size: 1.5rem;
+            color: #2d7aff;
+        }
+        .booking-estimate .info {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: #1a2a4a;
+        }
+        .booking-estimate .info strong {
+            font-weight: 700;
+            color: #0a1a3a;
+        }
+        .booking-estimate .estimate-badge {
+            background: #2d7aff;
+            color: #fff;
+            font-size: 0.55rem;
+            font-weight: 700;
+            padding: 0.2rem 1rem;
+            border-radius: 30px;
+            letter-spacing: 0.3px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .booking-estimate .estimate-badge i {
+            font-size: 0.55rem;
+        }
+
+        /* ── Maintenance Detail Card ── */
+        .maintenance-card {
+            background: #f8faff;
+            border-radius: 18px;
+            padding: 0.9rem 1rem 0.8rem 1rem;
+            border: 1px solid #eef2f9;
+            margin: 0.5rem 0 1rem 0;
+        }
+        .maintenance-card .title {
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #0a1a3a;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .maintenance-card .title i {
+            color: #2d7aff;
+            font-size: 0.85rem;
+        }
+        .maintenance-card .desc {
+            font-size: 0.6rem;
+            color: #3d445b;
+            line-height: 1.6;
+            margin: 0.3rem 0 0.4rem 0;
+            padding-left: 1.8rem;
+        }
+        .maintenance-card .otp-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-left: 1.8rem;
+            margin-top: 0.1rem;
+        }
+        .maintenance-card .otp-badge {
+            background: #22b573;
+            color: #fff;
+            font-size: 0.5rem;
+            font-weight: 700;
+            padding: 0.1rem 0.7rem;
+            border-radius: 30px;
+            letter-spacing: 0.5px;
+        }
+        .maintenance-card .otp-badge i {
+            margin-right: 4px;
+        }
+
+        /* ── Service Area ── */
+        .service-area {
+            background: #f8faff;
+            border-radius: 16px;
+            padding: 0.6rem 1rem;
+            border: 1px solid #eef2f9;
+            margin: 0.2rem 0 0.8rem 0;
+            display: flex;
+            align-items: center;
             gap: 10px;
             flex-wrap: wrap;
-            margin: 12px 0;
         }
-        .badge {
-            background: rgba(255, 255, 255, 0.05);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* ─── OFFERS ─── */
-        .offer-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .offer-item:last-child { border-bottom: none; }
-        .offer-item .discount { color: #F59E0B; font-weight: 700; }
-
-        /* ─── GUEST TRACKING ─── */
-        .track-input {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 15px;
-            margin-bottom: 10px;
-        }
-        .track-btn {
-            width: 100%;
-            padding: 12px;
-            background: #0D9488;
-            color: #fff;
-            border: none;
-            border-radius: 12px;
-            font-weight: 600;
-            cursor: pointer;
-        }
-
-        /* ─── RELEASE STRIP ─── */
-        .release-strip {
-            background: linear-gradient(90deg, #F59E0B, #FCD34D);
-            color: #0A0F1D;
-            font-weight: 700;
-            padding: 8px 16px;
-            text-align: center;
+        .service-area i {
+            color: #2d7aff;
             font-size: 0.85rem;
-            position: relative;
-            z-index: 60;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            flex-wrap: wrap;
         }
-        .release-strip .close-strip {
-            background: rgba(0, 0, 0, 0.12);
-            border: none;
-            color: #0A0F1D;
-            cursor: pointer;
-            padding: 2px 12px;
-            border-radius: 30px;
-            font-size: 14px;
-            transition: background 0.2s;
+        .service-area .text {
+            font-size: 0.65rem;
+            font-weight: 500;
+            color: #1a1e2b;
         }
-        .release-strip .close-strip:hover { background: rgba(0, 0, 0, 0.22); }
-
-        /* ─── TOAST ─── */
-        #toast {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            padding: 14px 24px;
-            background: #1a2a3a;
-            color: #fff;
-            border-radius: 12px;
+        .service-area .highlight {
+            font-weight: 700;
+            color: #0a1a3a;
+        }
+        .service-area .coming {
+            font-size: 0.55rem;
             font-weight: 600;
-            font-size: 14px;
-            opacity: 0;
-            transition: opacity 0.3s;
-            z-index: 9999;
-            max-width: 90%;
-            box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+            color: #2d7aff;
+            background: #eef4ff;
+            padding: 0.1rem 0.7rem;
+            border-radius: 20px;
+            margin-left: auto;
         }
-        #toast.show { opacity: 1; }
 
-        /* ─── BOTTOM NAV ─── */
+        /* ── Bottom Navigation ── */
         .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background: rgba(7, 11, 20, 0.95);
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(12px);
             display: flex;
             justify-content: space-around;
-            padding: 8px 0;
-            z-index: 50;
+            align-items: center;
+            padding: 0.5rem 0 0.2rem 0;
+            border-top: 1px solid #eef2f9;
+            margin-top: 0.3rem;
         }
-        .bottom-nav a {
+        .nav-item {
             display: flex;
             flex-direction: column;
             align-items: center;
-            color: rgba(255, 255, 255, 0.4);
-            font-size: 10px;
-            text-decoration: none;
-            transition: color 0.3s;
+            gap: 2px;
+            font-size: 0.5rem;
+            font-weight: 600;
+            color: #8e94a5;
+            transition: 0.2s;
+            cursor: default;
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
         }
-        .bottom-nav a.active { color: #14B8A6; }
-        .bottom-nav a i { font-size: 20px; margin-bottom: 2px; }
+        .nav-item i {
+            font-size: 1rem;
+            color: #8e94a5;
+        }
+        .nav-item.active {
+            color: #0a1a3a;
+        }
+        .nav-item.active i {
+            color: #2d7aff;
+        }
+        .nav-item .badge-dot {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            background: #2d7aff;
+            border-radius: 50%;
+            margin-top: 1px;
+        }
 
-        /* ─── FOOTER ─── */
-        .footer {
-            border-top: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 24px 0 12px;
-            text-align: center;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.3);
-            margin-top: 30px;
+        /* ── Responsive ── */
+        @media (max-width: 420px) {
+            .phone-frame {
+                padding: 1.2rem 0.9rem 0.5rem;
+                border-radius: 32px;
+            }
+            .brand-name {
+                font-size: 1.7rem;
+            }
+            .feature-item {
+                min-width: 70px;
+                padding: 0.5rem 0.3rem;
+            }
+            .feature-item i {
+                font-size: 1rem;
+            }
+            .calc-row select,
+            .calc-row input {
+                min-width: 60px;
+                font-size: 0.6rem;
+            }
+            .calc-row .calc-result {
+                font-size: 0.6rem;
+                padding: 0.25rem 0.7rem;
+            }
+            .offers-section .offer-text {
+                font-size: 0.6rem;
+            }
+            .booking-estimate .info {
+                font-size: 0.6rem;
+            }
         }
 
-        /* ─── RESPONSIVE ─── */
-        @media (max-width: 768px) {
-            .desktop-nav { display: none; }
-            .mobile-header-right { display: flex; }
-            .mobile-menu-btn { display: block; }
-            .carousel-container { height: 70vh; min-height: 400px; }
-            .carousel-slide { padding: 0 5%; }
-            .carousel-content h1 { font-size: 2.2rem; }
-            .container-custom { padding: 0 16px; }
-            .calc-container { padding: 20px; }
-            .glass-card { padding: 20px; }
-            .card { padding: 16px; }
-        }
-        @media (max-width: 480px) {
-            .carousel-container { height: 60vh; min-height: 320px; }
-            .carousel-content h1 { font-size: 1.8rem; }
-            .carousel-content p { font-size: 1rem; }
-            .header .logo-text { font-size: 17px; }
-            .header .logo img { width: 40px; height: 40px; }
-            .bottom-nav a { font-size: 9px; }
-            .bottom-nav a i { font-size: 18px; }
+        @media (max-width: 360px) {
+            .brand-name {
+                font-size: 1.4rem;
+            }
+            .feature-row {
+                gap: 0.4rem;
+            }
+            .feature-item {
+                min-width: 60px;
+                padding: 0.4rem 0.2rem;
+            }
+            .feature-item i {
+                font-size: 0.9rem;
+            }
+            .chip {
+                font-size: 0.5rem;
+                padding: 0.2rem 0.6rem;
+            }
+            .download-btn {
+                font-size: 0.75rem;
+                padding: 0.5rem 1.2rem;
+            }
+            .calc-row {
+                gap: 0.4rem;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- ─── RELEASE STRIP ─── -->
-    <div id="releaseStrip" class="release-strip">
-        <span class="inline-block bg-amber-800 text-white text-[10px] font-bold px-3 py-0.5 rounded-full">🚀 New Release</span>
-        <span>RepairMaster App version v3.0 coming soon!</span>
-        <button class="close-strip" onclick="document.getElementById('releaseStrip').style.display='none'">✕</button>
+    <div class="phone-frame">
+
+        <!-- ─── Status Bar ─── -->
+        <div class="status-bar">
+            <span class="time">9:41</span>
+            <span class="icons">
+                <i class="fas fa-signal"></i>
+                <i class="fas fa-wifi"></i>
+                <i class="fas fa-battery-three-quarters"></i>
+            </span>
+        </div>
+
+        <!-- ─── Brand ─── -->
+        <div class="brand-header">
+            <div class="brand-name">Repair<span>Master</span></div>
+            <div class="brand-tagline">Direct To Consumer</div>
+        </div>
+
+        <!-- ─── Coming Soon ─── -->
+        <div class="coming-soon-badge">
+            <i class="fas fa-clock"></i> App version v3.0 coming soon!
+        </div>
+
+        <!-- ─── Feature Row ─── -->
+        <div class="feature-row">
+            <div class="feature-item">
+                <i class="fas fa-calendar-check"></i>
+                <div class="label">Easy Booking</div>
+                <div class="sub">one‑tap schedule</div>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-mobile-alt"></i>
+                <div class="label">Seamless App</div>
+                <div class="sub">customer first</div>
+            </div>
+            <div class="feature-item">
+                <i class="fas fa-calculator"></i>
+                <div class="label">Estimate</div>
+                <div class="sub">smart cost</div>
+            </div>
+        </div>
+
+        <!-- ─── Status Chips ─── -->
+        <div class="status-chips">
+            <span class="chip">
+                <span class="dot green"></span> Maintenance Mode active
+            </span>
+            <span class="chip">
+                <i class="fas fa-lock"></i> Privacy Lock enabled
+            </span>
+        </div>
+
+        <!-- ─── Download CTA ─── -->
+        <button class="download-btn" aria-label="Download App">
+            <i class="fas fa-download"></i> Download App
+        </button>
+
+        <!-- ─── 🔥 NEW: Hot Deals / Offers ─── -->
+        <div class="offers-section">
+            <div class="offer-left">
+                <i class="fas fa-fire"></i>
+                <div class="offer-text">
+                    <span class="highlight">Hot Deal!</span> 20% off on screen repairs
+                </div>
+            </div>
+            <span class="offer-tag"><i class="fas fa-tag"></i> USE CODE: REPAIR20</span>
+        </div>
+
+        <!-- ─── 🧮 NEW: Calculator / Estimator ─── -->
+        <div class="calculator-card">
+            <div class="calc-title">
+                <i class="fas fa-calculator"></i> Quick Repair Estimator
+            </div>
+            <div class="calc-row">
+                <select id="deviceType">
+                    <option value="phone">📱 Phone</option>
+                    <option value="tablet">📟 Tablet</option>
+                    <option value="laptop">💻 Laptop</option>
+                </select>
+                <select id="issueType">
+                    <option value="screen">🖥️ Screen</option>
+                    <option value="battery">🔋 Battery</option>
+                    <option value="water">💧 Water damage</option>
+                    <option value="other">🔧 Other</option>
+                </select>
+                <div class="calc-result" id="estimateDisplay">
+                    ₹<span id="estimateValue">499</span>
+                </div>
+            </div>
+            <div class="calc-note">* estimated base price · final may vary</div>
+        </div>
+
+        <!-- ─── 📋 NEW: Seamless Booking Estimate ─── -->
+        <div class="booking-estimate">
+            <div class="left">
+                <i class="fas fa-clock"></i>
+                <div class="info">
+                    <strong>Seamless Booking</strong> · Get estimate in <strong>2 min</strong>
+                </div>
+            </div>
+            <span class="estimate-badge">
+                <i class="fas fa-check-circle"></i> Book now
+            </span>
+        </div>
+
+        <!-- ─── Maintenance Detail ─── -->
+        <div class="maintenance-card">
+            <div class="title">
+                <i class="fas fa-shield-alt"></i> Maintenance Mode Active
+            </div>
+            <div class="desc">
+                Your data privacy is our priority. <strong>Check Point at Pick‑up:</strong> All devices (except Dead Phone &amp; Blank Screen) will be placed in Maintenance Mode to protect your personal information.
+            </div>
+            <div class="otp-row">
+                <span class="otp-badge"><i class="fas fa-check-circle"></i> OTP Verified</span>
+            </div>
+        </div>
+
+        <!-- ─── Service Area ─── -->
+        <div class="service-area">
+            <i class="fas fa-map-pin"></i>
+            <span class="text">
+                <span class="highlight">Currently serving</span> Wardha – Nagpur
+            </span>
+            <span class="coming">Amravati coming soon!</span>
+        </div>
+
+        <!-- ─── Bottom Navigation ─── -->
+        <div class="bottom-nav">
+            <div class="nav-item active">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-file-alt"></i>
+                <span>Request</span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-store-alt"></i>
+                <span>Hub</span>
+                <span class="badge-dot"></span>
+            </div>
+            <div class="nav-item">
+                <i class="fas fa-user"></i>
+                <span>App</span>
+            </div>
+        </div>
+
     </div>
 
-    <!-- ─── HEADER ─── -->
-    <header class="header container-custom">
-        <div class="logo" onclick="window.location.href='index.html'">
-            <img src="img_maintenance_mode_active.png.png" alt="RepairMaster" />
-            <div>
-                <div class="logo-text">Repair<span>Master</span></div>
-                <span class="logo-sub">Direct To Consumer</span>
-            </div>
-        </div>
-
-        <!-- Desktop Navigation -->
-        <nav class="desktop-nav">
-            <a href="index.html" class="active">Home</a>
-            <a href="request.html">Repair Request</a>
-            <a href="app.html">Download</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="login.html" class="login-btn">Login</a>
-            <a href="signup.html">Sign Up</a>
-        </nav>
-
-        <!-- Mobile Header Right -->
-        <div class="mobile-header-right">
-            <div id="mobileUserAvatar" onclick="toggleMobileSidebar()">U</div>
-            <button class="mobile-menu-btn" onclick="toggleMobileSidebar()">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-        </div>
-    </header>
-
-    <!-- ─── MOBILE SIDEBAR ─── -->
-    <div id="mobileSidebar">
-        <div class="sidebar-close">
-            <button onclick="toggleMobileSidebar()">&times;</button>
-        </div>
-
-        <div class="sidebar-user">
-            <div class="avatar" id="sidebarAvatar">U</div>
-            <div class="info">
-                <div class="name" id="sidebarUserName">Guest</div>
-                <div class="role" id="sidebarUserRole">Customer</div>
-            </div>
-        </div>
-
-        <div class="sidebar-role">
-            <select id="sidebarRoleSelect" onchange="switchActiveRole(this.value)">
-                <option value="customer">Customer</option>
-                <option value="coordinator">Coordinator</option>
-                <option value="technician">Technician</option>
-                <option value="repairmaster">RepairMaster</option>
-                <option value="admin">Admin</option>
-            </select>
-        </div>
-
-        <nav class="sidebar-nav">
-            <a href="index.html" class="active"><i class="fa-solid fa-house"></i> Home</a>
-            <a href="request.html"><i class="fa-solid fa-screwdriver-wrench"></i> Repair Request</a>
-            <a href="app.html"><i class="fa-solid fa-download"></i> Download App</a>
-            <a href="dashboard.html"><i class="fa-solid fa-chart-simple"></i> Dashboard</a>
-        </nav>
-
-        <div class="sidebar-actions">
-            <button class="btn-profile" onclick="toggleProfileDrawer(); toggleMobileSidebar();">
-                <i class="fa-regular fa-user"></i> View &amp; Edit Profile
-            </button>
-            <button class="btn-logout" onclick="logoutUser(); toggleMobileSidebar();">
-                <i class="fa-solid fa-power-off"></i> Logout
-            </button>
-        </div>
-    </div>
-
-    <!-- ─── SIDEBAR OVERLAY ─── -->
-    <div id="sidebarOverlay" onclick="toggleMobileSidebar()"></div>
-
-    <!-- ─── MAIN CONTENT ─── -->
-    <main>
-        <!-- Carousel Slider -->
-        <div class="carousel-container">
-            <div class="carousel-slide active" style="background-image: url('repo-image-folder/technician-device-1.png');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">🔥 Welcome</span>
-                    <h1>Repair<span class="text-teal">Master</span></h1>
-                    <p class="text-2xl font-bold text-teal">Direct To Consumer</p>
-                    <p>Smart, Fast &amp; Reliable Repairs — powered by cm2us.com</p>
-                    <div class="flex flex-wrap gap-4">
-                        <a href="#calculator-section" class="btn-teal" onclick="document.getElementById('calculator-section').scrollIntoView({behavior:'smooth'})">Get Estimate</a>
-                        <a href="request.html" class="btn-outline">Request Repair</a>
-                    </div>
-                </div>
-            </div>
-            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-scooty.png');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-teal-500/20 text-teal-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Doorstep Service</span>
-                    <h1>We Come To You</h1>
-                    <p>Real-time GPS tracking • OTP verified handover • Certified technicians</p>
-                    <a href="request.html" class="btn-teal">Schedule Pickup</a>
-                </div>
-            </div>
-            <div class="carousel-slide" style="background-image: url('repo-image-folder/device-generic.png');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Genuine Parts</span>
-                    <h1>State-of-the-Art Workshop</h1>
-                    <p>Advanced inventory management • Screens • Batteries • Charging Ports &amp; more</p>
-                    <a href="#calculator-section" class="btn-teal" onclick="document.getElementById('calculator-section').scrollIntoView({behavior:'smooth'})">Explore Parts</a>
-                </div>
-            </div>
-            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-device-2.png');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-teal-500/20 text-teal-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Easy Booking</span>
-                    <h1>Seamless Customer App</h1>
-                    <p>🔒 Maintenance Mode active • Privacy Lock enabled</p>
-                    <a href="app.html" class="btn-teal">Download App</a>
-                </div>
-            </div>
-            <div class="carousel-slide" style="background-image: url('repo-image-folder/technician-device-1.png');">
-                <div class="carousel-content">
-                    <span class="inline-block bg-amber-500/20 text-amber-400 text-xs font-bold px-4 py-1 rounded-full mb-4">Expanding Network</span>
-                    <h1>Serving Wardha</h1>
-                    <p class="text-xl font-bold text-amber-400">Nagpur &amp; Amravati — Coming Soon!</p>
-                    <a href="request.html" class="btn-teal">Visit Hub</a>
-                </div>
-            </div>
-            <div class="carousel-dots">
-                <button class="carousel-dot active" onclick="goToSlide(0)"></button>
-                <button class="carousel-dot" onclick="goToSlide(1)"></button>
-                <button class="carousel-dot" onclick="goToSlide(2)"></button>
-                <button class="carousel-dot" onclick="goToSlide(3)"></button>
-                <button class="carousel-dot" onclick="goToSlide(4)"></button>
-            </div>
-        </div>
-
-        <!-- City Notice & Maintenance -->
-        <div class="container-custom" style="margin-top: -30px; position: relative; z-index: 10;">
-            <div class="city-notice">
-                <i class="fa-solid fa-location-dot"></i>
-                <span><strong>Currently serving Wardha</strong> — Nagpur &amp; Amravati coming soon!</span>
-            </div>
-            <div class="maintenance-banner">
-                <i class="fa-solid fa-shield-halved"></i>
-                <div>
-                    <strong>🔒 Maintenance Mode Active</strong> — Your data privacy is our priority.
-                    <span class="text-amber-400 font-medium">Check Point at Pick-up:</span>
-                    All devices (except <strong>Dead Phone</strong> &amp; <strong>Blank Screen</strong>) will be placed in <strong>Maintenance Mode</strong> to protect your personal information.
-                    <span class="text-teal-400 text-xs block mt-1"><i class="fa-regular fa-circle-check mr-1"></i> OTP Verified Handover • Privacy Lock Enabled</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Badges -->
-        <div class="container-custom">
-            <div class="badge-row">
-                <span class="badge"><i class="fa-regular fa-clock"></i> 90 Days Warranty</span>
-                <span class="badge"><i class="fa-solid fa-otp"></i> OTP Handover</span>
-                <span class="badge"><i class="fa-solid fa-tools"></i> Genuine Parts</span>
-            </div>
-        </div>
-
-        <!-- Calculator -->
-        <div id="calculator-section" class="container-custom" style="padding: 24px 0;">
-            <div class="text-center space-y-3 mb-8">
-                <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
-                    <i class="fa-solid fa-calculator mr-1"></i> Smart Repair Calculator
-                </span>
-                <h2 class="text-3xl md:text-4xl font-bold text-white">Get Your Accurate Estimate</h2>
-                <p class="text-gray-400 text-sm max-w-2xl mx-auto">Select brand, model, repair type &amp; parts quality – transparent pricing.</p>
-                <p class="text-xs text-amber-400"><i class="fa-solid fa-tag mr-1"></i> All prices include 10% discount</p>
-            </div>
-
-            <div class="calc-container">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Left: Dropdowns -->
-                    <div>
-                        <div class="form-group">
-                            <label>1. Select Brand</label>
-                            <select id="brandSelect"><option value="">— Brand —</option></select>
-                        </div>
-                        <div class="form-group">
-                            <label>2. Select Model</label>
-                            <select id="modelSelect"><option value="">— Model —</option></select>
-                        </div>
-                        <div class="form-group">
-                            <label>3. Select Repair</label>
-                            <select id="repairTypeSelect"><option value="">— Repair —</option></select>
-                        </div>
-                        <div class="form-group">
-                            <label>4. Parts Quality</label>
-                            <select id="qualitySelect">
-                                <option value="standard">Standard</option>
-                                <option value="premium">Premium</option>
-                            </select>
-                        </div>
-                        <div class="offer-toggle">
-                            <input type="checkbox" id="offerToggle" />
-                            <label for="offerToggle">
-                                Apply 50% service discount
-                                <span class="offer-badge">HOT DEAL</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Right: Breakdown -->
-                    <div>
-                        <div class="card" style="margin-bottom:0;">
-                            <div class="card-title"><i class="fa-solid fa-file-invoice-dollar"></i> Estimate Summary</div>
-                            <div id="partsSurveyContainer" style="font-size:13px;color:rgba(255,255,255,0.5);margin:8px 0;">
-                                Select brand, model &amp; repair to see parts.
-                            </div>
-                            <div class="price-breakdown">
-                                <div class="price-row"><span>Parts (10% off)</span><strong id="partsTotalDisplay">₹0.00</strong></div>
-                                <div class="price-row"><span>Service Fee</span><strong id="serviceFeeDisplay">₹0.00</strong></div>
-                                <div class="price-row"><span>Diagnosis</span><strong id="diagnosisChargeDisplay">₹250.00</strong></div>
-                                <div class="price-row total"><span>Total</span><strong id="totalPriceDisplay">₹0.00</strong></div>
-                            </div>
-                            <button class="btn-primary" onclick="createOrder()">
-                                <i class="fa-regular fa-calendar-check"></i> Book Service
-                            </button>
-                            <p style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:8px;text-align:center;">You'll be prompted to login before booking.</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Hot Deals -->
-        <div class="container-custom">
-            <div class="card">
-                <div class="card-title"><i class="fa-solid fa-fire" style="color:#F59E0B;"></i> Hot Deals</div>
-                <div id="offersContainer">
-                    <div style="text-align:center;color:rgba(255,255,255,0.4);padding:10px;">Loading offers...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Guest Tracking -->
-        <div class="container-custom">
-            <div class="card">
-                <div class="card-title"><i class="fa-solid fa-magnifying-glass"></i> Track Your Order</div>
-                <form id="trackForm" onsubmit="trackOrderGuest(event)">
-                    <input type="text" id="trackOrderId" class="track-input" placeholder="Order ID (e.g. RM-REQ-XXXX)" required />
-                    <input type="tel" id="trackPhone" class="track-input" placeholder="Phone Number" required />
-                    <button type="submit" class="track-btn">Track</button>
-                </form>
-                <div id="guestTrackResult" style="margin-top:10px;"></div>
-            </div>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer container-custom">
-            <p>© 2026 RepairMaster – Direct To Consumer Support. Wardha Hub.</p>
-            <p style="margin-top:4px;">Powered by <span style="color:#14B8A6;">cm2us.com</span></p>
-        </div>
-    </main>
-
-    <!-- ─── BOTTOM NAV ─── -->
-    <div class="bottom-nav">
-        <a href="index.html" class="active"><i class="fa-solid fa-house"></i> Home</a>
-        <a href="request.html"><i class="fa-solid fa-screwdriver-wrench"></i> Request</a>
-        <a href="dashboard.html"><i class="fa-solid fa-chart-simple"></i> Hub</a>
-        <a href="app.html"><i class="fa-solid fa-download"></i> App</a>
-    </div>
-
-    <!-- ─── TOAST ─── -->
-    <div id="toast"></div>
-
-    <!-- ─── SCRIPTS ─── -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
-    <script src="homepage.js"></script>
+    <!-- ─── Interactive Calculator Script ─── -->
     <script>
-        // ─── CAROUSEL ───
         (function() {
-            const slides = document.querySelectorAll('.carousel-slide');
-            const dots = document.querySelectorAll('.carousel-dot');
-            let current = 0;
-            let interval;
+            const deviceSelect = document.getElementById('deviceType');
+            const issueSelect = document.getElementById('issueType');
+            const estimateSpan = document.getElementById('estimateValue');
 
-            function goTo(index) {
-                slides.forEach((s, i) => s.classList.toggle('active', i === index));
-                dots.forEach((d, i) => d.classList.toggle('active', i === index));
-                current = index;
+            // Base prices: [device][issue]
+            const prices = {
+                phone: { screen: 499, battery: 399, water: 899, other: 299 },
+                tablet: { screen: 799, battery: 599, water: 1299, other: 499 },
+                laptop: { screen: 1499, battery: 999, water: 2499, other: 799 }
+            };
+
+            function updateEstimate() {
+                const device = deviceSelect.value;
+                const issue = issueSelect.value;
+                const price = prices[device]?.[issue] ?? 499;
+                estimateSpan.textContent = price;
             }
 
-            function nextSlide() { goTo((current + 1) % slides.length); }
+            deviceSelect.addEventListener('change', updateEstimate);
+            issueSelect.addEventListener('change', updateEstimate);
 
-            function startCarousel() {
-                if (interval) clearInterval(interval);
-                interval = setInterval(nextSlide, 5000);
-            }
-
-            window.goToSlide = goTo;
-            startCarousel();
-
-            document.addEventListener('visibilitychange', () => {
-                if (document.hidden) clearInterval(interval);
-                else startCarousel();
-            });
+            // initial set
+            updateEstimate();
         })();
-
-        // ─── MOBILE SIDEBAR ───
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('mobileSidebar');
-            const overlay = document.getElementById('sidebarOverlay');
-            if (sidebar) {
-                sidebar.classList.toggle('open');
-                overlay.classList.toggle('show');
-            }
-        }
-        window.toggleMobileSidebar = toggleMobileSidebar;
-
-        // ─── FALLBACK CALCULATOR ───
-        (function() {
-            const brands = [
-                { id: 'b1', name: 'Apple' }, { id: 'b2', name: 'Samsung' },
-                { id: 'b3', name: 'Vivo' }, { id: 'b4', name: 'OnePlus' },
-                { id: 'b5', name: 'Xiaomi' }, { id: 'b6', name: 'Oppo' },
-                { id: 'b7', name: 'Realme' }, { id: 'b8', name: 'Google' }
-            ];
-            const devices = [
-                { id: 'd1', brand_id: 'b1', name: 'iPhone 15 Pro' },
-                { id: 'd2', brand_id: 'b1', name: 'iPhone 14' },
-                { id: 'd3', brand_id: 'b2', name: 'Galaxy S24 Ultra' },
-                { id: 'd4', brand_id: 'b2', name: 'Galaxy A55' },
-                { id: 'd5', brand_id: 'b3', name: 'V30 Pro' },
-                { id: 'd6', brand_id: 'b3', name: 'V29' },
-                { id: 'd7', brand_id: 'b4', name: 'OnePlus 12' },
-                { id: 'd8', brand_id: 'b5', name: 'Redmi Note 13 Pro' }
-            ];
-            const repairTypes = [
-                { id: 'rt1', name: 'screen', label: 'Screen Replacement' },
-                { id: 'rt2', name: 'battery', label: 'Battery Replacement' },
-                { id: 'rt3', name: 'chargingport', label: 'Charging Port' },
-                { id: 'rt4', name: 'camera', label: 'Camera Repair' },
-                { id: 'rt5', name: 'speaker', label: 'Speaker / Mic' }
-            ];
-            const parts = [
-                { device_id: 'd5', repair_type_id: 'rt1', name: 'AMOLED Screen Panel Assembly', price: 6300 },
-                { device_id: 'd5', repair_type_id: 'rt2', name: 'Li-Po Battery', price: 1500 },
-                { device_id: 'd1', repair_type_id: 'rt1', name: 'OLED Display', price: 15000 },
-                { device_id: 'd1', repair_type_id: 'rt2', name: 'Battery', price: 4500 },
-                { device_id: 'd3', repair_type_id: 'rt1', name: 'AMOLED Display', price: 12000 },
-                { device_id: 'd3', repair_type_id: 'rt2', name: 'Battery Pack', price: 3800 }
-            ];
-
-            function populateBrands() {
-                const sel = document.getElementById('brandSelect');
-                if (!sel) return;
-                sel.innerHTML = '<option value="">— Brand —</option>';
-                brands.forEach(b => {
-                    const opt = document.createElement('option');
-                    opt.value = b.id;
-                    opt.textContent = b.name;
-                    sel.appendChild(opt);
-                });
-                sel.onchange = updateModels;
-                updateModels();
-            }
-
-            function updateModels() {
-                const brandId = document.getElementById('brandSelect').value;
-                const sel = document.getElementById('modelSelect');
-                if (!sel) return;
-                sel.innerHTML = '<option value="">— Model —</option>';
-                if (!brandId) { updateRepairTypes(); return; }
-                devices.filter(d => d.brand_id === brandId).forEach(d => {
-                    const opt = document.createElement('option');
-                    opt.value = d.id;
-                    opt.textContent = d.name;
-                    sel.appendChild(opt);
-                });
-                updateRepairTypes();
-            }
-
-            function updateRepairTypes() {
-                const sel = document.getElementById('repairTypeSelect');
-                if (!sel) return;
-                sel.innerHTML = '<option value="">— Repair —</option>';
-                repairTypes.forEach(rt => {
-                    const opt = document.createElement('option');
-                    opt.value = rt.id;
-                    opt.textContent = rt.label || rt.name;
-                    sel.appendChild(opt);
-                });
-                updatePartsSurvey();
-            }
-
-            function updatePartsSurvey() {
-                const modelId = document.getElementById('modelSelect').value;
-                const repairId = document.getElementById('repairTypeSelect').value;
-                const quality = document.getElementById('qualitySelect')?.value || 'standard';
-                const offer = document.getElementById('offerToggle')?.checked || false;
-                const partsList = parts.filter(p => p.device_id === modelId && p.repair_type_id === repairId);
-                const qm = quality === 'premium' ? 1 : 0.7;
-                const container = document.getElementById('partsSurveyContainer');
-                if (!modelId || !repairId || partsList.length === 0) {
-                    if (container) container.innerHTML = 'Select brand, model & repair to see parts.';
-                    document.getElementById('partsTotalDisplay').textContent = '₹0.00';
-                    document.getElementById('serviceFeeDisplay').textContent = '₹0.00';
-                    document.getElementById('totalPriceDisplay').textContent = '₹0.00';
-                    return;
-                }
-                let total = partsList.reduce((s, p) => s + p.price * qm, 0);
-                const discounted = total * 0.9;
-                let service = discounted * 0.15;
-                if (offer) service *= 0.5;
-                const diagnosis = 250;
-                const final = discounted + service + diagnosis;
-                if (container) {
-                    container.innerHTML = partsList.map(p =>
-                        `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
-                            <span>${p.name}</span>
-                            <span style="color:#14B8A6;">₹${(p.price * qm).toFixed(0)}</span>
-                        </div>`
-                    ).join('');
-                }
-                document.getElementById('partsTotalDisplay').textContent = '₹' + discounted.toFixed(0);
-                document.getElementById('serviceFeeDisplay').textContent = '₹' + service.toFixed(0);
-                document.getElementById('totalPriceDisplay').textContent = '₹' + final.toFixed(0);
-            }
-
-            document.getElementById('qualitySelect')?.addEventListener('change', updatePartsSurvey);
-            document.getElementById('offerToggle')?.addEventListener('change', updatePartsSurvey);
-            document.getElementById('modelSelect')?.addEventListener('change', updateRepairTypes);
-            document.getElementById('repairTypeSelect')?.addEventListener('change', updatePartsSurvey);
-
-            window.populateBrands = populateBrands;
-            window.updateModels = updateModels;
-            window.updateRepairTypes = updateRepairTypes;
-            window.updatePartsSurvey = updatePartsSurvey;
-
-            if (document.readyState === 'complete') populateBrands();
-            else document.addEventListener('DOMContentLoaded', populateBrands);
-        })();
-
-        // ─── GUEST TRACKING ───
-        window.trackOrderGuest = async function(e) {
-            e.preventDefault();
-            const orderId = document.getElementById('trackOrderId').value.trim();
-            const phone = document.getElementById('trackPhone').value.trim();
-            const container = document.getElementById('guestTrackResult');
-            if (!orderId || !phone) { container.innerHTML = '<div style="color:#e74c3c;">Please fill both fields.</div>'; return; }
-            container.innerHTML = '<div style="color:rgba(255,255,255,0.5);">Searching...</div>';
-            try {
-                const { data, error } = await supabase.from('orders').select('*').eq('order_number', orderId);
-                if (error || !data || data.length === 0) { container.innerHTML = '<div style="color:#e74c3c;">Order not found.</div>'; return; }
-                const o = data[0];
-                const dbPhone = (o.customer_phone || '').replace(/[^0-9]/g, '');
-                const cleanPhone = phone.replace(/[^0-9]/g, '');
-                if (dbPhone.slice(-10) !== cleanPhone.slice(-10)) { container.innerHTML = '<div style="color:#e74c3c;">Phone number mismatch.</div>'; return; }
-                const devName = (o.device_id) ? 'Device' : 'Device';
-                const repairLabel = (o.repair_type_id) ? 'Repair' : 'Repair';
-                container.innerHTML = `
-                    <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:12px;margin-top:6px;">
-                        <div style="display:flex;justify-content:space-between;">
-                            <strong>${devName}</strong>
-                            <span style="background:rgba(255,255,255,0.1);padding:2px 10px;border-radius:12px;">${o.status || 'Pending'}</span>
-                        </div>
-                        <div style="color:rgba(255,255,255,0.6);font-size:13px;">${repairLabel}</div>
-                        <div style="font-weight:600;color:#14B8A6;">₹${(o.total_price || 0).toFixed(0)}</div>
-                    </div>
-                `;
-            } catch (err) {
-                container.innerHTML = '<div style="color:#e74c3c;">Error: ' + err.message + '</div>';
-            }
-        };
-
-        // ─── OFFERS ───
-        async function fetchOffers() {
-            try {
-                const { data, error } = await supabase.from('offers').select('*').eq('active', true).limit(5);
-                if (error || !data || data.length === 0) throw new Error('No offers');
-                const container = document.getElementById('offersContainer');
-                container.innerHTML = data.map(o => `
-                    <div class="offer-item">
-                        <div><strong>${o.name}</strong><div style="font-size:12px;color:rgba(255,255,255,0.5);">${o.description || ''}</div></div>
-                        <span class="discount">${o.discount_percent || 0}% OFF</span>
-                    </div>
-                `).join('');
-            } catch (e) {
-                const fallback = [
-                    { name: 'Monsoon Screen Guard', description: 'Free tempered glass with screen repair', discount_percent: 100 },
-                    { name: 'Battery Saver Deal', description: '15% off on battery replacements', discount_percent: 15 }
-                ];
-                const container = document.getElementById('offersContainer');
-                container.innerHTML = fallback.map(o => `
-                    <div class="offer-item">
-                        <div><strong>${o.name}</strong><div style="font-size:12px;color:rgba(255,255,255,0.5);">${o.description || ''}</div></div>
-                        <span class="discount">${o.discount_percent}% OFF</span>
-                    </div>
-                `).join('');
-            }
-        }
-
-        // ─── CREATE ORDER ───
-        window.createOrder = async function() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (!user) {
-                document.getElementById('toast').textContent = 'Please login first.';
-                document.getElementById('toast').classList.add('show');
-                setTimeout(() => document.getElementById('toast').classList.remove('show'), 3000);
-                return;
-            }
-            const brand = document.getElementById('brandSelect').value;
-            const model = document.getElementById('modelSelect').value;
-            const repair = document.getElementById('repairTypeSelect').value;
-            if (!brand || !model || !repair) {
-                document.getElementById('toast').textContent = 'Please select brand, model & repair.';
-                document.getElementById('toast').classList.add('show');
-                setTimeout(() => document.getElementById('toast').classList.remove('show'), 3000);
-                return;
-            }
-            document.getElementById('toast').textContent = 'Redirecting to dashboard...';
-            document.getElementById('toast').classList.add('show');
-            setTimeout(() => window.location.href = 'dashboard.html', 1500);
-        };
-
-        // ─── INIT ───
-        document.addEventListener('DOMContentLoaded', function() {
-            if (typeof loadCatalog === 'function') loadCatalog();
-            else fetchOffers();
-        });
     </script>
+
 </body>
 </html>
