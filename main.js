@@ -1921,9 +1921,9 @@ window.switchActiveRole = switchActiveRole;
 async function completeRepair(orderId) {
     if (!supabase) return;
     try {
-        const { error } = await supabase.from('orders').update({ status: 'Completed' }).eq('id', orderId);
+        const { error } = await supabase.from('orders').update({ status: 'Ready-For-Delivery' }).eq('id', orderId);
         if (error) throw error;
-        showToast('🎉 Repair completed! Ready for delivery.', 'success');
+        showToast('✅ Repair completed. Device ready for delivery.', 'success');
         loadDashboard();
     } catch (err) {
         showToast('Failed to complete repair: ' + err.message, 'error');
