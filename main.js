@@ -561,7 +561,8 @@ async function createOrder() {
 // ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
 
 // --- ASSIGN STAFF (modal with dropdown) ---
-async function assignOrderRoles(orderId) {
+// ─── Open the Assign Staff modal (now with status) ───
+async function assignOrderRoles(orderId, currentStatus) {
     if (!supabase) return showToast('Supabase not connected', 'error');
     try {
         const { data: userRoles, error: roleError } = await supabase
@@ -587,7 +588,7 @@ async function assignOrderRoles(orderId) {
                 user_id: ur.user_id,
                 role_id: ur.role_id,
                 displayName: displayName,
-                roleName: ur.role_id === 3 ? 'technician' : 'repairmaster'   // adjust if your role IDs differ
+                roleName: ur.role_id === 3 ? 'technician' : 'repairmaster'
             };
         });
 
@@ -618,7 +619,7 @@ async function assignOrderRoles(orderId) {
                     </div>
                     <div class="flex gap-3 pt-2">
                         <button onclick="document.getElementById('assignModal').remove()" class="flex-1 py-2 bg-gray-700 hover:bg-gray-600 rounded-xl text-white">Cancel</button>
-                        <button onclick="confirmAssign('${orderId}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Assign</button>
+                        <button onclick="confirmAssign('${orderId}', '${currentStatus}')" class="flex-1 py-2 bg-teal-600 hover:bg-teal-500 rounded-xl text-white font-bold">Assign</button>
                     </div>
                 </div>
             </div>
@@ -628,7 +629,9 @@ async function assignOrderRoles(orderId) {
         showToast('Failed to load staff: ' + err.message, 'error');
     }
 }
-window.confirmAssign = async function(orderId) {
+
+// ─── Confirm assignment (conditional) ───
+window.confirmAssign = async function(orderId, currentStatus) {
     const techId = document.getElementById('techSelect').value;
     const masterId = document.getElementById('masterSelect').value;
     if (!techId && !masterId) {
@@ -636,9 +639,16 @@ window.confirmAssign = async function(orderId) {
         return;
     }
     try {
-        const updateData = { status: 'Technician Assigned' };
+        const updateData = {};
         if (techId) updateData.technician_id = techId;
         if (masterId) updateData.repairmaster_id = masterId;
+
+        // Only change status if the order is not already Ready-For-Delivery
+        if (currentStatus !== 'Ready-For-Delivery') {
+            updateData.status = 'Technician Assigned';
+        }
+        // For delivery (Ready-For-Delivery), we keep the status as is.
+
         const { error } = await supabase.from('orders').update(updateData).eq('id', orderId);
         if (error) throw error;
         showToast('Staff assigned successfully!', 'success');
@@ -648,6 +658,7 @@ window.confirmAssign = async function(orderId) {
         showToast('Assignment failed: ' + err.message, 'error');
     }
 };
+
 
 // --- SELF ASSIGN ---
 async function assignSelfAsTechnician(orderId) {
