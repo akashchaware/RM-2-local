@@ -200,25 +200,25 @@
         </div>
 
         <!-- Metric Stat Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
-                <div class="text-3xl font-black text-teal" id="statTotal">0</div>
-                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Total Tickets</div>
-            </div>
-            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
-                <div class="text-3xl font-black text-amber-400" id="statPending">0</div>
-                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Pending Assignment</div>
-            </div>
-            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
-                <div class="text-3xl font-black text-blue-400" id="statInProgress">0</div>
-                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Active Handover</div>
-            </div>
-            <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
-                <div class="text-3xl font-black text-emerald-400" id="statCompleted">0</div>
-                <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Completed &amp; Fixed</div>
-            </div>
-        </div>
-
+       <!-- Metric Stat Cards (clickable) -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+    <div class="stat-card bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center" data-filter="all" onclick="filterByStatus('all')" style="cursor:pointer;">
+        <div class="text-3xl font-black text-teal" id="statTotal">0</div>
+        <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Total Tickets</div>
+    </div>
+    <div class="stat-card bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center" data-filter="Pending" onclick="filterByStatus('Pending')" style="cursor:pointer;">
+        <div class="text-3xl font-black text-amber-400" id="statPending">0</div>
+        <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Pending Assignment</div>
+    </div>
+    <div class="stat-card bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center" data-filter="Pickup" onclick="filterByStatus('Pickup')" style="cursor:pointer;">
+        <div class="text-3xl font-black text-blue-400" id="statInProgress">0</div>
+        <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Active Handover</div>
+    </div>
+    <div class="stat-card bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center" data-filter="Completed" onclick="filterByStatus('Completed')" style="cursor:pointer;">
+        <div class="text-3xl font-black text-emerald-400" id="statCompleted">0</div>
+        <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Completed &amp; Fixed</div>
+    </div>
+</div>
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left: Orders / Tickets Section (Expanded to Full Width) -->
             <div class="lg:col-span-3 space-y-6">
