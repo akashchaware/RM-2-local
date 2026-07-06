@@ -1,0 +1,228 @@
+/* ─── dashboard.css – Mobile responsiveness for the DTC Dashboard ─── */
+
+/* Mobile menu toggle */
+@media (max-width: 768px) {
+    .mobile-menu {
+        display: block !important;
+    }
+    .desktop-nav {
+        display: none !important;
+    }
+    .desktop-nav.open {
+        display: flex !important;
+        flex-direction: column;
+        gap: 12px;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background: #0A0F1D;
+        padding: 20px;
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        z-index: 50;
+    }
+
+    /* Main content padding */
+    .content {
+        padding: 16px !important;
+    }
+
+    /* Topbar - stack vertically */
+    .topbar {
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 12px !important;
+        padding: 16px !important;
+    }
+    .topbar h2 {
+        font-size: 20px !important;
+    }
+    .top-actions {
+        flex-wrap: wrap !important;
+        justify-content: flex-start !important;
+    }
+
+    /* Metric cards - 2 columns on mobile */
+    .metric-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 10px !important;
+    }
+    .metric-grid article {
+        padding: 12px !important;
+    }
+    .metric-grid strong {
+        font-size: 24px !important;
+    }
+
+    /* Main two-column layout → single column */
+    .grid-2col {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+
+    /* Cards */
+    .card {
+        padding: 16px !important;
+    }
+    .card h3 {
+        font-size: 16px !important;
+    }
+
+    /* Hot deals grid - single column */
+    #offersContainer {
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+    .offer-card {
+        padding: 12px !important;
+    }
+    .offer-card img {
+        height: 120px !important;
+    }
+
+    /* Estimator */
+    .estimator select,
+    .estimator input {
+        font-size: 14px !important;
+        padding: 10px !important;
+    }
+    .price-breakdown {
+        padding: 10px !important;
+    }
+    .price-row {
+        font-size: 13px !important;
+    }
+    .price-row.total {
+        font-size: 16px !important;
+    }
+
+    /* Dashboard tickets (order cards) */
+    .order-card {
+        padding: 12px !important;
+        margin-bottom: 10px !important;
+    }
+    .order-card .flex-wrap {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    .order-card .flex-wrap > .flex-1 {
+        width: 100% !important;
+    }
+    .order-card .flex-wrap .flex-col.items-end {
+        align-items: stretch !important;
+        gap: 6px !important;
+        margin-top: 8px !important;
+    }
+    .order-card .text-lg.font-bold {
+        font-size: 16px !important;
+    }
+    .order-card .text-sm {
+        font-size: 12px !important;
+    }
+
+    /* Status badge */
+    .status-badge {
+        font-size: 10px !important;
+        padding: 2px 10px !important;
+    }
+
+    /* Action buttons */
+    .action-btn {
+        padding: 4px 10px !important;
+        font-size: 10px !important;
+        margin: 2px !important;
+    }
+
+    /* Metadata panel */
+    .mt-3.p-3.bg-slate-900\/80 .grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Quotation box */
+    .quotation-box {
+        padding: 10px !important;
+        font-size: 11px !important;
+    }
+    .quotation-box .flex.gap-4 {
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+    }
+
+    /* Workflow tracking */
+    .mt-4.border-t .flex.items-center {
+        gap: 2px !important;
+    }
+    .mt-4.border-t .flex.items-center .flex-1 {
+        min-width: 30px !important;
+    }
+    .mt-4.border-t .flex.items-center span {
+        font-size: 7px !important;
+    }
+
+    /* Profile section (right column) */
+    .profile input,
+    .profile select {
+        font-size: 14px !important;
+        padding: 10px !important;
+    }
+
+    /* Filters */
+    .filter-row {
+        flex-direction: column !important;
+        gap: 8px !important;
+    }
+    .filter-row input,
+    .filter-row select {
+        width: 100% !important;
+    }
+
+    /* Bottom nav */
+    .bottom-nav {
+        display: flex !important;
+    }
+    body {
+        padding-bottom: 70px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .content {
+        padding: 10px !important;
+    }
+    .topbar h2 {
+        font-size: 18px !important;
+    }
+    .metric-grid {
+        grid-template-columns: 1fr 1fr !important;
+        gap: 6px !important;
+    }
+    .metric-grid article {
+        padding: 10px !important;
+    }
+    .metric-grid strong {
+        font-size: 20px !important;
+    }
+    .metric-grid span {
+        font-size: 10px !important;
+    }
+
+    .order-card .text-lg.font-bold {
+        font-size: 14px !important;
+    }
+    .order-card .text-sm {
+        font-size: 11px !important;
+    }
+    .order-card .flex-wrap .flex-col.items-end {
+        margin-top: 6px !important;
+    }
+
+    /* Make action buttons full width on very small screens */
+    .order-card .actions {
+        flex-direction: column !important;
+        gap: 4px !important;
+    }
+    .order-card .actions .action-btn {
+        width: 100% !important;
+        text-align: center !important;
+    }
+}
