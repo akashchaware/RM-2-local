@@ -1956,6 +1956,37 @@ function renderRoleSelector(roles, activeRole) {
             mSwitcher.innerHTML = `<span class="text-teal-400 font-bold tracking-wider uppercase text-[10px]"><i class="fa-solid fa-user-shield mr-1"></i> ${activeRole}</span>`;
         }
     }
+        // ─── Update mobile sidebar ───
+    const sidebarSelect = document.getElementById('sidebarRoleSelect');
+    if (sidebarSelect) {
+        sidebarSelect.innerHTML = '';
+        roles.forEach(r => {
+            const opt = document.createElement('option');
+            opt.value = r;
+            opt.textContent = r.toUpperCase();
+            if (r === activeRole) opt.selected = true;
+            sidebarSelect.appendChild(opt);
+        });
+    }
+
+    const sidebarUserName = document.getElementById('sidebarUserName');
+    if (sidebarUserName && currentUser) {
+        sidebarUserName.textContent = currentUser.user_metadata?.full_name || currentUser.email;
+    }
+    const sidebarUserRole = document.getElementById('sidebarUserRole');
+    if (sidebarUserRole) {
+        sidebarUserRole.textContent = activeRole.charAt(0).toUpperCase() + activeRole.slice(1);
+    }
+    const sidebarAvatar = document.getElementById('sidebarUserAvatar');
+    if (sidebarAvatar && currentUser) {
+        const name = currentUser.user_metadata?.full_name || currentUser.email;
+        sidebarAvatar.textContent = name.charAt(0).toUpperCase();
+    }
+    const mobileAvatar = document.getElementById('mobileUserAvatar');
+    if (mobileAvatar && currentUser) {
+        const name = currentUser.user_metadata?.full_name || currentUser.email;
+        mobileAvatar.textContent = name.charAt(0).toUpperCase();
+    }
 }
 
 function switchActiveRole(newRole) {
