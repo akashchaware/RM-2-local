@@ -2270,6 +2270,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     const isLogin = path.includes('login');
     const isSignup = path.includes('signup');
     const isDashboard = path.includes('dashboard');
+    const isRequest = path.includes('request');  // ✅ ADD THIS LINE
 
     await loadCatalog();
     if (document.getElementById('brandSelect')) populateBrands();
@@ -2284,6 +2285,11 @@ document.addEventListener('DOMContentLoaded', async function() {
             updateNavForAuth(currentUser);
             if (isLogin || isSignup) window.location.href = 'dashboard.html';
             if (isDashboard) await loadDashboard();
+            
+            // ✅ ADD THIS BLOCK – pre-fill request form if on request page
+            if (isRequest && currentUser) {
+                await populateRequestFormFromProfile();
+            }
         } else {
             updateNavForAuth(null);
             if (isDashboard) window.location.href = 'login.html';
