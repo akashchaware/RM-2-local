@@ -2358,6 +2358,17 @@ async function submitOrderReview(orderId, rating, reviewText) {
 }
 window.submitOrderReview = submitOrderReview;
 
+// ─── Mobile Sidebar Toggle ───
+function toggleMobileSidebar() {
+    const sidebar = document.getElementById('mobileSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    if (sidebar) {
+        sidebar.classList.toggle('-translate-x-full');
+        if (overlay) overlay.classList.toggle('hidden');
+    }
+}
+window.toggleMobileSidebar = toggleMobileSidebar;
+
 // ─── 17. DRAWER HELPERS ───
 function toggleProfileDrawer() {
     const drawer = document.getElementById('profileSidebarDrawer');
