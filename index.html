@@ -6,8 +6,10 @@
     <title>RepairMaster — v3.0 Coming Soon</title>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,400..700;1,14..32,400..700&display=swap" rel="stylesheet" />
     <style>
-        /* ── Reset & Base ── */
+        /* ───────── RESET & BASE ───────── */
         * {
             margin: 0;
             padding: 0;
@@ -15,110 +17,157 @@
         }
 
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: #f0f4fc;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0b0f1a;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
             padding: 1.5rem;
-            color: #1a1e2b;
+            color: #e8edf5;
         }
 
-        /* ── Phone Frame ── */
+        /* ───────── PHONE FRAME ───────── */
         .phone-frame {
             max-width: 420px;
             width: 100%;
-            background: #ffffff;
-            border-radius: 40px;
-            box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.25);
+            background: linear-gradient(145deg, #111827 0%, #0f1629 100%);
+            border-radius: 44px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
             overflow: hidden;
-            padding: 1.5rem 1.25rem 0.75rem;
-            transition: all 0.2s;
+            padding: 1.6rem 1.3rem 0.8rem;
+            position: relative;
         }
 
-        /* ── Status Bar ── */
+        /* subtle glow ring */
+        .phone-frame::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            border-radius: 46px;
+            background: linear-gradient(135deg, rgba(45, 122, 255, 0.15), transparent 50%, rgba(45, 122, 255, 0.08));
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .phone-frame>* {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ───────── STATUS BAR ───────── */
         .status-bar {
             display: flex;
             justify-content: space-between;
             font-size: 0.6rem;
             font-weight: 600;
-            color: #8e94a5;
+            color: rgba(255, 255, 255, 0.5);
             letter-spacing: 0.3px;
-            padding-bottom: 0.5rem;
-            border-bottom: 1px solid #f0f2f7;
+            padding-bottom: 0.6rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             margin-bottom: 1rem;
         }
         .status-bar .time {
             font-weight: 700;
-            color: #1a1e2b;
+            color: rgba(255, 255, 255, 0.8);
         }
         .status-bar .icons i {
             margin-left: 6px;
             font-size: 0.7rem;
+            color: rgba(255, 255, 255, 0.5);
         }
 
-        /* ── Brand ── */
+        /* ───────── BRAND HEADER ───────── */
         .brand-header {
             display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            margin-bottom: 0.3rem;
-        }
-        .brand-name {
-            font-size: 2rem;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-            color: #0a1a3a;
-            line-height: 1.1;
-        }
-        .brand-name span {
-            color: #2d7aff;
-        }
-        .brand-tagline {
-            font-size: 0.65rem;
-            font-weight: 600;
-            color: #2d7aff;
-            background: #eef4ff;
-            padding: 0.15rem 0.7rem;
-            border-radius: 20px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            margin-top: 0.15rem;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 0.2rem;
         }
 
-        /* ── Coming Soon Badge ── */
-        .coming-soon-badge {
-            background: #0a1a3a;
+        /* RM monogram logo */
+        .logo-monogram {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #2d7aff, #6c5ce7);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: 800;
             color: #fff;
+            letter-spacing: -1px;
+            box-shadow: 0 8px 24px rgba(45, 122, 255, 0.35);
+            flex-shrink: 0;
+        }
+
+        .brand-text {
+            display: flex;
+            flex-direction: column;
+        }
+        .brand-text .name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+            line-height: 1.1;
+        }
+        .brand-text .name span {
+            color: #2d7aff;
+        }
+        .brand-text .tagline {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: #2d7aff;
+            background: rgba(45, 122, 255, 0.15);
+            padding: 0.1rem 0.7rem;
+            border-radius: 20px;
+            letter-spacing: 0.6px;
+            text-transform: uppercase;
+            display: inline-block;
+            width: fit-content;
+            margin-top: 0.1rem;
+        }
+
+        /* ───────── COMING SOON BADGE ───────── */
+        .coming-badge {
+            background: rgba(45, 122, 255, 0.15);
+            border: 1px solid rgba(45, 122, 255, 0.2);
+            color: #8bb4ff;
             display: inline-block;
             padding: 0.25rem 1rem;
             border-radius: 30px;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 600;
             letter-spacing: 0.4px;
-            margin: 0.4rem 0 0.8rem 0;
+            margin: 0.5rem 0 0.9rem 0;
         }
-        .coming-soon-badge i {
+        .coming-badge i {
             margin-right: 6px;
-            font-size: 0.6rem;
+            font-size: 0.55rem;
+            color: #2d7aff;
         }
 
-        /* ── Feature Row (updated) ── */
+        /* ───────── FEATURE ROW ───────── */
         .feature-row {
             display: flex;
             gap: 0.6rem;
-            margin: 0.6rem 0 1rem 0;
+            margin: 0.5rem 0 0.9rem 0;
             flex-wrap: wrap;
         }
         .feature-item {
             flex: 1;
             min-width: 80px;
-            background: #f8faff;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(4px);
             border-radius: 16px;
             padding: 0.7rem 0.4rem;
             text-align: center;
-            border: 1px solid #eef2f9;
+            border: 1px solid rgba(255, 255, 255, 0.06);
             transition: 0.2s;
         }
         .feature-item i {
@@ -130,30 +179,31 @@
         .feature-item .label {
             font-size: 0.65rem;
             font-weight: 700;
-            color: #1a1e2b;
+            color: #e8edf5;
             letter-spacing: -0.2px;
         }
         .feature-item .sub {
             font-size: 0.5rem;
-            color: #7b839b;
+            color: rgba(255, 255, 255, 0.4);
             font-weight: 500;
             margin-top: 0.1rem;
         }
 
-        /* ── Status Chips ── */
+        /* ───────── STATUS CHIPS ───────── */
         .status-chips {
             display: flex;
             flex-wrap: wrap;
             gap: 0.5rem;
-            margin: 0.5rem 0 1rem 0;
+            margin: 0.4rem 0 0.9rem 0;
         }
         .chip {
-            background: #f0f4fe;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: 30px;
-            padding: 0.25rem 0.8rem;
+            padding: 0.25rem 0.85rem;
             font-size: 0.55rem;
             font-weight: 600;
-            color: #1a2a4a;
+            color: #c8d0e0;
             display: inline-flex;
             align-items: center;
             gap: 6px;
@@ -175,33 +225,36 @@
             background: #22b573;
         }
 
-        /* ── Download CTA ── */
+        /* ───────── DOWNLOAD BUTTON ───────── */
         .download-btn {
-            background: #0a1a3a;
+            background: linear-gradient(135deg, #2d7aff, #5b3fd4);
             color: #fff;
             border: none;
             border-radius: 40px;
-            padding: 0.65rem 1.6rem;
+            padding: 0.7rem 1.8rem;
             font-size: 0.85rem;
             font-weight: 700;
             display: inline-flex;
             align-items: center;
             gap: 10px;
             cursor: default;
-            box-shadow: 0 8px 20px -6px rgba(10, 26, 58, 0.25);
-            margin: 0.2rem 0 0.8rem 0;
+            box-shadow: 0 8px 28px rgba(45, 122, 255, 0.35);
+            margin: 0.1rem 0 0.9rem 0;
+            transition: 0.2s;
+            width: 100%;
+            justify-content: center;
         }
         .download-btn i {
             font-size: 0.95rem;
         }
 
-        /* ── NEW: Hot Deals / Offers Section ── */
+        /* ───────── HOT DEALS ───────── */
         .offers-section {
-            background: linear-gradient(135deg, #fef7e8 0%, #fff4e0 100%);
+            background: linear-gradient(135deg, rgba(255, 180, 40, 0.12), rgba(255, 120, 0, 0.08));
             border-radius: 18px;
             padding: 0.8rem 1rem;
-            border: 1px solid #fae6c8;
-            margin: 0.5rem 0 0.8rem 0;
+            border: 1px solid rgba(255, 180, 40, 0.15);
+            margin: 0.4rem 0 0.8rem 0;
             display: flex;
             flex-wrap: wrap;
             align-items: center;
@@ -213,22 +266,22 @@
             gap: 10px;
         }
         .offers-section .offer-left i {
-            font-size: 1.4rem;
-            color: #e67e22;
+            font-size: 1.3rem;
+            color: #f39c12;
         }
         .offers-section .offer-text {
             font-size: 0.7rem;
             font-weight: 600;
-            color: #7a4a1a;
+            color: #f5d6a8;
         }
         .offers-section .offer-text .highlight {
-            color: #d35400;
+            color: #f39c12;
             font-weight: 800;
         }
         .offers-section .offer-tag {
-            background: #d35400;
+            background: linear-gradient(135deg, #f39c12, #e67e22);
             color: #fff;
-            font-size: 0.55rem;
+            font-size: 0.5rem;
             font-weight: 700;
             padding: 0.15rem 0.8rem;
             border-radius: 30px;
@@ -239,79 +292,117 @@
             font-size: 0.5rem;
         }
 
-        /* ── NEW: Calculator / Estimator Widget ── */
+        /* ───────── CALCULATOR ───────── */
         .calculator-card {
-            background: #f8faff;
-            border-radius: 18px;
-            padding: 0.9rem 1rem 1rem 1rem;
-            border: 1px solid #eef2f9;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(4px);
+            border-radius: 20px;
+            padding: 1rem 1rem 0.9rem 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.06);
             margin: 0.5rem 0 0.8rem 0;
         }
         .calculator-card .calc-title {
             font-size: 0.75rem;
             font-weight: 700;
-            color: #0a1a3a;
+            color: #e8edf5;
             display: flex;
             align-items: center;
             gap: 8px;
-            margin-bottom: 0.6rem;
+            margin-bottom: 0.7rem;
         }
         .calculator-card .calc-title i {
             color: #2d7aff;
             font-size: 0.9rem;
         }
-        .calc-row {
-            display: flex;
-            gap: 0.6rem;
-            flex-wrap: wrap;
-            align-items: center;
+
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
         }
-        .calc-row select,
-        .calc-row input {
-            flex: 1;
-            min-width: 80px;
-            padding: 0.4rem 0.6rem;
+        .calc-grid .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .calc-grid label {
+            font-size: 0.55rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: block;
+            margin-bottom: 0.2rem;
+        }
+
+        .calc-grid select,
+        .calc-grid input {
+            width: 100%;
+            padding: 0.45rem 0.6rem;
             border-radius: 12px;
-            border: 1px solid #dce1ed;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.05);
             font-size: 0.65rem;
             font-weight: 500;
-            color: #1a1e2b;
-            background: #fff;
+            color: #e8edf5;
             outline: none;
             transition: 0.2s;
+            font-family: 'Inter', sans-serif;
+            appearance: none;
+            -webkit-appearance: none;
+            cursor: pointer;
         }
-        .calc-row select:focus,
-        .calc-row input:focus {
+        .calc-grid select option {
+            background: #1a2340;
+            color: #e8edf5;
+        }
+        .calc-grid select:focus,
+        .calc-grid input:focus {
             border-color: #2d7aff;
             box-shadow: 0 0 0 3px rgba(45, 122, 255, 0.15);
         }
-        .calc-row .calc-result {
-            background: #0a1a3a;
+
+        .calc-result-box {
+            background: linear-gradient(135deg, #0a1a3a, #121e3e);
+            border-radius: 14px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(45, 122, 255, 0.2);
+            margin-top: 0.3rem;
+        }
+        .calc-result-box .label {
+            font-size: 0.6rem;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .calc-result-box .value {
+            font-size: 1.3rem;
+            font-weight: 800;
             color: #fff;
-            padding: 0.35rem 0.9rem;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            white-space: nowrap;
+            letter-spacing: -0.5px;
         }
-        .calc-row .calc-result span {
-            color: #ffd966;
+        .calc-result-box .value span {
+            color: #2d7aff;
         }
+
         .calc-note {
             font-size: 0.5rem;
-            color: #7b839b;
-            margin-top: 0.4rem;
+            color: rgba(255, 255, 255, 0.3);
+            margin-top: 0.5rem;
             text-align: right;
             padding-right: 0.2rem;
         }
 
-        /* ── NEW: Seamless Booking Estimate ── */
+        /* ───────── SEAMLESS BOOKING ───────── */
         .booking-estimate {
-            background: #eef6ff;
+            background: rgba(45, 122, 255, 0.08);
             border-radius: 18px;
             padding: 0.8rem 1rem;
-            border: 1px solid #d6e4ff;
-            margin: 0.5rem 0 1rem 0;
+            border: 1px solid rgba(45, 122, 255, 0.12);
+            margin: 0.5rem 0 0.8rem 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -323,46 +414,49 @@
             gap: 10px;
         }
         .booking-estimate .left i {
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             color: #2d7aff;
         }
         .booking-estimate .info {
             font-size: 0.65rem;
             font-weight: 500;
-            color: #1a2a4a;
+            color: #b0c4e8;
         }
         .booking-estimate .info strong {
             font-weight: 700;
-            color: #0a1a3a;
+            color: #e8edf5;
         }
         .booking-estimate .estimate-badge {
-            background: #2d7aff;
+            background: linear-gradient(135deg, #2d7aff, #5b3fd4);
             color: #fff;
             font-size: 0.55rem;
             font-weight: 700;
-            padding: 0.2rem 1rem;
+            padding: 0.25rem 1.2rem;
             border-radius: 30px;
             letter-spacing: 0.3px;
             display: flex;
             align-items: center;
             gap: 5px;
+            box-shadow: 0 4px 16px rgba(45, 122, 255, 0.3);
+            cursor: default;
         }
         .booking-estimate .estimate-badge i {
             font-size: 0.55rem;
         }
 
-        /* ── Maintenance Detail Card ── */
+        /* ───────── MAINTENANCE CARD ───────── */
         .maintenance-card {
-            background: #f8faff;
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(4px);
             border-radius: 18px;
             padding: 0.9rem 1rem 0.8rem 1rem;
-            border: 1px solid #eef2f9;
-            margin: 0.5rem 0 1rem 0;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            margin: 0.4rem 0 0.8rem 0;
         }
         .maintenance-card .title {
             font-size: 0.75rem;
             font-weight: 700;
-            color: #0a1a3a;
+            color: #e8edf5;
             display: flex;
             align-items: center;
             gap: 8px;
@@ -373,10 +467,13 @@
         }
         .maintenance-card .desc {
             font-size: 0.6rem;
-            color: #3d445b;
-            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.6);
+            line-height: 1.7;
             margin: 0.3rem 0 0.4rem 0;
             padding-left: 1.8rem;
+        }
+        .maintenance-card .desc strong {
+            color: #c8d0e0;
         }
         .maintenance-card .otp-row {
             display: flex;
@@ -398,12 +495,12 @@
             margin-right: 4px;
         }
 
-        /* ── Service Area ── */
+        /* ───────── SERVICE AREA ───────── */
         .service-area {
-            background: #f8faff;
+            background: rgba(255, 255, 255, 0.03);
             border-radius: 16px;
             padding: 0.6rem 1rem;
-            border: 1px solid #eef2f9;
+            border: 1px solid rgba(255, 255, 255, 0.05);
             margin: 0.2rem 0 0.8rem 0;
             display: flex;
             align-items: center;
@@ -412,34 +509,34 @@
         }
         .service-area i {
             color: #2d7aff;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
         .service-area .text {
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 500;
-            color: #1a1e2b;
+            color: rgba(255, 255, 255, 0.6);
         }
         .service-area .highlight {
             font-weight: 700;
-            color: #0a1a3a;
+            color: #e8edf5;
         }
         .service-area .coming {
-            font-size: 0.55rem;
+            font-size: 0.5rem;
             font-weight: 600;
             color: #2d7aff;
-            background: #eef4ff;
+            background: rgba(45, 122, 255, 0.15);
             padding: 0.1rem 0.7rem;
             border-radius: 20px;
             margin-left: auto;
         }
 
-        /* ── Bottom Navigation ── */
+        /* ───────── BOTTOM NAV ───────── */
         .bottom-nav {
             display: flex;
             justify-content: space-around;
             align-items: center;
             padding: 0.5rem 0 0.2rem 0;
-            border-top: 1px solid #eef2f9;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
             margin-top: 0.3rem;
         }
         .nav-item {
@@ -449,7 +546,7 @@
             gap: 2px;
             font-size: 0.5rem;
             font-weight: 600;
-            color: #8e94a5;
+            color: rgba(255, 255, 255, 0.3);
             transition: 0.2s;
             cursor: default;
             padding: 0.2rem 0.6rem;
@@ -457,10 +554,10 @@
         }
         .nav-item i {
             font-size: 1rem;
-            color: #8e94a5;
+            color: rgba(255, 255, 255, 0.3);
         }
         .nav-item.active {
-            color: #0a1a3a;
+            color: #e8edf5;
         }
         .nav-item.active i {
             color: #2d7aff;
@@ -474,14 +571,32 @@
             margin-top: 1px;
         }
 
-        /* ── Responsive ── */
+        /* ───────── FOOTER CREDIT ───────── */
+        .footer-credit {
+            text-align: center;
+            font-size: 0.5rem;
+            color: rgba(255, 255, 255, 0.2);
+            padding: 0.6rem 0 0.2rem 0;
+            letter-spacing: 0.5px;
+        }
+        .footer-credit span {
+            color: rgba(255, 255, 255, 0.35);
+        }
+
+        /* ───────── RESPONSIVE ───────── */
         @media (max-width: 420px) {
             .phone-frame {
                 padding: 1.2rem 0.9rem 0.5rem;
-                border-radius: 32px;
+                border-radius: 36px;
             }
-            .brand-name {
-                font-size: 1.7rem;
+            .brand-text .name {
+                font-size: 1.5rem;
+            }
+            .logo-monogram {
+                width: 44px;
+                height: 44px;
+                font-size: 1.2rem;
+                border-radius: 14px;
             }
             .feature-item {
                 min-width: 70px;
@@ -490,14 +605,12 @@
             .feature-item i {
                 font-size: 1rem;
             }
-            .calc-row select,
-            .calc-row input {
-                min-width: 60px;
-                font-size: 0.6rem;
+            .calc-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.4rem;
             }
-            .calc-row .calc-result {
-                font-size: 0.6rem;
-                padding: 0.25rem 0.7rem;
+            .calc-result-box .value {
+                font-size: 1.1rem;
             }
             .offers-section .offer-text {
                 font-size: 0.6rem;
@@ -505,33 +618,55 @@
             .booking-estimate .info {
                 font-size: 0.6rem;
             }
+            .download-btn {
+                font-size: 0.8rem;
+                padding: 0.6rem 1.2rem;
+            }
         }
 
         @media (max-width: 360px) {
-            .brand-name {
-                font-size: 1.4rem;
+            .brand-text .name {
+                font-size: 1.3rem;
             }
-            .feature-row {
-                gap: 0.4rem;
+            .logo-monogram {
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
             }
             .feature-item {
-                min-width: 60px;
+                min-width: 56px;
                 padding: 0.4rem 0.2rem;
             }
             .feature-item i {
-                font-size: 0.9rem;
+                font-size: 0.85rem;
+            }
+            .feature-item .label {
+                font-size: 0.55rem;
             }
             .chip {
-                font-size: 0.5rem;
-                padding: 0.2rem 0.6rem;
+                font-size: 0.45rem;
+                padding: 0.15rem 0.6rem;
             }
-            .download-btn {
-                font-size: 0.75rem;
-                padding: 0.5rem 1.2rem;
+            .calc-grid select,
+            .calc-grid input {
+                font-size: 0.55rem;
+                padding: 0.35rem 0.4rem;
             }
-            .calc-row {
-                gap: 0.4rem;
+            .calc-result-box .value {
+                font-size: 1rem;
             }
+        }
+
+        /* ───────── SCROLLBAR STYLING ───────── */
+        .phone-frame::-webkit-scrollbar {
+            width: 3px;
+        }
+        .phone-frame::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .phone-frame::-webkit-scrollbar-thumb {
+            background: rgba(45, 122, 255, 0.3);
+            border-radius: 10px;
         }
     </style>
 </head>
@@ -539,7 +674,7 @@
 
     <div class="phone-frame">
 
-        <!-- ─── Status Bar ─── -->
+        <!-- ─── STATUS BAR ─── -->
         <div class="status-bar">
             <span class="time">9:41</span>
             <span class="icons">
@@ -549,18 +684,21 @@
             </span>
         </div>
 
-        <!-- ─── Brand ─── -->
+        <!-- ─── BRAND HEADER ─── -->
         <div class="brand-header">
-            <div class="brand-name">Repair<span>Master</span></div>
-            <div class="brand-tagline">Direct To Consumer</div>
+            <div class="logo-monogram">RM</div>
+            <div class="brand-text">
+                <div class="name">Repair<span>Master</span></div>
+                <div class="tagline">Direct To Consumer</div>
+            </div>
         </div>
 
-        <!-- ─── Coming Soon ─── -->
-        <div class="coming-soon-badge">
+        <!-- ─── COMING SOON ─── -->
+        <div class="coming-badge">
             <i class="fas fa-clock"></i> App version v3.0 coming soon!
         </div>
 
-        <!-- ─── Feature Row ─── -->
+        <!-- ─── FEATURE ROW ─── -->
         <div class="feature-row">
             <div class="feature-item">
                 <i class="fas fa-calendar-check"></i>
@@ -579,7 +717,7 @@
             </div>
         </div>
 
-        <!-- ─── Status Chips ─── -->
+        <!-- ─── STATUS CHIPS ─── -->
         <div class="status-chips">
             <span class="chip">
                 <span class="dot green"></span> Maintenance Mode active
@@ -589,12 +727,12 @@
             </span>
         </div>
 
-        <!-- ─── Download CTA ─── -->
+        <!-- ─── DOWNLOAD BUTTON ─── -->
         <button class="download-btn" aria-label="Download App">
             <i class="fas fa-download"></i> Download App
         </button>
 
-        <!-- ─── 🔥 NEW: Hot Deals / Offers ─── -->
+        <!-- ─── HOT DEAL ─── -->
         <div class="offers-section">
             <div class="offer-left">
                 <i class="fas fa-fire"></i>
@@ -605,31 +743,51 @@
             <span class="offer-tag"><i class="fas fa-tag"></i> USE CODE: REPAIR20</span>
         </div>
 
-        <!-- ─── 🧮 NEW: Calculator / Estimator ─── -->
+        <!-- ─── CALCULATOR ─── -->
         <div class="calculator-card">
             <div class="calc-title">
                 <i class="fas fa-calculator"></i> Quick Repair Estimator
             </div>
-            <div class="calc-row">
-                <select id="deviceType">
-                    <option value="phone">📱 Phone</option>
-                    <option value="tablet">📟 Tablet</option>
-                    <option value="laptop">💻 Laptop</option>
-                </select>
-                <select id="issueType">
-                    <option value="screen">🖥️ Screen</option>
-                    <option value="battery">🔋 Battery</option>
-                    <option value="water">💧 Water damage</option>
-                    <option value="other">🔧 Other</option>
-                </select>
-                <div class="calc-result" id="estimateDisplay">
-                    ₹<span id="estimateValue">499</span>
+
+            <div class="calc-grid">
+                <!-- Device Type -->
+                <div>
+                    <label for="deviceType">Device</label>
+                    <select id="deviceType">
+                        <option value="phone">📱 Phone</option>
+                        <option value="tablet">📟 Tablet</option>
+                        <option value="laptop">💻 Laptop</option>
+                    </select>
                 </div>
+
+                <!-- Model -->
+                <div>
+                    <label for="modelType">Model</label>
+                    <select id="modelType">
+                        <!-- populated by JS -->
+                    </select>
+                </div>
+
+                <!-- Quality Tier -->
+                <div class="full-width">
+                    <label for="qualityTier">Quality</label>
+                    <select id="qualityTier">
+                        <option value="standard">Standard — 24h turnaround</option>
+                        <option value="premium">Premium — 12h turnaround</option>
+                        <option value="express">Express — 4h turnaround</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Result -->
+            <div class="calc-result-box">
+                <span class="label">Estimated Price</span>
+                <span class="value">₹<span id="estimateValue">499</span></span>
             </div>
             <div class="calc-note">* estimated base price · final may vary</div>
         </div>
 
-        <!-- ─── 📋 NEW: Seamless Booking Estimate ─── -->
+        <!-- ─── SEAMLESS BOOKING ─── -->
         <div class="booking-estimate">
             <div class="left">
                 <i class="fas fa-clock"></i>
@@ -642,7 +800,7 @@
             </span>
         </div>
 
-        <!-- ─── Maintenance Detail ─── -->
+        <!-- ─── MAINTENANCE MODE ─── -->
         <div class="maintenance-card">
             <div class="title">
                 <i class="fas fa-shield-alt"></i> Maintenance Mode Active
@@ -655,7 +813,7 @@
             </div>
         </div>
 
-        <!-- ─── Service Area ─── -->
+        <!-- ─── SERVICE AREA ─── -->
         <div class="service-area">
             <i class="fas fa-map-pin"></i>
             <span class="text">
@@ -664,7 +822,7 @@
             <span class="coming">Amravati coming soon!</span>
         </div>
 
-        <!-- ─── Bottom Navigation ─── -->
+        <!-- ─── BOTTOM NAV ─── -->
         <div class="bottom-nav">
             <div class="nav-item active">
                 <i class="fas fa-home"></i>
@@ -685,33 +843,77 @@
             </div>
         </div>
 
+        <!-- ─── FOOTER ─── -->
+        <div class="footer-credit">
+            powered by <span>cm2us.com</span>
+        </div>
+
     </div>
 
-    <!-- ─── Interactive Calculator Script ─── -->
+    <!-- ─── CALCULATOR SCRIPT ─── -->
     <script>
         (function() {
-            const deviceSelect = document.getElementById('deviceType');
-            const issueSelect = document.getElementById('issueType');
-            const estimateSpan = document.getElementById('estimateValue');
-
-            // Base prices: [device][issue]
-            const prices = {
-                phone: { screen: 499, battery: 399, water: 899, other: 299 },
-                tablet: { screen: 799, battery: 599, water: 1299, other: 499 },
-                laptop: { screen: 1499, battery: 999, water: 2499, other: 799 }
+            // ── Database: pricing by device, model, quality ──
+            const pricingDB = {
+                phone: {
+                    models: ['iPhone 14', 'iPhone 15', 'Samsung S23', 'Samsung S24', 'Google Pixel 8', 'OnePlus 12'],
+                    base: { standard: 499, premium: 749, express: 999 }
+                },
+                tablet: {
+                    models: ['iPad Pro', 'iPad Air', 'Samsung Tab S9', 'Samsung Tab S8', 'Lenovo Tab', 'Google Pixel Tab'],
+                    base: { standard: 799, premium: 1099, express: 1499 }
+                },
+                laptop: {
+                    models: ['MacBook Air', 'MacBook Pro', 'Dell XPS', 'HP Spectre', 'Lenovo ThinkPad', 'Acer Swift'],
+                    base: { standard: 1499, premium: 1999, express: 2799 }
+                }
             };
 
+            // DOM refs
+            const deviceSelect = document.getElementById('deviceType');
+            const modelSelect = document.getElementById('modelType');
+            const qualitySelect = document.getElementById('qualityTier');
+            const estimateSpan = document.getElementById('estimateValue');
+
+            // ── Populate models ──
+            function populateModels(deviceKey) {
+                const data = pricingDB[deviceKey];
+                if (!data) return;
+                modelSelect.innerHTML = '';
+                data.models.forEach(m => {
+                    const opt = document.createElement('option');
+                    opt.value = m;
+                    opt.textContent = m;
+                    modelSelect.appendChild(opt);
+                });
+            }
+
+            // ── Update estimate ──
             function updateEstimate() {
                 const device = deviceSelect.value;
-                const issue = issueSelect.value;
-                const price = prices[device]?.[issue] ?? 499;
+                const quality = qualitySelect.value;
+                const data = pricingDB[device];
+                if (!data) {
+                    estimateSpan.textContent = '—';
+                    return;
+                }
+                const price = data.base[quality] || 499;
                 estimateSpan.textContent = price;
             }
 
-            deviceSelect.addEventListener('change', updateEstimate);
-            issueSelect.addEventListener('change', updateEstimate);
+            // ── Handle device change ──
+            function onDeviceChange() {
+                populateModels(deviceSelect.value);
+                updateEstimate();
+            }
 
-            // initial set
+            // ── Events ──
+            deviceSelect.addEventListener('change', onDeviceChange);
+            qualitySelect.addEventListener('change', updateEstimate);
+            modelSelect.addEventListener('change', updateEstimate);
+
+            // ── Init ──
+            populateModels('phone');
             updateEstimate();
         })();
     </script>
