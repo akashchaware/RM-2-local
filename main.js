@@ -17,6 +17,50 @@ let currentUser = null;
 let currentRoles = [];
 let orderSubscription = null;   // for Realtime
 
+// ─── POPULATE REQUEST FORM FROM PROFILE ───
+async function populateRequestFormFromProfile() {
+    if (!currentUser) return;
+    try {
+        const { data: userData, error } = await supabase
+            .from('users')
+            .select('name, phone, email, address')
+            .eq('id', currentUser.id)
+            .single();
+        if (error) throw error;
+
+        if (userData) {
+            const addressParts = (userData.address || '').split(', ');
+            const city = addressParts.pop() || '';
+            const addressLine = addressParts.join(', ') || '';
+
+            const nameInput = document.getElementById('reqName');
+            if (nameInput) nameInput.value = userData.name || '';
+
+            const phoneInput = document.getElementById('reqPhone');
+            if (phoneInput) phoneInput.value = userData.phone || '';
+
+            const emailInput = document.getElementById('reqEmail');
+            if (emailInput) emailInput.value = userData.email || '';
+
+            const addressLineInput = document.getElementById('reqAddressLine');
+            if (addressLineInput) addressLineInput.value = addressLine;
+
+            const citySelect = document.getElementById('reqCity');
+            if (citySelect && city) {
+                for (let opt of citySelect.options) {
+                    if (opt.value.toLowerCase() === city.toLowerCase()) {
+                        opt.selected = true;
+                        break;
+                    }
+                }
+            }
+        }
+    } catch (err) {
+        console.warn('Could not populate request form from profile:', err);
+    }
+}
+
+
 // ─── TOAST NOTIFICATION ENGINE ───
 function showToast(message, type = 'info') {
     console.log(`[Toast ${type.toUpperCase()}]: ${message}`);
