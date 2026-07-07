@@ -273,6 +273,9 @@
                     </div>
                 </div>
 
+                <!-- REPAIRMASTER PARTS INVENTORY MANAGEMENT AREA -->
+                <div id="repairmasterInventoryArea" class="hidden mt-10 space-y-6"></div>
+
                 <!-- Collapsible Supabase SQL console for direct data acquisition (Coordinator / Admin Only) -->
                 <div class="bg-navyBG/30 border border-grayBorder/40 rounded-2xl p-6 mt-12">
                     <button onclick="document.getElementById('sqlRunnerBlock').classList.toggle('hidden')" class="w-full flex items-center justify-between text-left outline-none">
@@ -317,8 +320,65 @@ CREATE TABLE IF NOT EXISTS public.user_roles (
     UNIQUE(user_id, role_id)
 );
 
--- 4. Enable RLS and insert Security Policies
+-- 4. Create Parts Pricing Table (For Calculator)
+CREATE TABLE IF NOT EXISTS public.parts_pricing (
+    id SERIAL PRIMARY KEY,
+    brand TEXT NOT NULL,
+    model TEXT NOT NULL,
+    issue_type TEXT NOT NULL,
+    part_name TEXT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    labor DECIMAL(10,2) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Insert dummy calculator pricing for references
+INSERT INTO public.parts_pricing (brand, model, issue_type, part_name, price, labor) VALUES
+('iPhone', 'iPhone 15 Pro Max', 'Screen replacement', 'OEM OLED Panel', 14500.00, 1500.00),
+('iPhone', 'iPhone 15 Pro Max', 'Battery replacement', 'High Capacity Battery', 3200.00, 800.00),
+('Vivo', 'Vivo V30 Pro', 'Screen replacement', '3D Curved Glass & Screen', 5800.00, 1000.00),
+('Vivo', 'Vivo V30 Pro', 'Charging Port issue', 'Charging Jack sub-board', 850.00, 400.00)
+ON CONFLICT DO NOTHING;
+
+-- 5. Create Repair Parts Inventory Table (For Lab Stock)
+CREATE TABLE IF NOT EXISTS public.repair_parts_inventory (
+    id SERIAL PRIMARY KEY,
+    part_name TEXT NOT NULL,
+    price DECIMAL(10,2) NOT NULL,
+    quantity INT DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 6. Create Orders Table
+CREATE TABLE IF NOT EXISTS public.orders (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    order_number TEXT UNIQUE NOT NULL,
+    user_id UUID REFERENCES auth.users(id),
+    customer_name TEXT NOT NULL,
+    customer_phone TEXT NOT NULL,
+    address TEXT NOT NULL,
+    device_id INT,
+    device_other TEXT,
+    repair_type_id INT,
+    repair_other TEXT,
+    additional_notes TEXT,
+    status TEXT DEFAULT 'Pending' NOT NULL,
+    total_price DECIMAL(10,2) DEFAULT 0,
+    custom_quote_parts TEXT,
+    diagnosis_notes TEXT,
+    diagnosis_charge DECIMAL(10,2) DEFAULT 250,
+    pickup_otp TEXT,
+    technician_id UUID REFERENCES auth.users(id),
+    repairmaster_id UUID REFERENCES auth.users(id),
+    customer_rating INT,
+    customer_review TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 7. Enable RLS and insert Security Policies
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.orders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.repair_parts_inventory ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS "Allow public select" ON public.users;
 DROP POLICY IF EXISTS "Allow authenticated insert" ON public.users;
@@ -328,7 +388,17 @@ CREATE POLICY "Allow public select" ON public.users FOR SELECT USING (true);
 CREATE POLICY "Allow authenticated insert" ON public.users FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "Allow user self update" ON public.users FOR UPDATE USING (auth.uid() = id);
 
--- 5. Auto-mirror new Auth users to Public Users and User Roles
+DROP POLICY IF EXISTS "Allow public select orders" ON public.orders;
+DROP POLICY IF EXISTS "Allow authenticated operations" ON public.orders;
+CREATE POLICY "Allow public select orders" ON public.orders FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated operations" ON public.orders FOR ALL USING (true);
+
+DROP POLICY IF EXISTS "Allow public select inventory" ON public.repair_parts_inventory;
+DROP POLICY IF EXISTS "Allow authenticated operations inventory" ON public.repair_parts_inventory;
+CREATE POLICY "Allow public select inventory" ON public.repair_parts_inventory FOR SELECT USING (true);
+CREATE POLICY "Allow authenticated operations inventory" ON public.repair_parts_inventory FOR ALL USING (true);
+
+-- 8. Auto-mirror new Auth users to Public Users and User Roles
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN

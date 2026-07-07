@@ -207,6 +207,32 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         }
 
         if (isTechnician && o.technician_id === currentUser?.id) {
+            // Add interactive job checklist
+            const steps = [
+                'Verify customer physical handset condition',
+                'Perform multi-point sensor & touch diagnostics',
+                'Ensure physical safety of the device on transit',
+                'Match serial numbers for components'
+            ];
+            actions += `
+                <div class="mt-4 mb-4 p-4 rounded-xl bg-slate-950/60 border border-slate-800 text-left">
+                    <p class="text-xs font-bold text-teal mb-3 flex items-center gap-1.5">
+                        <i class="fa-solid fa-clipboard-check"></i> Doorstep Technician Job Checklist
+                    </p>
+                    <div class="space-y-2">
+                        ${steps.map((step, idx) => {
+                            const stepKey = `${o.id}-step-${idx}`;
+                            const checked = localStorage.getItem(stepKey) === 'true' ? 'checked' : '';
+                            return `
+                                <label class="flex items-start gap-2.5 text-xs text-gray-300 cursor-pointer hover:text-white transition">
+                                    <input type="checkbox" onchange="localStorage.setItem('${stepKey}', this.checked); checkAllStepsCompleted('${o.id}')" ${checked} class="mt-0.5 accent-teal rounded"/>
+                                    <span>${step}</span>
+                                </label>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
             if (status === 'Technician Assigned') {
                 actions += `<button onclick="initiatePickup('${o.id}')" class="action-btn btn-pickup">Start Pickup</button>`;
             } else if (status === 'Pickup-Pending') {
@@ -622,6 +648,97 @@ function updateRepairTypes() {
 }
 
 function updatePartsSurvey() {
+    calculateEstimate();
+}
+
+async function calculateEstimate() {
+    const brandSelect = document.getElementById('brandSelect');
+    const modelSelect = document.getElementById('modelSelect');
+    const repairSelect = document.getElementById('repairTypeSelect');
+    const surveyContainer = document.getElementById('partsSurveyContainer');
+    
+    if (!brandSelect || !modelSelect || !repairSelect) return;
+    
+    const brandName = brandSelect.options[brandSelect.selectedIndex]?.text;
+    const modelName = modelSelect.options[modelSelect.selectedIndex]?.text;
+    const issueType = repairSelect.options[repairSelect.selectedIndex]?.text;
+    
+    if (!brandSelect.value || !modelSelect.value || !repairSelect.value) {
+        if (surveyContainer) {
+            surveyContainer.innerHTML = `
+                <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 text-center text-gray-400/50">
+                    <i class="fa-solid fa-circle-info mr-2"></i> Select a brand, model, and repair type to see parts.
+                </div>
+            `;
+        }
+        return;
+    }
+    
+    try {
+        if (!supabase) throw new Error("Supabase client not connected");
+        
+        // Fetch from parts_pricing table
+        const { data, error } = await supabase
+            .from('parts_pricing')
+            .select('*')
+            .eq('brand', brandName)
+            .eq('model', modelName)
+            .eq('issue_type', issueType)
+            .maybeSingle();
+            
+        if (error) throw error;
+        
+        if (data) {
+            const partName = data.part_name || 'Genuine Spare Part';
+            const price = parseFloat(data.price) || 0;
+            const labor = parseFloat(data.labor) || 0;
+            const serviceFee = (price + labor) * 0.10; // 10% service fee
+            const diagnosisCharge = 250.0;
+            const total = price + labor + serviceFee + diagnosisCharge;
+            
+            if (surveyContainer) {
+                surveyContainer.innerHTML = `
+                    <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 space-y-2 text-left">
+                        <p class="text-xs font-bold text-teal mb-2 uppercase tracking-wider"><i class="fa-solid fa-layer-group mr-1"></i> Part & Service Breakdown</p>
+                        <div class="flex justify-between text-xs py-1">
+                            <span class="text-gray-400">Spare: ${partName}</span>
+                            <span class="text-white font-bold">₹${price.toFixed(2)}</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1">
+                            <span class="text-gray-400">Labor / Installation:</span>
+                            <span class="text-white font-bold">₹${labor.toFixed(2)}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+            const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+            const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+            const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+            
+            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + (price + labor).toFixed(2);
+            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toFixed(2);
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toFixed(2);
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toFixed(2);
+            
+            const btn = document.getElementById('bookServiceBtn');
+            if (btn) {
+                btn.className = 'flex-1 text-center btn-teal font-extrabold py-3.5 rounded-xl shadow-md hover:scale-[1.02] transition-all';
+                btn.innerHTML = '<i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service';
+            }
+        } else {
+            // No custom pricing, fall back to standard catalog logic gracefully
+            runCatalogFallbackCalculation();
+        }
+    } catch (err) {
+        console.warn("Supabase parts_pricing fetch failed, using catalog fallback:", err);
+        runCatalogFallbackCalculation();
+    }
+}
+window.calculateEstimate = calculateEstimate;
+
+function runCatalogFallbackCalculation() {
     const modelId = document.getElementById('modelSelect')?.value;
     const repairTypeId = document.getElementById('repairTypeSelect')?.value;
     const quality = document.getElementById('qualitySelect')?.value || 'standard';
@@ -1738,11 +1855,28 @@ async function loadDashboard() {
 
     if (!currentUser) {
         container.innerHTML = `
-            <div class="text-center text-grayText/60 py-12">
-                <i class="fa-regular fa-circle-user text-6xl mb-4 block text-tealAccent"></i>
-                <p class="text-lg font-medium text-white">Access Your Nagpur & Wardha Support Hub</p>
-                <p class="text-xs text-grayText max-w-sm mx-auto mt-1">Check real-time estimates, update customer details, or track current ticket statuses.</p>
-                <a href="login.html" class="btn-teal mt-4 inline-block">Login Now</a>
+            <div class="max-w-md mx-auto bg-slate-900/60 border border-slate-800 rounded-2xl p-8 space-y-6 shadow-xl my-12 text-left">
+                <div class="text-center">
+                    <div class="inline-flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-16 w-16 shadow-[0_0_15px_rgba(20,184,166,0.15)] mb-4">
+                        <img src="app/src/main/res/drawable/img_maintenance_mode_1782766826537.jpg" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
+                    </div>
+                    <h3 class="text-2xl font-bold text-white font-display">Sign In to Hub</h3>
+                    <p class="text-gray-400 text-xs mt-1">Access DTC Tech Support Dashboard</p>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Email Address</label>
+                        <input type="email" id="loginEmail" placeholder="you@example.com" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1">Password</label>
+                        <input type="password" id="loginPassword" placeholder="••••••••" class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                    </div>
+                    <button type="button" onclick="handleSignIn()" class="btn-teal w-full py-3 rounded-xl font-bold text-sm tracking-wide">Sign In</button>
+                </div>
+                <p class="text-center text-xs text-gray-500">
+                    Don't have an account? Contact Coordinator to register your profile.
+                </p>
             </div>
         `;
         return;
@@ -1792,6 +1926,13 @@ async function loadDashboard() {
 
     if (isAdmin || isCoordinator) {
         await loadStaffLists();
+    }
+
+    if (isRepairMaster || isAdmin) {
+        await loadRepairPartsInventory();
+    } else {
+        const area = document.getElementById('repairmasterInventoryArea');
+        if (area) area.classList.add('hidden');
     }
 
     const roleBadge = document.getElementById('userRoleBadge');
@@ -2577,6 +2718,68 @@ function showRequestEstimate() {
 }
 
 // ─── 12. LOGINS & AUTHS ───
+async function handleSignIn() {
+    if (!supabase) return showToast('Supabase Client disconnected', 'error');
+    const emailInput = document.getElementById('loginEmail');
+    const passwordInput = document.getElementById('loginPassword');
+    if (!emailInput || !passwordInput) {
+        showToast('Login inputs not found', 'error');
+        return;
+    }
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    if (!email || !password) {
+        showToast('Please enter both email and password', 'error');
+        return;
+    }
+    try {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        
+        currentUser = data.user;
+        showToast('Welcome back!', 'success');
+        
+        // Fetch the user's role from the profiles table
+        let role = 'customer';
+        try {
+            const { data: profile, error: pError } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', currentUser.id)
+                .single();
+            if (!pError && profile && profile.role) {
+                role = profile.role;
+            } else {
+                // Fallback to user_roles
+                const rolesList = await getUserRoles(currentUser.id);
+                if (rolesList && rolesList.length > 0) {
+                    role = rolesList[0];
+                }
+            }
+        } catch (err) {
+            console.warn("Profiles fetch error:", err);
+            const rolesList = await getUserRoles(currentUser.id);
+            if (rolesList && rolesList.length > 0) {
+                role = rolesList[0];
+            }
+        }
+        
+        localStorage.setItem('activeRole', role);
+        updateNavForAuth(currentUser);
+        
+        setTimeout(() => {
+            if (window.location.href.includes('dashboard.html')) {
+                loadDashboard();
+            } else {
+                window.location.href = 'dashboard.html';
+            }
+        }, 1000);
+    } catch (err) {
+        showToast('Login Failed: ' + err.message, 'error');
+    }
+}
+window.handleSignIn = handleSignIn;
+
 async function loginUser(e) {
     e.preventDefault();
     if (!supabase) return showToast('Supabase Client disconnected', 'error');
@@ -2850,9 +3053,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             }
         } else {
             updateNavForAuth(null);
-            // Protect dashboard page
+            // Protect dashboard page (handled inline on dashboard.html via login container)
             if (isDashboard) {
-                window.location.href = 'login.html';
+                await loadDashboard();
             }
         }
     } else {
@@ -3002,3 +3205,204 @@ window.addNewQuotationPartPromptEditable = addNewQuotationPartPromptEditable;
 window.removeQuotationPartEditable = removeQuotationPartEditable;
 window.cancelQuotationEdit = cancelQuotationEdit;
 window.submitFinalizedQuotation = submitFinalizedQuotation;
+
+// ─── 13. TECHNICIAN CHECKLIST & REPAIRMASTER INVENTORY MANAGEMENT ───
+function checkAllStepsCompleted(orderId) {
+    const stepsCount = 4;
+    let completed = 0;
+    for (let i = 0; i < stepsCount; i++) {
+        if (localStorage.getItem(`${orderId}-step-${i}`) === 'true') {
+            completed++;
+        }
+    }
+    if (completed === stepsCount) {
+        showToast('✨ Excellent! All job checklist items completed.', 'success');
+    }
+}
+window.checkAllStepsCompleted = checkAllStepsCompleted;
+
+async function loadRepairPartsInventory() {
+    const area = document.getElementById('repairmasterInventoryArea');
+    if (!area) return;
+    
+    const activeRole = localStorage.getItem('activeRole') || 'customer';
+    if (activeRole !== 'repairmaster' && activeRole !== 'admin') {
+        area.classList.add('hidden');
+        return;
+    }
+    
+    area.classList.remove('hidden');
+    
+    let items = [];
+    try {
+        if (!supabase) throw new Error("Supabase disconnected");
+        const { data, error } = await supabase.from('repair_parts_inventory').select('*').order('part_name');
+        if (error) throw error;
+        items = data || [];
+    } catch (err) {
+        console.warn("Using offline mock inventory:", err);
+        items = [
+            { id: 'inv1', part_name: 'iPhone 15 Pro Max Screen (OLED)', quantity: 5, price: 14500 },
+            { id: 'inv2', part_name: 'Vivo V30 Pro Curved Display', quantity: 8, price: 5800 },
+            { id: 'inv3', part_name: 'Galaxy S24 Ultra Glass Cover', quantity: 3, price: 9200 },
+            { id: 'inv4', part_name: 'Premium Lithium Battery (5000mAh)', quantity: 12, price: 1500 },
+            { id: 'inv5', part_name: 'Type-C Fast Charger Sub-board', quantity: 15, price: 850 }
+        ];
+    }
+    window.allInventoryItems = items;
+    renderInventoryTable(items);
+}
+window.loadRepairPartsInventory = loadRepairPartsInventory;
+
+function renderInventoryTable(items) {
+    const area = document.getElementById('repairmasterInventoryArea');
+    if (!area) return;
+    
+    let rowsHtml = items.map(item => `
+        <tr class="border-b border-slate-800 hover:bg-slate-900/30">
+            <td class="p-3 text-xs font-bold text-white">${item.part_name}</td>
+            <td class="p-3 text-xs text-teal font-extrabold">₹${parseFloat(item.price).toLocaleString('en-IN')}</td>
+            <td class="p-3 text-xs">
+                <div class="flex items-center gap-2">
+                    <button onclick="updateInventoryQty('${item.id}', -1)" class="w-6 h-6 bg-slate-800 text-white hover:bg-red-500 hover:text-white rounded flex items-center justify-center font-bold transition">-</button>
+                    <span class="text-white font-mono font-bold px-1">${item.quantity}</span>
+                    <button onclick="updateInventoryQty('${item.id}', 1)" class="w-6 h-6 bg-slate-800 text-white hover:bg-emerald-500 hover:text-white rounded flex items-center justify-center font-bold transition">+</button>
+                </div>
+            </td>
+            <td class="p-3 text-xs text-right">
+                <button onclick="deleteInventoryItem('${item.id}')" class="text-red-400 hover:text-red-300 font-bold text-xs"><i class="fa-regular fa-trash-can"></i> Remove</button>
+            </td>
+        </tr>
+    `).join('');
+    
+    if (items.length === 0) {
+        rowsHtml = `
+            <tr>
+                <td colspan="4" class="p-8 text-center text-xs text-gray-500 italic">No parts registered in active inventory.</td>
+            </tr>
+        `;
+    }
+    
+    area.innerHTML = `
+        <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-lg font-bold text-white font-display flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-stacked text-teal"></i> RepairMaster Inventory Management
+                    </h3>
+                    <p class="text-[11px] text-gray-500">Track and manage available spare parts stock level & rates.</p>
+                </div>
+                <button onclick="toggleAddInventoryForm()" class="btn-teal px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> Register Spare Part</button>
+            </div>
+            
+            <!-- Quick Add Inventory Form (Hidden by default) -->
+            <div id="addInventoryForm" class="hidden bg-slate-950 border border-slate-800 rounded-xl p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold block mb-1">Part Name</label>
+                    <input type="text" id="invPartName" placeholder="e.g. iPhone 14 Battery" class="w-full bg-slate-900 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none focus:border-teal">
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold block mb-1">Unit Price (INR)</label>
+                    <input type="number" id="invPrice" placeholder="e.g. 1500" class="w-full bg-slate-900 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none focus:border-teal">
+                </div>
+                <div>
+                    <label class="text-[10px] text-gray-400 font-bold block mb-1">Initial Quantity</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="invQty" placeholder="e.g. 10" class="w-full bg-slate-900 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none focus:border-teal">
+                        <button onclick="submitNewInventoryItem()" class="btn-teal px-4 font-bold rounded-lg text-xs">Save</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inventory Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="border-b border-slate-800 text-gray-400 text-[10px] uppercase font-bold tracking-wider bg-slate-950/40 font-display">
+                            <th class="p-3">Spare Part Name</th>
+                            <th class="p-3">Unit Price</th>
+                            <th class="p-3">In Stock</th>
+                            <th class="p-3 text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${rowsHtml}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+}
+window.renderInventoryTable = renderInventoryTable;
+
+function toggleAddInventoryForm() {
+    const form = document.getElementById('addInventoryForm');
+    if (form) form.classList.toggle('hidden');
+}
+window.toggleAddInventoryForm = toggleAddInventoryForm;
+
+async function submitNewInventoryItem() {
+    const part_name = document.getElementById('invPartName')?.value.trim();
+    const price = parseFloat(document.getElementById('invPrice')?.value) || 0;
+    const quantity = parseInt(document.getElementById('invQty')?.value) || 0;
+    
+    if (!part_name) {
+        showToast('Please specify spare part name', 'error');
+        return;
+    }
+    
+    try {
+        if (!supabase) throw new Error("Supabase disconnected");
+        const { error } = await supabase.from('repair_parts_inventory').insert([{ part_name, price, quantity }]);
+        if (error) throw error;
+        showToast('📦 Spare part registered in inventory!', 'success');
+        loadRepairPartsInventory();
+    } catch (err) {
+        console.warn("Adding locally:", err);
+        const newItem = { id: 'inv-' + Date.now(), part_name, price, quantity };
+        if (!window.allInventoryItems) window.allInventoryItems = [];
+        window.allInventoryItems.push(newItem);
+        showToast('📦 Spare part registered locally!', 'success');
+        renderInventoryTable(window.allInventoryItems);
+        toggleAddInventoryForm();
+    }
+}
+window.submitNewInventoryItem = submitNewInventoryItem;
+
+async function updateInventoryQty(itemId, delta) {
+    let items = window.allInventoryItems || [];
+    const idx = items.findIndex(item => item.id === itemId);
+    if (idx === -1) return;
+    
+    const newQty = Math.max(0, items[idx].quantity + delta);
+    items[idx].quantity = newQty;
+    
+    try {
+        if (!supabase) throw new Error("Supabase disconnected");
+        const { error } = await supabase.from('repair_parts_inventory').update({ quantity: newQty }).eq('id', itemId);
+        if (error) throw error;
+        showToast('Inventory level updated', 'success');
+        loadRepairPartsInventory();
+    } catch (err) {
+        console.warn("Updated locally:", err);
+        showToast('Inventory level updated locally', 'success');
+        renderInventoryTable(items);
+    }
+}
+window.updateInventoryQty = updateInventoryQty;
+
+async function deleteInventoryItem(itemId) {
+    try {
+        if (!supabase) throw new Error("Supabase disconnected");
+        const { error } = await supabase.from('repair_parts_inventory').delete().eq('id', itemId);
+        if (error) throw error;
+        showToast('Item deleted from inventory', 'success');
+        loadRepairPartsInventory();
+    } catch (err) {
+        console.warn("Deleted locally:", err);
+        window.allInventoryItems = window.allInventoryItems.filter(item => item.id !== itemId);
+        showToast('Item deleted locally', 'success');
+        renderInventoryTable(window.allInventoryItems);
+    }
+}
+window.deleteInventoryItem = deleteInventoryItem;
