@@ -125,7 +125,7 @@
         <div class="container-custom flex items-center justify-between gap-2 md:gap-4">
             <div class="flex items-center gap-2 md:gap-4 cursor-pointer select-none" onclick="window.location.href='index.html'">
                 <!-- Logo Icon Container styled to match the mockup perfectly -->
-                <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-10 w-10 md:h-[60px] md:w-[60px] shadow-[0_0_15px_rgba(20,184,166,0.15)] shrink-0 transition-transform duration-300 hover:scale-105">
+                <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-11 w-11 md:h-[64px] md:w-[64px] shadow-[0_0_20px_rgba(20,184,166,0.25)] shrink-0 transition-transform duration-300 hover:scale-105">
                     <img src="assets/images/logo.png" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
                 </div>
                 
@@ -134,24 +134,24 @@
                 
                 <!-- Branding Text Block -->
                 <div class="flex flex-col justify-center relative pr-4 md:pr-8">
-                    <div class="font-display text-base sm:text-lg md:text-[24px] font-bold tracking-tight leading-none text-white">
+                    <div class="font-display text-sm sm:text-base md:text-lg font-bold tracking-tight leading-none text-white">
                         Repair<span class="text-teal">Master</span>
                     </div>
                     <!-- Horizontal Line -->
-                    <div class="w-full h-[1.5px] bg-teal/60 my-0.5 md:my-1"></div>
+                    <div class="w-full h-[1px] bg-teal/40 my-0.5 md:my-1"></div>
                     <!-- Tagline -->
-                    <div class="text-[8px] sm:text-[10px] md:text-[12px] font-semibold text-white leading-none tracking-normal">
+                    <div class="text-[7px] sm:text-[8px] md:text-[10px] font-normal text-gray-400 leading-none tracking-normal">
                         Direct To Consumer
                     </div>
                     <!-- Powered By -->
-                    <div class="text-[6px] sm:text-[8px] md:text-[9px] text-white/90 italic mt-0.5 leading-none">
+                    <div class="text-[6px] sm:text-[7px] md:text-[8px] text-white/50 italic mt-0.5 leading-none">
                         powered by <span class="text-teal font-medium not-italic">cm2us.com</span>
                     </div>
                     
                     <!-- Sparkles Sparkle on the Right of the text -->
                     <div class="absolute right-0 bottom-1 flex flex-col items-center gap-1">
                         <!-- Large Sparkle -->
-                        <svg class="w-2.5 h-2.5 md:w-3 md:h-3 text-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                        <svg class="w-2 h-2 md:w-2.5 md:h-2.5 text-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
                         </svg>
                     </div>
@@ -162,6 +162,7 @@
             <nav class="desktop-nav hidden md:flex items-center gap-8 text-sm font-semibold mx-auto" id="mainNav">
                 <a href="index.html" class="nav-link">Home</a>
                 <a href="request.html" class="nav-link">Repair Request</a>
+                <a href="marketplace.html" class="nav-link">Marketplace</a>
                 <a href="dashboard.html" class="nav-link active">Dashboard</a>
             </nav>
 
@@ -218,81 +219,145 @@
             </div>
         </div>
 
+        <!-- Modern Dashboard Tabs -->
+        <div class="flex items-center gap-1 border-b border-white/5 pb-0 mb-8 overflow-x-auto scrollbar-none">
+            <button id="tab-tickets-btn" onclick="switchDashboardTab('tickets')" class="px-5 py-3.5 text-xs md:text-sm font-bold text-teal border-b-2 border-teal outline-none whitespace-nowrap transition-all flex items-center gap-2">
+                <i class="fa-solid fa-ticket"></i> Assigned Tickets
+            </button>
+            <button id="tab-filters-btn" onclick="switchDashboardTab('filters')" class="px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i> Control Console
+            </button>
+            <button id="tab-inventory-btn" onclick="switchDashboardTab('inventory')" class="px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2">
+                <i class="fa-solid fa-boxes-stacked"></i> Lab Inventory
+            </button>
+            <button id="tab-sql-btn" onclick="switchDashboardTab('sql')" class="px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2">
+                <i class="fa-solid fa-database"></i> Developer Console
+            </button>
+        </div>
+
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Left: Orders / Tickets Section (Expanded to Full Width) -->
             <div class="lg:col-span-3 space-y-6">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
-                        <i class="fa-solid fa-ticket text-teal"></i> Assigned Doorstep Tickets
-                    </h3>
-                    <span class="text-xs text-gray-500">Auto-synced with Supabase</span>
-                </div>
-
-                <!-- COORDINATOR / STAFF FILTERS & GROUPING PANEL -->
-                <div id="coordinatorFiltersPanel" class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-5 mb-4 space-y-4">
-                    <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
-                            <i class="fa-solid fa-filter"></i> Coordinator Control Console
-                        </span>
-                        <span class="text-[10px] text-gray-400 font-bold bg-teal-500/10 px-2.5 py-0.5 rounded-full">Group requests by hub or status</span>
+                
+                <!-- Tab Section: Tickets -->
+                <div id="tab-tickets-section" class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
+                            <i class="fa-solid fa-ticket text-teal"></i> Assigned Doorstep Tickets
+                        </h3>
+                        <span class="text-xs text-gray-500">Auto-synced with Supabase</span>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Search Client / Order No</label>
-                            <input type="text" id="filterSearch" oninput="applyDashboardFilters()" placeholder="Search Name, Phone, ID..." class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Filter by City Hub</label>
-                            <select id="filterHub" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
-                                <option value="All">All Hubs (Wardha, Nagpur, Amravati)</option>
-                                <option value="Wardha">Wardha Hub Only</option>
-                                <option value="Nagpur">Nagpur Hub Only</option>
-                                <option value="Amravati">Amravati Hub Only</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Group by Workflow Status</label>
-                            <select id="filterStatus" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
-                                <option value="All">All Tickets</option>
-                                <option value="Pending">Pending Action</option>
-                                <option value="Pickup">Pickup &amp; Handover</option>
-                                <option value="Lab">With RepairMaster (Lab)</option>
-                                <option value="Quotation">Quotation Awaiting Approval</option>
-                                <option value="Repairing">Under Repairing</option>
-                                <option value="Payment">Awaiting Payment</option>
-                                <option value="Delivery">Ready for Delivery</option>
-                                <option value="Completed">Completed &amp; Closed</option>
-                                <option value="Rejected">Rejected / Minimum Service Fee</option>
-                            </select>
+
+                    <div id="dashboardContent" class="space-y-4">
+                        <div class="text-center text-gray-400 py-12 bg-navyBG/20 border border-grayBorder rounded-2xl">
+                            <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing synchronized ticket session...
                         </div>
                     </div>
                 </div>
 
-                <div id="dashboardContent" class="space-y-4">
-                    <div class="text-center text-gray-400 py-12 bg-navyBG/20 border border-grayBorder rounded-2xl">
-                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Initializing synchronized ticket session...
+                <!-- Tab Section: Filters -->
+                <div id="tab-filters-section" class="hidden space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
+                            <i class="fa-solid fa-sliders text-teal"></i> Control Console
+                        </h3>
+                        <span class="text-xs text-gray-500 font-bold bg-[#14B8A6]/10 text-teal px-2.5 py-0.5 rounded-full">Authorized Hub Staff only</span>
+                    </div>
+
+                    <!-- COORDINATOR / STAFF FILTERS & GROUPING PANEL -->
+                    <div id="coordinatorFiltersPanel" class="hidden bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
+                            <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
+                                <i class="fa-solid fa-filter"></i> Coordinator Control Console
+                            </span>
+                            <span class="text-[10px] text-gray-400 font-bold bg-teal-500/10 px-2.5 py-0.5 rounded-full">Group requests by hub or status</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Search Client / Order No</label>
+                                <input type="text" id="filterSearch" oninput="applyDashboardFilters()" placeholder="Search Name, Phone, ID..." class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Filter by City Hub</label>
+                                <select id="filterHub" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                                    <option value="All">All Hubs (Wardha, Nagpur, Amravati)</option>
+                                    <option value="Wardha">Wardha Hub Only</option>
+                                    <option value="Nagpur">Nagpur Hub Only</option>
+                                    <option value="Amravati">Amravati Hub Only</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Group by Workflow Status</label>
+                                <select id="filterStatus" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                                    <option value="All">All Tickets</option>
+                                    <option value="Pending">Pending Action</option>
+                                    <option value="Pickup">Pickup &amp; Handover</option>
+                                    <option value="Lab">With RepairMaster (Lab)</option>
+                                    <option value="Quotation">Quotation Awaiting Approval</option>
+                                    <option value="Repairing">Under Repairing</option>
+                                    <option value="Payment">Awaiting Payment</option>
+                                    <option value="Delivery">Ready for Delivery</option>
+                                    <option value="Completed">Completed &amp; Closed</option>
+                                    <option value="Rejected">Rejected / Minimum Service Fee</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Non-Staff/Guest Notice -->
+                    <div id="nonStaffFilterNotice" class="hidden bg-[#121B33]/20 border border-slate-800/80 p-8 rounded-2xl text-center space-y-4 max-w-md mx-auto">
+                        <div class="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-3xl text-amber-500 mx-auto">
+                            <i class="fa-solid fa-lock"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white font-display">Staff Authorized Section</h4>
+                        <p class="text-xs text-gray-400">The Coordinator Control Panel filters are only visible and interactive for RepairMaster coordinators, support staff, technicians and administrators.</p>
                     </div>
                 </div>
 
-                <!-- REPAIRMASTER PARTS INVENTORY MANAGEMENT AREA -->
-                <div id="repairmasterInventoryArea" class="hidden mt-10 space-y-6"></div>
+                <!-- Tab Section: Lab Inventory -->
+                <div id="tab-inventory-section" class="hidden space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
+                            <i class="fa-solid fa-boxes-stacked text-teal"></i> Lab Parts Inventory
+                        </h3>
+                        <span class="text-xs text-gray-500 font-bold bg-[#14B8A6]/10 text-teal px-2.5 py-0.5 rounded-full">Direct Lab Stock Access</span>
+                    </div>
 
-                <!-- Collapsible Supabase SQL console for direct data acquisition (Coordinator / Admin Only) -->
-                <div class="bg-navyBG/30 border border-grayBorder/40 rounded-2xl p-6 mt-12">
-                    <button onclick="document.getElementById('sqlRunnerBlock').classList.toggle('hidden')" class="w-full flex items-center justify-between text-left outline-none">
-                        <div class="flex items-center gap-3">
-                            <i class="fa-solid fa-database text-amberAccent text-xl"></i>
+                    <!-- REPAIRMASTER PARTS INVENTORY MANAGEMENT AREA -->
+                    <div id="repairmasterInventoryArea" class="hidden space-y-6"></div>
+
+                    <!-- Non-Staff/Guest Notice -->
+                    <div id="nonStaffInventoryNotice" class="hidden bg-[#121B33]/20 border border-slate-800/80 p-8 rounded-2xl text-center space-y-4 max-w-md mx-auto">
+                        <div class="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-3xl text-amber-500 mx-auto">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <h4 class="text-lg font-bold text-white font-display">Restricted Inventory Area</h4>
+                        <p class="text-xs text-gray-400">Only authorized laboratory technicians, repairmasters, and system admins have permission to read/write real-time spare part quantities.</p>
+                    </div>
+                </div>
+
+                <!-- Tab Section: SQL Schema -->
+                <div id="tab-sql-section" class="hidden space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
+                            <i class="fa-solid fa-database text-teal"></i> Supabase Schema Console
+                        </h3>
+                        <span class="text-xs text-gray-500 font-bold bg-amber-500/15 text-amber-400 px-2.5 py-0.5 rounded-full">System Database Setup</span>
+                    </div>
+
+                    <!-- Collapsible Supabase SQL console for direct data acquisition -->
+                    <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i class="fa-solid fa-database text-amber-500 text-xl"></i>
                             <div>
                                 <h4 class="text-sm font-bold text-white uppercase tracking-wider">Supabase Data Acquisition Console</h4>
                                 <p class="text-xs text-gray-500">Run this SQL code in your Supabase Editor to setup remaining dashboard queries &amp; profiles tables.</p>
                             </div>
                         </div>
-                        <i class="fa-solid fa-chevron-down text-gray-400"></i>
-                    </button>
-                    
-                    <div id="sqlRunnerBlock" class="hidden mt-6 space-y-4 border-t border-grayBorder/40 pt-6">
-                        <p class="text-xs text-gray-400">Below is the optimized SQL command script to construct the users table, user role linkages, parts catalogs, Row Level Security policies, and the user creation mirror trigger automatically:</p>
-                        <pre class="bg-slate-900/80 p-4 rounded-xl border border-grayBorder text-[10px] text-tealAccent font-mono overflow-x-auto max-h-64 leading-relaxed">
+                        
+                        <div class="space-y-4 border-t border-slate-800/60 pt-6">
+                            <p class="text-xs text-gray-400">Below is the optimized SQL command script to construct the users table, user role linkages, parts catalogs, Row Level Security policies, and the user creation mirror trigger automatically:</p>
+                            <pre class="bg-slate-950 p-4 rounded-xl border border-slate-800 text-[10px] text-teal-400 font-mono overflow-x-auto max-h-96 leading-relaxed">
 -- 1. Create Users Table (user schema mirroring)
 CREATE TABLE IF NOT EXISTS public.users (
     id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
@@ -428,12 +493,14 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-                        </pre>
-                        <button onclick="navigator.clipboard.writeText(document.querySelector('#sqlRunnerBlock pre').textContent); showToast('📋 SQL Code copied to clipboard!', 'success');" class="btn-teal text-xs py-2 px-4 rounded-lg">
-                            <i class="fa-regular fa-copy mr-1"></i> Copy Schema SQL
-                        </button>
+                            </pre>
+                            <button onclick="navigator.clipboard.writeText(document.querySelector('#tab-sql-section pre').textContent); showToast('📋 SQL Code copied to clipboard!', 'success');" class="btn-teal text-xs py-2 px-4 rounded-lg">
+                                <i class="fa-regular fa-copy mr-1"></i> Copy Schema SQL
+                            </button>
+                        </div>
                     </div>
                 </div>
+
             </div>
         </div>
     </main>

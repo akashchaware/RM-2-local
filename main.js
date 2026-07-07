@@ -2103,7 +2103,66 @@ async function loadDashboard() {
         renderFilteredOrders();
     }
     window.applyDashboardFilters = applyDashboardFilters;
+
+    // Initialize default dashboard tab state
+    setTimeout(() => {
+        switchDashboardTab('tickets');
+    }, 50);
 }
+
+function switchDashboardTab(tabId) {
+    const tabs = ['tickets', 'filters', 'inventory', 'sql'];
+    tabs.forEach(t => {
+        const sec = document.getElementById(`tab-${t}-section`);
+        const btn = document.getElementById(`tab-${t}-btn`);
+        if (sec) {
+            if (t === tabId) {
+                sec.classList.remove('hidden');
+            } else {
+                sec.classList.add('hidden');
+            }
+        }
+        if (btn) {
+            if (t === tabId) {
+                btn.className = "px-5 py-3.5 text-xs md:text-sm font-bold text-teal border-b-2 border-teal outline-none whitespace-nowrap transition-all flex items-center gap-2";
+            } else {
+                btn.className = "px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2";
+            }
+        }
+    });
+
+    const activeRole = localStorage.getItem('activeRole') || 'customer';
+    const isAdmin = activeRole === 'admin';
+    const isCoordinator = activeRole === 'coordinator';
+    const isRepairMaster = activeRole === 'repairmaster';
+
+    // Staff Filter visibility
+    const filterPanel = document.getElementById('coordinatorFiltersPanel');
+    const filterNotice = document.getElementById('nonStaffFilterNotice');
+    if (filterPanel && filterNotice) {
+        if (isCoordinator || isAdmin) {
+            filterPanel.classList.remove('hidden');
+            filterNotice.classList.add('hidden');
+        } else {
+            filterPanel.classList.add('hidden');
+            filterNotice.classList.remove('hidden');
+        }
+    }
+
+    // Inventory visibility
+    const inventoryPanel = document.getElementById('repairmasterInventoryArea');
+    const inventoryNotice = document.getElementById('nonStaffInventoryNotice');
+    if (inventoryPanel && inventoryNotice) {
+        if (isRepairMaster || isAdmin) {
+            inventoryPanel.classList.remove('hidden');
+            inventoryNotice.classList.add('hidden');
+        } else {
+            inventoryPanel.classList.add('hidden');
+            inventoryNotice.classList.remove('hidden');
+        }
+    }
+}
+window.switchDashboardTab = switchDashboardTab;
 
 // ─── 10. AUTH STATUS UPDATE & CUSTOM DRAWER/BELL CONTROLLERS ───
 
@@ -2880,7 +2939,7 @@ function toggleMobileMenu() {
                         <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
                             <i class="fa-solid fa-chart-line text-tealAccent/80"></i> Dashboard
                         </a>
-                        <a href="index.html#marketplace-section" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-store" onclick="toggleMobileMenu()">
+                        <a href="marketplace.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-marketplace">
                             <i class="fa-solid fa-store text-tealAccent/80"></i> Certified Store
                         </a>
                     </nav>
@@ -2939,6 +2998,7 @@ function toggleMobileMenu() {
     const path = window.location.pathname.toLowerCase();
     let activeId = 'mLink-index';
     if (path.includes('request')) activeId = 'mLink-request';
+    else if (path.includes('marketplace')) activeId = 'mLink-marketplace';
     else if (path.includes('dashboard')) activeId = 'mLink-dashboard';
     
     document.querySelectorAll('.mobile-nav-link').forEach(link => {
@@ -3419,3 +3479,35 @@ window.addEventListener('scroll', () => {
         }
     }
 });
+
+// Homepage Accordion Toggler & Auto-Scroller
+function toggleHomepageSection(sectionId) {
+    const content = document.getElementById(sectionId + '-content');
+    const header = document.getElementById(sectionId + '-header');
+    if (!content || !header) return;
+    
+    const icon = header.querySelector('.accordion-icon');
+    const isCollapsed = content.classList.contains('collapsed');
+    
+    if (isCollapsed) {
+        content.classList.remove('collapsed');
+        if (icon) {
+            icon.classList.add('rotate-180');
+        }
+        header.classList.add('bg-slate-900/60', 'border-teal/40');
+        
+        // Scroll to header after a slight delay to allow content expand layout calculation
+        setTimeout(() => {
+            const yOffset = -100; // Account for sticky header
+            const y = header.getBoundingClientRect().top + window.pageYOffset + yOffset;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }, 150);
+    } else {
+        content.classList.add('collapsed');
+        if (icon) {
+            icon.classList.remove('rotate-180');
+        }
+        header.classList.remove('bg-slate-900/60', 'border-teal/40');
+    }
+}
+window.toggleHomepageSection = toggleHomepageSection;
