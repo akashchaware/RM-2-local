@@ -499,23 +499,14 @@
     <!-- ════════════════════════════════════════════════════ -->
     <!--  PAGE: HOME                                         -->
     <!-- ════════════════════════════════════════════════════ -->
-    <main class="pt-[96px] md:pt-[116px] pb-12 space-y-6">
+    <main class="space-y-0">
         <!-- ════════════════════════════════════════════════════ -->
-        <!--  1. HERO SHOWCASE ACCORDION                         -->
+        <!--  1. HERO SHOWCASE SECTION                          -->
         <!-- ════════════════════════════════════════════════════ -->
-        <div class="container-custom">
-            <div class="bg-[#0b1329]/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                <div id="hero-header" onclick="toggleHomepageSection('hero')" class="accordion-header bg-[#0D1527]/90 border-b border-white/5 p-4 md:p-6 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal text-sm"><i class="fa-solid fa-play"></i></span>
-                        <h3 class="text-sm md:text-base font-bold text-white uppercase tracking-wider font-display">Interactive Showcase (Hero)</h3>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[9px] bg-teal-500/20 text-teal-400 font-bold px-2 py-0.5 rounded uppercase">Default Open</span>
-                        <i class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300 accordion-icon rotate-180"></i>
-                    </div>
-                </div>
-                <div id="hero-content" class="accordion-content">
+        <section class="py-12 bg-slate-950 border-b border-white/5">
+            <div class="container-custom">
+                <div class="bg-[#0b1329]/40 border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
+                    <div id="hero-content" class="p-0">
                     <!-- Carousel Slider -->
                     <div class="carousel-container relative">
                         <div class="carousel-slide active" style="background-image: url('repo-image-folder/Slideshow_homepage_1.jpg');">
@@ -585,76 +576,152 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- ════════════════════════════════════════════════════ -->
-        <!--  2. COMMUNITY TRUST BADGES ACCORDION               -->
+        <!--  2. SMART REPAIR CALCULATOR SECTION                -->
         <!-- ════════════════════════════════════════════════════ -->
-        <div class="container-custom">
-            <div class="bg-[#0b1329]/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                <div id="trust-header" onclick="toggleHomepageSection('trust')" class="accordion-header bg-[#0D1527]/90 border-b border-white/5 p-4 md:p-6 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal text-sm"><i class="fa-solid fa-star"></i></span>
-                        <h3 class="text-sm md:text-base font-bold text-white uppercase tracking-wider font-display">Community Trust Badges</h3>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[9px] bg-slate-800 text-gray-400 font-bold px-2 py-0.5 rounded uppercase">Collapsed</span>
-                        <i class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300 accordion-icon"></i>
-                    </div>
-                </div>
-                <div id="trust-content" class="accordion-content collapsed">
-                    <div class="p-6 md:p-8">
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 md:p-8">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-2xl text-teal flex-shrink-0">
-                        <i class="fa-solid fa-circle-check"></i>
-                    </div>
-                    <div>
-                        <div class="text-base font-bold text-white">1000+ Repairs</div>
-                        <div class="text-xs text-gray-400">Completed with 5-star customer feedback</div>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 border-t md:border-t-0 md:border-l md:border-r border-slate-800 pt-4 md:pt-0 md:px-6">
-                    <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-2xl text-amber-400 flex-shrink-0">
-                        <i class="fa-solid fa-star"></i>
-                    </div>
-                    <div>
-                        <div class="text-base font-bold text-white">4.8/5 Rating</div>
-                        <div class="text-xs text-gray-400">Trusted by Wardha & local community</div>
-                    </div>
-                </div>
-                <div class="flex items-center gap-4 border-t md:border-t-0 border-slate-800 pt-4 md:pt-0">
-                    <div class="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-2xl text-emerald-400 flex-shrink-0">
-                        <i class="fa-solid fa-shield-halved"></i>
-                    </div>
-                    <div>
-                        <div class="text-base font-bold text-white">30-Day Warranty</div>
-                        <div class="text-xs text-gray-400">On all certified genuine spare parts</div>
-                    </div>
-                </div>
+        <section class="py-16 bg-[#090e1a] border-b border-white/5">
+            <div class="container-custom">
+                <div id="calc-content" class="bg-[#0b1329]/20 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl">
+                    <div id="calculator-section" class="py-4">
+                        <div class="text-center space-y-3 mb-8">
+                            <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
+                                <i class="fa-solid fa-calculator mr-1"></i> Smart Repair Calculator
+                            </span>
+                            <h2 class="text-2xl md:text-4xl font-bold text-white font-display">Get Your Accurate Estimate</h2>
+                            <p class="text-gray-400 text-xs md:text-sm max-w-2xl mx-auto">Select brand, model, repair type &amp; parts quality – transparent pricing.</p>
+                            <p class="text-xs text-amber-400"><i class="fa-solid fa-tag mr-1"></i> All prices include 10% discount</p>
+                        </div>
+                        <div class="calc-container">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <!-- Dropdowns / Options -->
+                                <div class="space-y-6">
+                                    <div class="form-group">
+                                        <label>1. Select Brand</label>
+                                        <select id="brandSelect" onchange="updateModels()">
+                                            <option value="">— Select Brand —</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>2. Choose Model</label>
+                                        <select id="modelSelect" onchange="updateModels()">
+                                            <option value="">— Select Model —</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>3. Select Repair Action</label>
+                                        <select id="repairTypeSelect" onchange="updatePartsSurvey()">
+                                            <option value="">— Select Repair —</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>4. Component Quality Grade</label>
+                                        <select id="qualitySelect" onchange="updatePartsSurvey()">
+                                            <option value="standard">Standard Grade Spares (Affordable &amp; Durable)</option>
+                                            <option value="premium">Premium Grade Spares (OEM Equivalent Glass/OLED)</option>
+                                        </select>
+                                    </div>
+                                    <div class="offer-toggle">
+                                        <input type="checkbox" id="offerToggle" onchange="updatePartsSurvey()">
+                                        <label for="offerToggle">
+                                            Apply claim voucher? <span class="offer-badge">50% Off Service Fee</span>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <!-- Live Breakdown Display -->
+                                <div class="bg-navyBG/40 border border-grayBorder/40 rounded-2xl p-6 flex flex-col justify-between">
+                                    <div>
+                                        <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-teal"></i> Estimate Summary</h3>
+                                        
+                                        <!-- Dynamic Parts Breakdown list -->
+                                        <div id="partsSurveyContainer" class="mb-6">
+                                            <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 text-center text-grayText/50">
+                                                Select options to preview component breakdown.
+                                            </div>
+                                        </div>
+
+                                        <!-- Cost rows -->
+                                        <div class="space-y-2 border-t border-grayBorder/40 pt-4">
+                                            <div class="price-row">
+                                                <span class="text-grayText">Discounted Parts:</span>
+                                                <span id="partsTotalDisplay" class="text-white font-medium">₹0.00</span>
+                                            </div>
+                                            <div class="price-row">
+                                                <span class="text-grayText">Service Charge (15%):</span>
+                                                <span id="serviceFeeDisplay" class="text-white font-medium">₹0.00</span>
+                                            </div>
+                                            <div class="price-row">
+                                                <span class="text-grayText">Diagnostic Visit Fee:</span>
+                                                <span id="diagnosisChargeDisplay" class="text-white font-medium">₹250.00</span>
+                                            </div>
+                                            <div class="price-row total-row text-tealAccent">
+                                                <span>Total Estimate (INR):</span>
+                                                <span id="totalPriceDisplay" class="text-xl font-black text-teal">₹250.00</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-6 flex gap-4">
+                                        <button id="bookServiceBtn" onclick="createOrder()" class="flex-1 btn-teal text-center py-3.5 rounded-xl font-extrabold hover:scale-[1.02] transition-all">
+                                            <i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- ════════════════════════════════════════════════════ -->
-        <!--  3. HOW IT WORKS ACCORDION                         -->
+        <!--  3. COMMUNITY TRUST BADGES SECTION                  -->
         <!-- ════════════════════════════════════════════════════ -->
-        <div class="container-custom">
-            <div class="bg-[#0b1329]/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                <div id="how-header" onclick="toggleHomepageSection('how')" class="accordion-header bg-[#0D1527]/90 border-b border-white/5 p-4 md:p-6 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal text-sm"><i class="fa-solid fa-gears"></i></span>
-                        <h3 class="text-sm md:text-base font-bold text-white uppercase tracking-wider font-display">How It Works</h3>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[9px] bg-slate-800 text-gray-400 font-bold px-2 py-0.5 rounded uppercase">Collapsed</span>
-                        <i class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300 accordion-icon"></i>
+        <section class="py-12 bg-slate-950 border-b border-white/5">
+            <div class="container-custom">
+                <div id="trust-content" class="bg-[#0b1329]/20 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-900/40 border border-slate-800/80 rounded-2xl p-6 md:p-8">
+                        <div class="flex items-center gap-4">
+                            <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-2xl text-teal flex-shrink-0">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                            <div>
+                                <div class="text-base font-bold text-white">1000+ Repairs</div>
+                                <div class="text-xs text-gray-400">Completed with 5-star customer feedback</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 border-t md:border-t-0 md:border-l md:border-r border-slate-800 pt-4 md:pt-0 md:px-6">
+                            <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-2xl text-amber-400 flex-shrink-0">
+                                <i class="fa-solid fa-star"></i>
+                            </div>
+                            <div>
+                                <div class="text-base font-bold text-white">4.8/5 Rating</div>
+                                <div class="text-xs text-gray-400">Trusted by Wardha & local community</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4 border-t md:border-t-0 border-slate-800 pt-4 md:pt-0">
+                            <div class="w-12 h-12 rounded-full bg-emerald-500/10 flex items-center justify-center text-2xl text-emerald-400 flex-shrink-0">
+                                <i class="fa-solid fa-shield-halved"></i>
+                            </div>
+                            <div>
+                                <div class="text-base font-bold text-white">30-Day Warranty</div>
+                                <div class="text-xs text-gray-400">On all certified genuine spare parts</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div id="how-content" class="accordion-content collapsed">
-                    <div class="p-6 md:p-8 space-y-8">
+            </div>
+        </section>
+
+        <!-- ════════════════════════════════════════════════════ -->
+        <!--  4. HOW IT WORKS SECTION                           -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <section class="py-16 bg-[#090e1a] border-b border-white/5">
+            <div class="container-custom">
+                <div id="how-content" class="bg-[#0b1329]/20 border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl">
+                    <div class="space-y-8">
                         <div class="text-center space-y-3 mb-6">
                             <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
                                 <i class="fa-solid fa-gears mr-1"></i> Seamless Process
@@ -662,40 +729,40 @@
                             <h2 class="text-2xl md:text-4xl font-bold text-white font-display">How It Works</h2>
                             <p class="text-gray-400 text-xs md:text-sm max-w-xl mx-auto">Get your smartphone repaired in three simple, secure steps.</p>
                         </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
-                <!-- Connectors on desktop -->
-                <div class="hidden md:block absolute top-1/2 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-teal-500/30 via-amber-500/20 to-teal-500/30 -z-10"></div>
-                
-                <!-- Step 1 -->
-                <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl p-6 text-center transition-all duration-300">
-                    <div class="w-16 h-16 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center text-3xl mx-auto mb-6 shadow-lg shadow-teal-500/5">
-                        <i class="fa-solid fa-truck-ramp-box"></i>
-                    </div>
-                    <span class="text-teal text-xs font-bold uppercase tracking-wider block mb-2">Step 1</span>
-                    <h3 class="text-lg font-bold text-white font-display mb-3">1. Free Doorstep Pickup</h3>
-                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Book a pickup. Our OTP-verified logistics boy secures your device and handles it with complete care.</p>
-                </div>
-                
-                <!-- Step 2 -->
-                <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl p-6 text-center transition-all duration-300">
-                    <div class="w-16 h-16 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center text-3xl mx-auto mb-6 shadow-lg shadow-amber-500/5">
-                        <i class="fa-solid fa-screwdriver-wrench"></i>
-                    </div>
-                    <span class="text-amber-400 text-xs font-bold uppercase tracking-wider block mb-2">Step 2</span>
-                    <h3 class="text-lg font-bold text-white font-display mb-3">2. Expert Lab Diagnostics</h3>
-                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Technicians perform full diagnostics. Your private files are kept locked safe under Maintenance Mode.</p>
-                </div>
-                
-                <!-- Step 3 -->
-                <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl p-6 text-center transition-all duration-300">
-                    <div class="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-3xl mx-auto mb-6 shadow-lg shadow-emerald-500/5">
-                        <i class="fa-solid fa-truck-fast"></i>
-                    </div>
-                    <span class="text-emerald-400 text-xs font-bold uppercase tracking-wider block mb-2">Step 3</span>
-                    <h3 class="text-lg font-bold text-white font-display mb-3">3. Safe Delivery & Escrow</h3>
-                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">We deliver your fully fixed and tested phone. You pay securely on delivery only after full satisfaction.</p>
-                </div>
-            </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+                            <!-- Connectors on desktop -->
+                            <div class="hidden md:block absolute top-1/2 left-1/4 right-1/4 h-0.5 bg-gradient-to-r from-teal-500/30 via-amber-500/20 to-teal-500/30 -z-10"></div>
+                            
+                            <!-- Step 1 -->
+                            <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl p-6 text-center transition-all duration-300">
+                                <div class="w-16 h-16 rounded-full bg-teal-500/10 text-teal-400 flex items-center justify-center text-3xl mx-auto mb-6 shadow-lg shadow-teal-500/5">
+                                    <i class="fa-solid fa-truck-ramp-box"></i>
+                                </div>
+                                <span class="text-teal text-xs font-bold uppercase tracking-wider block mb-2">Step 1</span>
+                                <h3 class="text-lg font-bold text-white font-display mb-3">1. Free Doorstep Pickup</h3>
+                                <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Book a pickup. Our OTP-verified logistics boy secures your device and handles it with complete care.</p>
+                            </div>
+                            
+                            <!-- Step 2 -->
+                            <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl p-6 text-center transition-all duration-300">
+                                <div class="w-16 h-16 rounded-full bg-amber-500/10 text-amber-400 flex items-center justify-center text-3xl mx-auto mb-6 shadow-lg shadow-amber-500/5">
+                                    <i class="fa-solid fa-screwdriver-wrench"></i>
+                                </div>
+                                <span class="text-amber-400 text-xs font-bold uppercase tracking-wider block mb-2">Step 2</span>
+                                <h3 class="text-lg font-bold text-white font-display mb-3">2. Expert Lab Diagnostics</h3>
+                                <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Technicians perform full diagnostics. Your private files are kept locked safe under Maintenance Mode.</p>
+                            </div>
+                            
+                            <!-- Step 3 -->
+                            <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl p-6 text-center transition-all duration-300">
+                                <div class="w-16 h-16 rounded-full bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-3xl mx-auto mb-6 shadow-lg shadow-emerald-500/5">
+                                    <i class="fa-solid fa-truck-fast"></i>
+                                </div>
+                                <span class="text-emerald-400 text-xs font-bold uppercase tracking-wider block mb-2">Step 3</span>
+                                <h3 class="text-lg font-bold text-white font-display mb-3">3. Safe Delivery & Escrow</h3>
+                                <p class="text-gray-400 text-xs md:text-sm leading-relaxed">We deliver your fully fixed and tested phone. You pay securely on delivery only after full satisfaction.</p>
+                            </div>
+                        </div>
                         <!-- City Notice & Maintenance Block inside How It Works content -->
                         <div class="mt-8 border-t border-slate-800 pt-6">
                             <div class="city-notice mb-4">
@@ -715,350 +782,214 @@
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- ════════════════════════════════════════════════════ -->
-        <!--  4. SMART REPAIR CALCULATOR ACCORDION              -->
+        <!--  5. REFURBISHED DEVICE STORE SECTION                -->
         <!-- ════════════════════════════════════════════════════ -->
-        <div class="container-custom">
-            <div class="bg-[#0b1329]/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                <div id="calc-header" onclick="toggleHomepageSection('calc')" class="accordion-header bg-[#0D1527]/90 border-b border-white/5 p-4 md:p-6 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal text-sm"><i class="fa-solid fa-calculator"></i></span>
-                        <h3 class="text-sm md:text-base font-bold text-white uppercase tracking-wider font-display">Smart Repair Calculator</h3>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[9px] bg-teal-500/20 text-teal-400 font-bold px-2 py-0.5 rounded uppercase">Default Open</span>
-                        <i class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300 accordion-icon rotate-180"></i>
-                    </div>
-                </div>
-                <div id="calc-content" class="accordion-content">
-                    <div class="p-6 md:p-8">
-                        <div id="calculator-section" class="py-4">
-                            <div class="text-center space-y-3 mb-8">
-                                <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
-                                    <i class="fa-solid fa-calculator mr-1"></i> Smart Repair Calculator
-                                </span>
-                                <h2 class="text-2xl md:text-4xl font-bold text-white font-display">Get Your Accurate Estimate</h2>
-                                <p class="text-gray-400 text-xs md:text-sm max-w-2xl mx-auto">Select brand, model, repair type &amp; parts quality – transparent pricing.</p>
-                                <p class="text-xs text-amber-400"><i class="fa-solid fa-tag mr-1"></i> All prices include 10% discount</p>
-                            </div>
-            <div class="calc-container">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Dropdowns / Options -->
-                    <div class="space-y-6">
-                        <div class="form-group">
-                            <label>1. Select Brand</label>
-                            <select id="brandSelect" onchange="updateModels()">
-                                <option value="">— Select Brand —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>2. Choose Model</label>
-                            <select id="modelSelect" onchange="updateRepairTypes()">
-                                <option value="">— Select Model —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>3. Select Repair Action</label>
-                            <select id="repairTypeSelect" onchange="updatePartsSurvey()">
-                                <option value="">— Select Repair —</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>4. Component Quality Grade</label>
-                            <select id="qualitySelect" onchange="updatePartsSurvey()">
-                                <option value="standard">Standard Grade Spares (Affordable &amp; Durable)</option>
-                                <option value="premium">Premium Grade Spares (OEM Equivalent Glass/OLED)</option>
-                            </select>
-                        </div>
-                        <div class="offer-toggle">
-                            <input type="checkbox" id="offerToggle" onchange="updatePartsSurvey()">
-                            <label for="offerToggle">
-                                Apply claim voucher? <span class="offer-badge">50% Off Service Fee</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Live Breakdown Display -->
-                    <div class="bg-navyBG/40 border border-grayBorder/40 rounded-2xl p-6 flex flex-col justify-between">
-                        <div>
-                            <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><i class="fa-solid fa-file-invoice-dollar text-teal"></i> Estimate Summary</h3>
-                            
-                            <!-- Dynamic Parts Breakdown list -->
-                            <div id="partsSurveyContainer" class="mb-6">
-                                <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 text-center text-grayText/50">
-                                    Select options to preview component breakdown.
-                                </div>
-                            </div>
-
-                            <!-- Cost rows -->
-                            <div class="space-y-2 border-t border-grayBorder/40 pt-4">
-                                <div class="price-row">
-                                    <span class="text-grayText">Discounted Parts:</span>
-                                    <span id="partsTotalDisplay" class="text-white font-medium">₹0.00</span>
-                                </div>
-                                <div class="price-row">
-                                    <span class="text-grayText">Service Charge (15%):</span>
-                                    <span id="serviceFeeDisplay" class="text-white font-medium">₹0.00</span>
-                                </div>
-                                <div class="price-row">
-                                    <span class="text-grayText">Diagnostic Visit Fee:</span>
-                                    <span id="diagnosisChargeDisplay" class="text-white font-medium">₹250.00</span>
-                                </div>
-                                <div class="price-row total-row text-tealAccent">
-                                    <span>Total Estimate (INR):</span>
-                                    <span id="totalPriceDisplay" class="text-xl font-black text-teal">₹250.00</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="mt-6 flex gap-4">
-                            <button id="bookServiceBtn" onclick="createOrder()" class="flex-1 btn-teal text-center py-3.5 rounded-xl font-extrabold hover:scale-[1.02] transition-all">
-                                <i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ════════════════════════════════════════════════════ -->
-        <!--  5. REFURBISHED DEVICE STORE ACCORDION              -->
-        <!-- ════════════════════════════════════════════════════ -->
-        <div class="container-custom">
-            <div class="bg-[#0b1329]/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                <div id="marketplace-header" onclick="toggleHomepageSection('marketplace')" class="accordion-header bg-[#0D1527]/90 border-b border-white/5 p-4 md:p-6 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal text-sm"><i class="fa-solid fa-store"></i></span>
-                        <h3 class="text-sm md:text-base font-bold text-white uppercase tracking-wider font-display">Refurbished Device Store</h3>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[9px] bg-slate-800 text-gray-400 font-bold px-2 py-0.5 rounded uppercase">Collapsed</span>
-                        <i class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300 accordion-icon"></i>
-                    </div>
-                </div>
-                <div id="marketplace-content" class="accordion-content collapsed">
-                    <div class="p-6 md:p-8 space-y-8">
-                        <div id="marketplace-section" class="py-4">
-                            <div class="text-center space-y-3 mb-8">
-                                <span class="inline-block bg-[#14B8A6]/15 text-[#14B8A6] text-xs px-4 py-1 rounded-full font-bold">
-                                    <i class="fa-solid fa-store mr-1"></i> Certified Store
-                                </span>
-                                <h2 class="text-2xl md:text-4xl font-bold text-white font-display">Refurbished Device Marketplace</h2>
-                                <p class="text-gray-400 text-xs md:text-sm max-w-2xl mx-auto">Premium quality tested pre-owned devices in Wardha. Cleaned, fully inspected, and backed by warranty.</p>
-                            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Device 1 -->
-                <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl overflow-hidden p-5 flex flex-col justify-between transition-all duration-300 shadow-lg">
-                    <div>
-                        <div class="relative bg-slate-950/60 rounded-xl p-4 flex items-center justify-center mb-4">
-                            <span class="absolute top-2.5 left-2.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold uppercase px-2 py-0.5 rounded">Grade A+ Pristine</span>
-                            <i class="fa-solid fa-mobile-screen-button text-6xl text-slate-800 my-4"></i>
-                        </div>
-                        <h3 class="text-base font-bold text-white font-display">iPhone 14 Pro Max</h3>
-                        <p class="text-xs text-gray-400 mt-1">Deep Purple • 256GB • 92% Battery Health</p>
-                        <div class="flex items-center gap-1 mt-2 text-amber-400 text-xs">
-                            <i class="fa-solid fa-star"></i><span class="font-bold">4.9</span><span class="text-gray-500">(18 reviews)</span>
-                        </div>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] text-gray-500 uppercase block leading-none">Special Price</span>
-                            <span class="text-lg font-black text-white">₹64,990</span>
-                        </div>
-                        <a href="request.html?buy=iphone14pm" class="bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold px-4 py-2 rounded-xl text-xs transition">Inquire Availability</a>
-                    </div>
-                </div>
-
-                <!-- Device 2 -->
-                <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl overflow-hidden p-5 flex flex-col justify-between transition-all duration-300 shadow-lg">
-                    <div>
-                        <div class="relative bg-slate-950/60 rounded-xl p-4 flex items-center justify-center mb-4">
-                            <span class="absolute top-2.5 left-2.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold uppercase px-2 py-0.5 rounded">Grade A+ Pristine</span>
-                            <i class="fa-solid fa-mobile-screen-button text-6xl text-slate-800 my-4"></i>
-                        </div>
-                        <h3 class="text-base font-bold text-white font-display">Samsung Galaxy S23 Ultra</h3>
-                        <p class="text-xs text-gray-400 mt-1">Phantom Black • 256GB • Certified Refurbished</p>
-                        <div class="flex items-center gap-1 mt-2 text-amber-400 text-xs">
-                            <i class="fa-solid fa-star"></i><span class="font-bold">4.8</span><span class="text-gray-500">(12 reviews)</span>
-                        </div>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] text-gray-500 uppercase block leading-none">Special Price</span>
-                            <span class="text-lg font-black text-white">₹58,500</span>
-                        </div>
-                        <a href="request.html?buy=s23u" class="bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold px-4 py-2 rounded-xl text-xs transition">Inquire Availability</a>
-                    </div>
-                </div>
-
-                <!-- Device 3 -->
-                <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl overflow-hidden p-5 flex flex-col justify-between transition-all duration-300 shadow-lg">
-                    <div>
-                        <div class="relative bg-slate-950/60 rounded-xl p-4 flex items-center justify-center mb-4">
-                            <span class="absolute top-2.5 left-2.5 bg-teal-500/20 text-teal-400 text-[9px] font-bold uppercase px-2 py-0.5 rounded">Grade A Excellent</span>
-                            <i class="fa-solid fa-mobile-screen-button text-6xl text-slate-800 my-4"></i>
-                        </div>
-                        <h3 class="text-base font-bold text-white font-display">OnePlus 11 5G</h3>
-                        <p class="text-xs text-gray-400 mt-1">Eternal Green • 128GB • 100W Charger included</p>
-                        <div class="flex items-center gap-1 mt-2 text-amber-400 text-xs">
-                            <i class="fa-solid fa-star"></i><span class="font-bold">4.7</span><span class="text-gray-500">(9 reviews)</span>
-                        </div>
-                    </div>
-                    <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
-                        <div>
-                            <span class="text-[10px] text-gray-500 uppercase block leading-none">Special Price</span>
-                            <span class="text-lg font-black text-white">₹36,400</span>
-                        </div>
-                        <a href="request.html?buy=op11" class="bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold px-4 py-2 rounded-xl text-xs transition">Inquire Availability</a>
-                    </div>
-                </div>
-
-            </div>
-            
-            <!-- Link to the dedicated marketplace page -->
-            <div class="mt-10 text-center">
-                <a href="marketplace.html" class="inline-flex items-center gap-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-black px-8 py-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-[0_4px_25px_rgba(20,184,166,0.25)] hover:scale-105">
-                    <i class="fa-solid fa-store"></i> View All Refurbished Devices & Filters
-                </a>
-            </div>
-        </div>
-
-        <!-- Hot Deals within Marketplace -->
-        <div class="border-t border-slate-800/80 pt-8 mt-10">
-            <div class="text-center space-y-2 mb-8">
-                <span class="inline-block bg-amber-500/10 text-amber-400 text-xs px-4 py-1 rounded-full font-bold">
-                    <i class="fa-solid fa-fire mr-1"></i> Hot Deals
-                </span>
-                <h2 class="text-xl md:text-3xl font-bold text-white font-display">Limited Time Offers</h2>
-                <p class="text-gray-400 text-xs md:text-sm max-w-xl mx-auto">Grab these exclusive discounts before they expire.</p>
-            </div>
-            <div id="offersContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="text-center text-gray-400 py-8 col-span-3"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading offers…</div>
-            </div>
-        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- ════════════════════════════════════════════════════ -->
-        <!--  6. THE REPAIRMASTER ADVANTAGE ACCORDION            -->
-        <!-- ════════════════════════════════════════════════════ -->
-        <div class="container-custom">
-            <div class="bg-[#0b1329]/40 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
-                <div id="why-header" onclick="toggleHomepageSection('why')" class="accordion-header bg-[#0D1527]/90 border-b border-white/5 p-4 md:p-6 flex items-center justify-between">
-                    <div class="flex items-center gap-3">
-                        <span class="w-8 h-8 rounded-lg bg-teal-500/10 flex items-center justify-center text-teal text-sm"><i class="fa-solid fa-shield-halved"></i></span>
-                        <h3 class="text-sm md:text-base font-bold text-white uppercase tracking-wider font-display">The RepairMaster Advantage</h3>
-                    </div>
-                    <div class="flex items-center gap-2">
-                        <span class="text-[9px] bg-slate-800 text-gray-400 font-bold px-2 py-0.5 rounded uppercase">Collapsed</span>
-                        <i class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300 accordion-icon"></i>
-                    </div>
-                </div>
-                <div id="why-content" class="accordion-content collapsed">
-                    <div class="p-6 md:p-8 space-y-12">
-                        <div class="text-center space-y-3 mb-6">
-                            <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
-                                <i class="fa-solid fa-circle-question mr-1"></i> Why Choose Us
+        <section class="py-16 bg-slate-950 border-b border-white/5">
+            <div class="container-custom">
+                <div id="marketplace-content" class="bg-[#0b1329]/20 border border-white/5 rounded-3xl p-6 md:p-8 space-y-8 shadow-2xl">
+                    <div id="marketplace-section" class="py-4">
+                        <div class="text-center space-y-3 mb-8">
+                            <span class="inline-block bg-[#14B8A6]/15 text-[#14B8A6] text-xs px-4 py-1 rounded-full font-bold">
+                                <i class="fa-solid fa-store mr-1"></i> Certified Store
                             </span>
-                            <h2 class="text-2xl md:text-4xl font-bold text-white font-display">The RepairMaster Advantage</h2>
-                            <p class="text-gray-400 text-xs md:text-sm max-w-xl mx-auto">Discover why thousands of users trust us for secure and certified smartphone support.</p>
+                            <h2 class="text-2xl md:text-4xl font-bold text-white font-display">Refurbished Device Marketplace</h2>
+                            <p class="text-gray-400 text-xs md:text-sm max-w-2xl mx-auto">Premium quality tested pre-owned devices in Wardha. Cleaned, fully inspected, and backed by warranty.</p>
                         </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Benefit 1 -->
-                <div class="bg-[#121B33]/20 border border-slate-800/80 rounded-2xl p-6 transition-all duration-300 hover:border-teal-500/30">
-                    <div class="text-teal text-3xl mb-4"><i class="fa-solid fa-shield-halved"></i></div>
-                    <h3 class="text-base font-bold text-white font-display mb-2">Privacy Lock Mode</h3>
-                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">All diagnostic checks are isolated from your private apps, photos, and databases. Rest easy knowing your files stay locked.</p>
-                </div>
-                
-                <!-- Benefit 2 -->
-                <div class="bg-[#121B33]/20 border border-slate-800/80 rounded-2xl p-6 transition-all duration-300 hover:border-teal-500/30">
-                    <div class="text-teal text-3xl mb-4"><i class="fa-solid fa-award"></i></div>
-                    <h3 class="text-base font-bold text-white font-display mb-2">Grade-A Spare Parts</h3>
-                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">We maintain standard & premium grades of fully authentic screens, charging sub-boards, and high-capacity batteries.</p>
-                </div>
-                
-                <!-- Benefit 3 -->
-                <div class="bg-[#121B33]/20 border border-slate-800/80 rounded-2xl p-6 transition-all duration-300 hover:border-teal-500/30">
-                    <div class="text-teal text-3xl mb-4"><i class="fa-solid fa-user-check"></i></div>
-                    <h3 class="text-base font-bold text-white font-display mb-2">OTP Handover Security</h3>
-                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Your device is securely tracked at every stage of collection, technician handover, and delivery. Fully verified by safe pin verification.</p>
-                </div>
-                
-                <!-- Benefit 4 -->
-                <div class="bg-[#121B33]/20 border border-slate-800/80 rounded-2xl p-6 transition-all duration-300 hover:border-teal-500/30">
-                    <div class="text-teal text-3xl mb-4"><i class="fa-solid fa-hand-holding-dollar"></i></div>
-                    <h3 class="text-base font-bold text-white font-display mb-2">Transparent Escrow</h3>
-                    <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Review breakdown prices, approve custom quotes on your live dashboard, and pay using local options only after delivery check.</p>
-                </div>
-            </div>
-        </div>
+        
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Device 1 -->
+                            <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl overflow-hidden p-5 flex flex-col justify-between transition-all duration-300 shadow-lg">
+                                <div>
+                                    <div class="relative bg-slate-950/60 rounded-xl p-4 flex items-center justify-center mb-4">
+                                        <span class="absolute top-2.5 left-2.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold uppercase px-2 py-0.5 rounded">Grade A+ Pristine</span>
+                                        <i class="fa-solid fa-mobile-screen-button text-6xl text-slate-800 my-4"></i>
+                                    </div>
+                                    <h3 class="text-base font-bold text-white font-display">iPhone 14 Pro Max</h3>
+                                    <p class="text-xs text-gray-400 mt-1">Deep Purple • 256GB • 92% Battery Health</p>
+                                    <div class="flex items-center gap-1 mt-2 text-amber-400 text-xs">
+                                        <i class="fa-solid fa-star"></i><span class="font-bold">4.9</span><span class="text-gray-500">(18 reviews)</span>
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-[10px] text-gray-500 uppercase block leading-none">Special Price</span>
+                                        <span class="text-lg font-black text-white">₹64,990</span>
+                                    </div>
+                                    <a href="request.html?buy=iphone14pm" class="bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold px-4 py-2 rounded-xl text-xs transition">Inquire Availability</a>
+                                </div>
+                            </div>
 
-        <!-- GUEST QUICK STATUS TRACKER -->
-        <section class="container-custom mb-16 relative z-20">
-            <div class="bg-slate-900/90 border border-teal-500/20 rounded-2xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
-                <div class="absolute -right-20 -top-20 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
-                <div class="max-w-xl relative z-10">
-                    <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-3 py-1 rounded-full font-bold mb-3">
-                        <i class="fa-solid fa-magnifying-glass mr-1"></i> Instant Guest Tracker (No Password Needed)
-                    </span>
-                    <h3 class="text-xl md:text-2xl font-bold text-white font-display mb-2">Track Your Repair Request Instantly</h3>
-                    <p class="text-xs md:text-sm text-gray-400 mb-6">Submitted a request without logging in? Enter your Reference ID (e.g., #RM-REQ-...) and registered phone number to view live status, accept/reject quotations, make escrow payments, view OTPs, or rate us.</p>
+                            <!-- Device 2 -->
+                            <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl overflow-hidden p-5 flex flex-col justify-between transition-all duration-300 shadow-lg">
+                                <div>
+                                    <div class="relative bg-slate-950/60 rounded-xl p-4 flex items-center justify-center mb-4">
+                                        <span class="absolute top-2.5 left-2.5 bg-emerald-500/20 text-emerald-400 text-[9px] font-bold uppercase px-2 py-0.5 rounded">Grade A+ Pristine</span>
+                                        <i class="fa-solid fa-mobile-screen-button text-6xl text-slate-800 my-4"></i>
+                                    </div>
+                                    <h3 class="text-base font-bold text-white font-display">Samsung Galaxy S23 Ultra</h3>
+                                    <p class="text-xs text-gray-400 mt-1">Phantom Black • 256GB • Certified Refurbished</p>
+                                    <div class="flex items-center gap-1 mt-2 text-amber-400 text-xs">
+                                        <i class="fa-solid fa-star"></i><span class="font-bold">4.8</span><span class="text-gray-500">(12 reviews)</span>
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-[10px] text-gray-500 uppercase block leading-none">Special Price</span>
+                                        <span class="text-lg font-black text-white">₹58,500</span>
+                                    </div>
+                                    <a href="request.html?buy=s23u" class="bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold px-4 py-2 rounded-xl text-xs transition">Inquire Availability</a>
+                                </div>
+                            </div>
+
+                            <!-- Device 3 -->
+                            <div class="bg-[#121B33]/40 border border-slate-800 hover:border-teal-500/30 rounded-2xl overflow-hidden p-5 flex flex-col justify-between transition-all duration-300 shadow-lg">
+                                <div>
+                                    <div class="relative bg-slate-950/60 rounded-xl p-4 flex items-center justify-center mb-4">
+                                        <span class="absolute top-2.5 left-2.5 bg-teal-500/20 text-teal-400 text-[9px] font-bold uppercase px-2 py-0.5 rounded">Grade A Excellent</span>
+                                        <i class="fa-solid fa-mobile-screen-button text-6xl text-slate-800 my-4"></i>
+                                    </div>
+                                    <h3 class="text-base font-bold text-white font-display">OnePlus 11 5G</h3>
+                                    <p class="text-xs text-gray-400 mt-1">Eternal Green • 128GB • 100W Charger included</p>
+                                    <div class="flex items-center gap-1 mt-2 text-amber-400 text-xs">
+                                        <i class="fa-solid fa-star"></i><span class="font-bold">4.7</span><span class="text-gray-500">(9 reviews)</span>
+                                    </div>
+                                </div>
+                                <div class="mt-4 pt-4 border-t border-slate-800/60 flex items-center justify-between">
+                                    <div>
+                                        <span class="text-[10px] text-gray-500 uppercase block leading-none">Special Price</span>
+                                        <span class="text-lg font-black text-white">₹36,400</span>
+                                    </div>
+                                    <a href="request.html?buy=op11" class="bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold px-4 py-2 rounded-xl text-xs transition">Inquire Availability</a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Link to the dedicated marketplace page -->
+                        <div class="mt-10 text-center">
+                            <a href="marketplace.html" class="inline-flex items-center gap-2.5 bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-400 hover:to-emerald-500 text-slate-950 font-black px-8 py-4 rounded-xl text-xs uppercase tracking-wider transition-all shadow-[0_4px_25px_rgba(20,184,166,0.25)] hover:scale-105">
+                                <i class="fa-solid fa-store"></i> View All Refurbished Devices & Filters
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Hot Deals within Marketplace -->
+                    <div class="border-t border-slate-800/80 pt-8 mt-10">
+                        <div class="text-center space-y-2 mb-8">
+                            <span class="inline-block bg-amber-500/10 text-amber-400 text-xs px-4 py-1 rounded-full font-bold">
+                                <i class="fa-solid fa-fire mr-1"></i> Hot Deals
+                            </span>
+                            <h2 class="text-xl md:text-3xl font-bold text-white font-display">Limited Time Offers</h2>
+                            <p class="text-gray-400 text-xs md:text-sm max-w-xl mx-auto">Grab these exclusive discounts before they expire.</p>
+                        </div>
+                        <div id="offersContainer" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="text-center text-gray-400 py-8 col-span-3"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading offers…</div>
+                        </div>
+                    </div>
                 </div>
-                <form id="guestTrackForm" onsubmit="trackOrderGuest(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Reference ID / Ticket No</label>
-                        <input type="text" id="trackOrderId" placeholder="e.g. RM-REQ-JXK3D9" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
-                    </div>
-                    <div>
-                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Registered Mobile Number</label>
-                        <input type="tel" id="trackPhone" placeholder="e.g. 9876543210" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
-                    </div>
-                    <div class="flex items-end">
-                        <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold p-3.5 rounded-xl transition duration-300 text-sm shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
-                            <i class="fa-solid fa-route"></i> Search &amp; Track Live
-                        </button>
-                    </div>
-                </form>
-                
-                <!-- Track Result Display Area -->
-                <div id="guestTrackResult" class="hidden mt-8 border-t border-slate-800 pt-6"></div>
             </div>
         </section>
 
-        <!-- Warranty badges info -->
-        <div class="mt-8">
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                <div class="glass-card bg-[#121B33]/20 border border-slate-800/80 p-5 rounded-xl flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-2xl text-teal flex-shrink-0">
-                        <i class="fa-solid fa-medal"></i>
+        <!-- ════════════════════════════════════════════════════ -->
+        <!--  6. THE REPAIRMASTER ADVANTAGE SECTION               -->
+        <!-- ════════════════════════════════════════════════════ -->
+        <section class="py-16 bg-[#090e1a]">
+            <div class="container-custom space-y-12">
+                <div id="why-content" class="bg-[#0b1329]/20 border border-white/5 rounded-3xl p-6 md:p-8 space-y-12 shadow-2xl">
+                    <div class="text-center space-y-3 mb-6">
+                        <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-4 py-1 rounded-full font-bold">
+                            <i class="fa-solid fa-circle-question mr-1"></i> Why Choose Us
+                        </span>
+                        <h2 class="text-2xl md:text-4xl font-bold text-white font-display">The RepairMaster Advantage</h2>
+                        <p class="text-gray-400 text-xs md:text-sm max-w-xl mx-auto">Discover why thousands of users trust us for secure and certified smartphone support.</p>
                     </div>
-                    <div>
-                        <div class="text-sm font-bold text-white">90 Days Warranty</div>
-                        <div class="text-xs text-gray-400">On all parts &amp; labour — guaranteed</div>
+        
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <!-- Benefit 1 -->
+                        <div class="bg-[#121B33]/20 border border-slate-800/80 rounded-2xl p-6 transition-all duration-300 hover:border-teal-500/30">
+                            <div class="text-teal text-3xl mb-4"><i class="fa-solid fa-shield-halved"></i></div>
+                            <h3 class="text-base font-bold text-white font-display mb-2">Privacy Lock Mode</h3>
+                            <p class="text-gray-400 text-xs md:text-sm leading-relaxed">All diagnostic checks are isolated from your private apps, photos, and databases. Rest easy knowing your files stay locked.</p>
+                        </div>
+                        
+                        <!-- Benefit 2 -->
+                        <div class="bg-[#121B33]/20 border border-slate-800/80 rounded-2xl p-6 transition-all duration-300 hover:border-teal-500/30">
+                            <div class="text-teal text-3xl mb-4"><i class="fa-solid fa-award"></i></div>
+                            <h3 class="text-base font-bold text-white font-display mb-2">Grade-A Spare Parts</h3>
+                            <p class="text-gray-400 text-xs md:text-sm leading-relaxed">We maintain standard & premium grades of fully authentic screens, charging sub-boards, and high-capacity batteries.</p>
+                        </div>
+                        
+                        <!-- Benefit 3 -->
+                        <div class="bg-[#121B33]/20 border border-slate-800/80 rounded-2xl p-6 transition-all duration-300 hover:border-teal-500/30">
+                            <div class="text-teal text-3xl mb-4"><i class="fa-solid fa-user-check"></i></div>
+                            <h3 class="text-base font-bold text-white font-display mb-2">OTP Handover Security</h3>
+                            <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Your device is securely tracked at every stage of collection, technician handover, and delivery. Fully verified by safe pin verification.</p>
+                        </div>
+                        
+                        <!-- Benefit 4 -->
+                        <div class="bg-[#121B33]/20 border border-slate-800/80 rounded-2xl p-6 transition-all duration-300 hover:border-teal-500/30">
+                            <div class="text-teal text-3xl mb-4"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+                            <h3 class="text-base font-bold text-white font-display mb-2">Transparent Escrow</h3>
+                            <p class="text-gray-400 text-xs md:text-sm leading-relaxed">Review breakdown prices, approve custom quotes on your live dashboard, and pay using local options only after delivery check.</p>
+                        </div>
                     </div>
                 </div>
-                <div class="glass-card bg-[#121B33]/20 border border-slate-800/80 p-5 rounded-xl flex items-center gap-4">
-                    <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-2xl text-amber-400 flex-shrink-0">
-                        <i class="fa-solid fa-shield-halved"></i>
+
+                <!-- GUEST QUICK STATUS TRACKER -->
+                <div class="bg-slate-900/90 border border-teal-500/20 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden">
+                    <div class="absolute -right-20 -top-20 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl pointer-events-none"></div>
+                    <div class="max-w-xl relative z-10">
+                        <span class="inline-block bg-teal-500/10 text-teal-400 text-xs px-3 py-1 rounded-full font-bold mb-3">
+                            <i class="fa-solid fa-magnifying-glass mr-1"></i> Instant Guest Tracker (No Password Needed)
+                        </span>
+                        <h3 class="text-xl md:text-2xl font-bold text-white font-display mb-2">Track Your Repair Request Instantly</h3>
+                        <p class="text-xs md:text-sm text-gray-400 mb-6">Submitted a request without logging in? Enter your Reference ID (e.g., #RM-REQ-...) and registered phone number to view live status, accept/reject quotations, make escrow payments, view OTPs, or rate us.</p>
                     </div>
-                    <div>
-                        <div class="text-sm font-bold text-white">🔒 Maintenance Mode</div>
-                        <div class="text-xs text-gray-400">Pick-up checkpoint active — <span class="text-amber-400">except Dead Phone &amp; Blank Screen</span></div>
+                    <form id="guestTrackForm" onsubmit="trackOrderGuest(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Reference ID / Ticket No</label>
+                            <input type="text" id="trackOrderId" placeholder="e.g. RM-REQ-JXK3D9" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
+                        </div>
+                        <div>
+                            <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Registered Mobile Number</label>
+                            <input type="tel" id="trackPhone" placeholder="e.g. 9876543210" required class="w-full bg-slate-950 border border-slate-800 p-3 rounded-xl text-sm text-white focus:border-teal-400 outline-none">
+                        </div>
+                        <div class="flex items-end">
+                            <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold p-3.5 rounded-xl transition duration-300 text-sm shadow-lg shadow-teal-500/20 flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-route"></i> Search &amp; Track Live
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Track Result Display Area -->
+                    <div id="guestTrackResult" class="hidden mt-8 border-t border-slate-800 pt-6"></div>
+                </div>
+
+                <!-- Warranty badges info -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div class="glass-card bg-[#121B33]/20 border border-slate-800/80 p-5 rounded-xl flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-teal-500/10 flex items-center justify-center text-2xl text-teal flex-shrink-0">
+                            <i class="fa-solid fa-medal"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-white">90 Days Warranty</div>
+                            <div class="text-xs text-gray-400">On all parts &amp; labour — guaranteed</div>
+                        </div>
+                    </div>
+                    <div class="glass-card bg-[#121B33]/20 border border-slate-800/80 p-5 rounded-xl flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-full bg-amber-500/10 flex items-center justify-center text-2xl text-amber-400 flex-shrink-0">
+                            <i class="fa-solid fa-shield-halved"></i>
+                        </div>
+                        <div>
+                            <div class="text-sm font-bold text-white">🔒 Maintenance Mode</div>
+                            <div class="text-xs text-gray-400">Pick-up checkpoint active — <span class="text-amber-400">except Dead Phone &amp; Blank Screen</span></div>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+        </section>
     </main>
 
     <!-- ════════════════════════════════════════════════════ -->

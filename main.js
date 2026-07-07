@@ -1908,7 +1908,7 @@ async function loadDashboard() {
         console.warn("Could not retrieve user info from table:", e);
     }
 
-    const roles = await getUserRoles(currentUser.id);
+    const roles = await getAllUserRoles(currentUser.id);
     let activeRole = localStorage.getItem('activeRole');
     if (!activeRole || !roles.includes(activeRole)) {
         if (roles.includes('admin')) activeRole = 'admin';
@@ -1917,6 +1917,19 @@ async function loadDashboard() {
         else if (roles.includes('repairmaster')) activeRole = 'repairmaster';
         else activeRole = 'customer';
         localStorage.setItem('activeRole', activeRole);
+    }
+
+    // Render dynamic tab buttons
+    const tabsContainer = document.getElementById('dashboard-tab-buttons-container');
+    if (tabsContainer) {
+        const roleTabs = ROLE_TABS[activeRole] || ROLE_TABS['customer'];
+        tabsContainer.innerHTML = roleTabs.map(t => {
+            return `
+                <button id="tab-${t.id}-btn" onclick="switchDashboardTab('${t.id}')" class="px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2">
+                    <i class="fa-solid ${t.icon}"></i> ${t.label}
+                </button>
+            `;
+        }).join('');
     }
 
     const isAdmin = activeRole === 'admin';
@@ -2106,30 +2119,37 @@ async function loadDashboard() {
 
     // Initialize default dashboard tab state
     setTimeout(() => {
-        switchDashboardTab('tickets');
+        const defaultTab = ROLE_TABS[activeRole]?.[0]?.id || 'tickets';
+        switchDashboardTab(defaultTab);
     }, 50);
 }
 
 function switchDashboardTab(tabId) {
-    const tabs = ['tickets', 'filters', 'inventory', 'sql'];
+    const tabs = ['tickets', 'filters', 'inventory', 'sql', 'dynamic'];
+    
     tabs.forEach(t => {
         const sec = document.getElementById(`tab-${t}-section`);
-        const btn = document.getElementById(`tab-${t}-btn`);
         if (sec) {
-            if (t === tabId) {
+            if (t === tabId || (t === 'dynamic' && !['tickets', 'filters', 'inventory', 'sql'].includes(tabId))) {
                 sec.classList.remove('hidden');
             } else {
                 sec.classList.add('hidden');
             }
         }
-        if (btn) {
-            if (t === tabId) {
+    });
+
+    // Handle tab button styling inside the container dynamically
+    const container = document.getElementById('dashboard-tab-buttons-container');
+    if (container) {
+        const buttons = container.querySelectorAll('button');
+        buttons.forEach(btn => {
+            if (btn.id === `tab-${tabId}-btn`) {
                 btn.className = "px-5 py-3.5 text-xs md:text-sm font-bold text-teal border-b-2 border-teal outline-none whitespace-nowrap transition-all flex items-center gap-2";
             } else {
                 btn.className = "px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2";
             }
-        }
-    });
+        });
+    }
 
     const activeRole = localStorage.getItem('activeRole') || 'customer';
     const isAdmin = activeRole === 'admin';
@@ -2160,6 +2180,11 @@ function switchDashboardTab(tabId) {
             inventoryPanel.classList.add('hidden');
             inventoryNotice.classList.remove('hidden');
         }
+    }
+
+    // If it's a dynamic tab, render its content
+    if (!['tickets', 'filters', 'inventory', 'sql'].includes(tabId)) {
+        renderDynamicTabContent(tabId);
     }
 }
 window.switchDashboardTab = switchDashboardTab;
@@ -2277,6 +2302,53 @@ async function checkAndPopulateTracker() {
 }
 window.checkAndPopulateTracker = checkAndPopulateTracker;
 
+async function getAllUserRoles(userId) {
+    if (!userId || !supabase) return ['customer'];
+    const rolesSet = new Set();
+    
+    // 1. Try from profiles table
+    try {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', userId)
+            .single();
+        if (!error && profile && profile.role) {
+            const profileRoles = profile.role.split(',').map(r => r.trim().toLowerCase()).filter(Boolean);
+            profileRoles.forEach(r => rolesSet.add(r));
+        }
+    } catch (err) {
+        console.warn("Profiles role fetch error:", err);
+    }
+    
+    // 2. Try from user_roles junction table
+    try {
+        const { data, error } = await supabase
+            .from('user_roles')
+            .select('roles(name)')
+            .eq('user_id', userId);
+        if (!error && data) {
+            data.map(row => row.roles?.name).filter(Boolean).forEach(r => rolesSet.add(r.toLowerCase()));
+        }
+    } catch (err) {
+        console.warn("User roles table fetch error:", err);
+    }
+    
+    if (rolesSet.size === 0) {
+        rolesSet.add('customer');
+    }
+    
+    return Array.from(rolesSet);
+}
+window.getAllUserRoles = getAllUserRoles;
+
+function changeActiveRole(newRole) {
+    localStorage.setItem('activeRole', newRole);
+    showToast(`Switched active role to ${newRole.toUpperCase()}`, 'success');
+    loadDashboard();
+}
+window.changeActiveRole = changeActiveRole;
+
 async function updateNavForAuth(user) {
     const navLogin = document.getElementById('navLogin');
     const navSignup = document.getElementById('navSignup');
@@ -2292,6 +2364,20 @@ async function updateNavForAuth(user) {
         
         const username = user.user_metadata?.full_name || user.email.split('@')[0];
         const initials = username.substring(0, 2).toUpperCase();
+
+        const roles = await getAllUserRoles(user.id);
+        const activeRole = localStorage.getItem('activeRole') || roles[0] || 'customer';
+
+        let roleSwitcherHtml = '';
+        if (roles.length > 1) {
+            roleSwitcherHtml = `
+                <div class="relative inline-block text-left mr-1" id="roleSwitcherContainer">
+                    <select onchange="changeActiveRole(this.value)" class="bg-slate-950/90 border border-teal-500/30 hover:border-teal-500 text-teal-400 text-[10px] font-black uppercase rounded-xl py-1.5 px-3 outline-none focus:border-teal-400 cursor-pointer transition">
+                        ${roles.map(r => `<option value="${r}" ${r === activeRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
+                    </select>
+                </div>
+            `;
+        }
 
         if (navUserInfo) {
             navUserInfo.classList.remove('hidden');
@@ -2326,6 +2412,9 @@ async function updateNavForAuth(user) {
                     </div>
                 </div>
 
+                <!-- Role Switcher Dropdown in navbar if multiple roles -->
+                ${roleSwitcherHtml}
+
                 <!-- Custom Avatar Menu trigger (Compact round avatar) -->
                 <div onclick="toggleProfileDrawer()" class="relative cursor-pointer select-none" title="View Account Profile">
                     <div class="w-9 h-9 rounded-full bg-teal-500/10 border-2 border-teal-500/40 text-teal-400 font-bold text-sm flex items-center justify-center shadow-lg shadow-teal-500/5 hover:border-teal-400 transition-all duration-300">
@@ -2340,8 +2429,22 @@ async function updateNavForAuth(user) {
 
         if (mNavUserInfo) {
             mNavUserInfo.classList.remove('hidden');
+            
+            let mRoleSwitcherHtml = '';
+            if (roles.length > 1) {
+                mRoleSwitcherHtml = `
+                    <div class="w-full mb-2">
+                        <label class="text-[9px] text-gray-400 font-bold uppercase tracking-wider block mb-1 text-center">Active Role Switcher</label>
+                        <select onchange="changeActiveRole(this.value)" class="w-full bg-slate-950 border border-slate-800 text-teal-400 text-xs font-bold rounded-xl py-2 px-3 outline-none focus:border-teal-400 text-center uppercase cursor-pointer">
+                            ${roles.map(r => `<option value="${r}" ${r === activeRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }
+
             mNavUserInfo.innerHTML = `
                 <div class="mt-2 flex flex-col gap-2 items-center justify-center">
+                    ${mRoleSwitcherHtml}
                     <button onclick="toggleProfileDrawer()" class="w-full bg-slate-900 border border-slate-800 py-2.5 px-4 rounded-xl text-xs text-white font-bold flex items-center justify-center gap-1.5">
                         👤 View &amp; Edit Profile
                     </button>
@@ -3511,3 +3614,547 @@ function toggleHomepageSection(sectionId) {
     }
 }
 window.toggleHomepageSection = toggleHomepageSection;
+
+// ─── 11. ROLE-SPECIFIC TABS DATA & DYNAMIC RENDERING ENGINE ───
+const ROLE_TABS = {
+    coordinator: [
+        { id: 'tickets', label: 'Overview', icon: 'fa-ticket' },
+        { id: 'filters', label: 'Control Console', icon: 'fa-sliders' },
+        { id: 'map', label: 'Live Active Map', icon: 'fa-map-location-dot' },
+        { id: 'cities', label: 'Cities Coverage', icon: 'fa-city' },
+        { id: 'subcontractors', label: 'Log Sub-Contractors', icon: 'fa-handshake' }
+    ],
+    technician: [
+        { id: 'tickets', label: 'Diagnostic Workstation', icon: 'fa-laptop-code' },
+        { id: 'diagnostics', label: 'Lab Diagnostic Checklist', icon: 'fa-circle-check' },
+        { id: 'handover', label: 'OTP Handover', icon: 'fa-key' },
+        { id: 'inventory', label: 'Lab Inventory', icon: 'fa-boxes-stacked' }
+    ],
+    repairmaster: [
+        { id: 'tickets', label: 'Full Database Ledger', icon: 'fa-book-open' },
+        { id: 'inventory', label: 'Lab Inventory', icon: 'fa-boxes-stacked' },
+        { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' },
+        { id: 'subcontractor-approvals', label: 'Subcontractor Approvals', icon: 'fa-user-check' }
+    ],
+    admin: [
+        { id: 'tickets', label: 'System Tickets', icon: 'fa-ticket' },
+        { id: 'filters', label: 'System Diagnostics', icon: 'fa-gauge-high' },
+        { id: 'sql', label: 'Developer Console', icon: 'fa-database' }
+    ],
+    customer: [
+        { id: 'tickets', label: 'My Active Tickets', icon: 'fa-ticket' },
+        { id: 'timeline', label: 'Courier Timeline', icon: 'fa-route' },
+        { id: 'escrow', label: 'Pay Escrow / Quotes', icon: 'fa-wallet' }
+    ]
+};
+window.ROLE_TABS = ROLE_TABS;
+
+function renderDynamicTabContent(tabId) {
+    const container = document.getElementById('dynamicTabContent');
+    if (!container) return;
+    
+    const activeRole = localStorage.getItem('activeRole') || 'customer';
+    
+    if (tabId === 'map') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/60 pb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white font-display">Live Courier Dispatch & GPS Tracking</h3>
+                        <p class="text-xs text-gray-400">Real-time geographical status of Wardha, Nagpur & Amravati hubs</p>
+                    </div>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs rounded-full font-bold">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live Dispatch Active
+                    </span>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                    <div class="lg:col-span-3 bg-slate-950 rounded-2xl border border-slate-800 p-4 h-96 relative overflow-hidden flex flex-col justify-between">
+                        <!-- Abstract Tech Support Map Overlay -->
+                        <div class="absolute inset-0 opacity-15 bg-[radial-gradient(#14B8A6_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950 pointer-events-none"></div>
+                        
+                        <!-- Pulse Hub Indicators -->
+                        <div class="absolute top-1/4 left-1/3 flex flex-col items-center">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-teal-500"></span>
+                            </span>
+                            <span class="text-[9px] font-black text-white mt-1 bg-slate-900/90 px-2 py-0.5 rounded border border-white/5 uppercase">Nagpur Hub</span>
+                        </div>
+                        
+                        <div class="absolute top-1/2 left-1/2 flex flex-col items-center">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                            </span>
+                            <span class="text-[9px] font-black text-white mt-1 bg-slate-900/90 px-2 py-0.5 rounded border border-white/5 uppercase">Wardha DTC (HQ)</span>
+                        </div>
+                        
+                        <div class="absolute top-2/3 left-1/4 flex flex-col items-center">
+                            <span class="relative flex h-3 w-3">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-3 w-3 bg-sky-500"></span>
+                            </span>
+                            <span class="text-[9px] font-black text-white mt-1 bg-slate-900/90 px-2 py-0.5 rounded border border-white/5 uppercase">Amravati Hub</span>
+                        </div>
+
+                        <!-- Map status text -->
+                        <div class="relative z-10 flex justify-between items-start">
+                            <span class="text-[10px] font-mono bg-slate-900/80 text-gray-400 px-3 py-1.5 rounded-lg border border-slate-800">GPS Constellation: 12 Sats Lock</span>
+                            <span class="text-[10px] font-mono bg-slate-900/80 text-teal-400 px-3 py-1.5 rounded-lg border border-slate-800">Wardha DTC Density: HIGH</span>
+                        </div>
+                        
+                        <div class="relative z-10 flex flex-wrap gap-2 items-center justify-between border-t border-slate-900 bg-slate-900/90 p-3 rounded-xl border border-slate-800 mt-auto">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-teal-500/15 flex items-center justify-center text-teal text-xs"><i class="fa-solid fa-truck-ramp-box"></i></div>
+                                <div>
+                                    <p class="text-[10px] font-bold text-white">Active Courier Dispatch #4</p>
+                                    <p class="text-[9px] text-gray-500">Delivering Vivo V30 Pro to Sevagram Rd, Wardha</p>
+                                </div>
+                            </div>
+                            <span class="text-[10px] font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">Estimated Time: 12 Mins</span>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-slate-950 rounded-2xl border border-slate-800 p-4">
+                            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3">Courier Dispatch Desk</h4>
+                            <div class="space-y-3">
+                                <div class="p-2.5 bg-[#121B33]/20 border border-slate-800/80 rounded-xl flex items-center justify-between text-[11px]">
+                                    <div>
+                                        <p class="font-bold text-white">Rahul Deshmukh</p>
+                                        <p class="text-[9px] text-gray-500">Wardha Hub • Moto Edge 40</p>
+                                    </div>
+                                    <span class="text-[9px] bg-amber-500/10 text-amber-400 font-bold px-2 py-0.5 rounded uppercase">Pickup-Pending</span>
+                                </div>
+                                <div class="p-2.5 bg-[#121B33]/20 border border-slate-800/80 rounded-xl flex items-center justify-between text-[11px]">
+                                    <div>
+                                        <p class="font-bold text-white">Amol Wankhede</p>
+                                        <p class="text-[9px] text-gray-500">Amravati Hub • Samsung S21</p>
+                                    </div>
+                                    <span class="text-[9px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded uppercase">In-Transit</span>
+                                </div>
+                                <div class="p-2.5 bg-[#121B33]/20 border border-slate-800/80 rounded-xl flex items-center justify-between text-[11px]">
+                                    <div>
+                                        <p class="font-bold text-white">Sanjay Shah</p>
+                                        <p class="text-[9px] text-gray-500">Nagpur Hub • iPhone 13</p>
+                                    </div>
+                                    <span class="text-[9px] bg-teal-500/10 text-teal-400 font-bold px-2 py-0.5 rounded uppercase">Delivered</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-slate-950 rounded-2xl border border-slate-800 p-4">
+                            <h4 class="text-xs font-bold text-white uppercase tracking-wider mb-3">Hub Fleet Coverage</h4>
+                            <div class="space-y-2 text-[11px] text-gray-400">
+                                <div class="flex justify-between"><span>Active Technicians:</span> <strong class="text-white">8 Engineers</strong></div>
+                                <div class="flex justify-between"><span>Online Dispatchers:</span> <strong class="text-white">5 Couriers</strong></div>
+                                <div class="flex justify-between"><span>Avg Response Latency:</span> <strong class="text-teal-400">18.4 Mins</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (tabId === 'cities') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+                <div>
+                    <h3 class="text-xl font-bold text-white font-display">Regional Cities Coverage &amp; Hub Statistics</h3>
+                    <p class="text-xs text-gray-400">Direct To Consumer support centers serving eastern Maharashtra</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Wardha Card -->
+                    <div class="bg-slate-950 border border-teal-500/20 rounded-2xl p-6 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-24 h-24 bg-teal-500/5 rounded-full blur-2xl pointer-events-none"></div>
+                        <span class="inline-block bg-teal-500/10 text-teal-400 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mb-4">DTC Headquarters</span>
+                        <h4 class="text-lg font-bold text-white font-display">Wardha Hub</h4>
+                        <p class="text-xs text-gray-500 mt-1">Serving Wardha City, Sevagram, Sindi, Hinganghat, Arvi</p>
+                        
+                        <div class="mt-6 pt-4 border-t border-slate-900 space-y-3 text-xs">
+                            <div class="flex justify-between"><span>Active Engineers:</span> <strong class="text-white">4</strong></div>
+                            <div class="flex justify-between"><span>Open Tickets:</span> <strong class="text-white">12</strong></div>
+                            <div class="flex justify-between"><span>Daily Gross Revenue:</span> <strong class="text-teal-400">₹24,500</strong></div>
+                            <div class="flex justify-between"><span>Customer Satisfaction:</span> <strong class="text-amber-400"><i class="fa-solid fa-star"></i> 4.9</strong></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Nagpur Card -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6">
+                        <span class="inline-block bg-blue-500/10 text-blue-400 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mb-4">Satellite Lab Hub</span>
+                        <h4 class="text-lg font-bold text-white font-display">Nagpur Hub</h4>
+                        <p class="text-xs text-gray-500 mt-1">Serving Sadar, Sitabuldi, Dharampeth, Manish Nagar, Kamptee</p>
+                        
+                        <div class="mt-6 pt-4 border-t border-slate-900 space-y-3 text-xs">
+                            <div class="flex justify-between"><span>Active Engineers:</span> <strong class="text-white">2</strong></div>
+                            <div class="flex justify-between"><span>Open Tickets:</span> <strong class="text-white">5</strong></div>
+                            <div class="flex justify-between"><span>Daily Gross Revenue:</span> <strong class="text-teal-400">₹14,200</strong></div>
+                            <div class="flex justify-between"><span>Customer Satisfaction:</span> <strong class="text-amber-400"><i class="fa-solid fa-star"></i> 4.7</strong></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Amravati Card -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6">
+                        <span class="inline-block bg-purple-500/10 text-purple-400 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase mb-4">Satellite Lab Hub</span>
+                        <h4 class="text-lg font-bold text-white font-display">Amravati Hub</h4>
+                        <p class="text-xs text-gray-500 mt-1">Serving Badnera, Rajapeth, Camp Road, Rahatgaon</p>
+                        
+                        <div class="mt-6 pt-4 border-t border-slate-900 space-y-3 text-xs">
+                            <div class="flex justify-between"><span>Active Engineers:</span> <strong class="text-white">2</strong></div>
+                            <div class="flex justify-between"><span>Open Tickets:</span> <strong class="text-white">3</strong></div>
+                            <div class="flex justify-between"><span>Daily Gross Revenue:</span> <strong class="text-teal-400">₹9,800</strong></div>
+                            <div class="flex justify-between"><span>Customer Satisfaction:</span> <strong class="text-amber-400"><i class="fa-solid fa-star"></i> 4.8</strong></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (tabId === 'subcontractors') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 border-b border-slate-800/60 pb-4">
+                    <div>
+                        <h3 class="text-xl font-bold text-white font-display">Sub-Contractor & Partner Registry</h3>
+                        <p class="text-xs text-gray-400">Manage and coordinate third-party specialist laboratories for advanced motherboards/displays</p>
+                    </div>
+                    <button onclick="showAddSubcontractorForm()" class="bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition flex items-center gap-1.5 shadow-lg shadow-teal-500/10">
+                        <i class="fa-solid fa-user-plus"></i> Add Sub-Contractor
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Contractor 1 -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-bold text-white text-sm">Wardha Micro-Tech Lab</h4>
+                                <p class="text-[10px] text-gray-500 mt-0.5">Specialization: Motherboard Layering</p>
+                            </div>
+                            <span class="text-[9px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded uppercase">Active Verified</span>
+                        </div>
+                        <div class="text-[11px] text-gray-400 space-y-1">
+                            <p><i class="fa-solid fa-phone mr-1.5 text-gray-600"></i> +91 91548 78241</p>
+                            <p><i class="fa-solid fa-location-dot mr-1.5 text-gray-600"></i> Bachraj Road, Wardha</p>
+                            <p><i class="fa-solid fa-clock-rotate-left mr-1.5 text-gray-600"></i> Avg Handback: 36 Hours</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Contractor 2 -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-bold text-white text-sm">Nagpur Glass Refurbishers</h4>
+                                <p class="text-[10px] text-gray-500 mt-0.5">Specialization: OCA Lamination & Glass Separation</p>
+                            </div>
+                            <span class="text-[9px] bg-emerald-500/10 text-emerald-400 font-bold px-2 py-0.5 rounded uppercase">Active Verified</span>
+                        </div>
+                        <div class="text-[11px] text-gray-400 space-y-1">
+                            <p><i class="fa-solid fa-phone mr-1.5 text-gray-600"></i> +91 88471 63200</p>
+                            <p><i class="fa-solid fa-location-dot mr-1.5 text-gray-600"></i> Ganeshpeth, Nagpur</p>
+                            <p><i class="fa-solid fa-clock-rotate-left mr-1.5 text-gray-600"></i> Avg Handback: 24 Hours</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Contractor 3 -->
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+                        <div class="flex items-start justify-between">
+                            <div>
+                                <h4 class="font-bold text-white text-sm">Amravati Motherboard Experts</h4>
+                                <p class="text-[10px] text-gray-500 mt-0.5">Specialization: CPU Reballing & IC swap</p>
+                            </div>
+                            <span class="text-[9px] bg-amber-500/10 text-amber-400 font-bold px-2 py-0.5 rounded uppercase">Awaiting Bond-Sign</span>
+                        </div>
+                        <div class="text-[11px] text-gray-400 space-y-1">
+                            <p><i class="fa-solid fa-phone mr-1.5 text-gray-600"></i> +91 76204 49182</p>
+                            <p><i class="fa-solid fa-location-dot mr-1.5 text-gray-600"></i> Jail Road, Amravati</p>
+                            <p><i class="fa-solid fa-clock-rotate-left mr-1.5 text-gray-600"></i> Avg Handback: 72 Hours</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (tabId === 'diagnostics') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+                <div>
+                    <h3 class="text-xl font-bold text-white font-display">Lab Diagnostics Calibration Workbench</h3>
+                    <p class="text-xs text-gray-400">Strict technical isolation check-sheet for certified hardware servicing</p>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-slate-950 border border-slate-800 rounded-2xl p-6 space-y-6">
+                        <div class="flex items-center gap-3 border-b border-slate-900 pb-4">
+                            <i class="fa-solid fa-microchip text-teal-400 text-xl"></i>
+                            <div>
+                                <h4 class="text-xs font-bold text-white uppercase tracking-wider">Active Device Isolation Session</h4>
+                                <p class="text-[10px] text-gray-500 font-mono mt-0.5">Device Serial ID: #RM-DIAG-88219</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-4" id="labDiagnosticChecklistForm">
+                            <label class="flex items-start gap-3.5 p-3 hover:bg-slate-900/40 rounded-xl cursor-pointer select-none transition">
+                                <input type="checkbox" checked class="w-4 h-4 accent-teal-500 mt-0.5 rounded">
+                                <div>
+                                    <span class="text-xs font-bold text-white">Privacy Lock Sandbox Mode Verified</span>
+                                    <p class="text-[10px] text-gray-500 mt-0.5">Isolate private applications, chats, data files, and photos from debug terminals.</p>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start gap-3.5 p-3 hover:bg-slate-900/40 rounded-xl cursor-pointer select-none transition">
+                                <input type="checkbox" checked class="w-4 h-4 accent-teal-500 mt-0.5 rounded">
+                                <div>
+                                    <span class="text-xs font-bold text-white">Static Dusting & Clean Room Alignment Complete</span>
+                                    <p class="text-[10px] text-gray-500 mt-0.5">Heated screen clean-up and dust removal before display decoupling.</p>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start gap-3.5 p-3 hover:bg-slate-900/40 rounded-xl cursor-pointer select-none transition">
+                                <input type="checkbox" class="w-4 h-4 accent-teal-500 mt-0.5 rounded">
+                                <div>
+                                    <span class="text-xs font-bold text-white">Digitizer Lamination Integrity Test Passed</span>
+                                    <p class="text-[10px] text-gray-500 mt-0.5">Glass and OLED component verify proper lamination and heat resistance limits.</p>
+                                </div>
+                            </label>
+                            
+                            <label class="flex items-start gap-3.5 p-3 hover:bg-slate-900/40 rounded-xl cursor-pointer select-none transition">
+                                <input type="checkbox" class="w-4 h-4 accent-teal-500 mt-0.5 rounded">
+                                <div>
+                                    <span class="text-xs font-bold text-white">Battery Cycle Health Verify (>85% standard)</span>
+                                    <p class="text-[10px] text-gray-500 mt-0.5">Verify real capacity and report if charging board replacement is required.</p>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="border-t border-slate-900 pt-4 flex justify-end gap-3">
+                            <button onclick="showToast('📋 Lab session diagnostics checklist saved locally!', 'success')" class="bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold px-5 py-2.5 rounded-xl text-xs transition">
+                                Save Diagnostics State
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-3">
+                            <h4 class="text-xs font-bold text-white uppercase tracking-wider">Calibration Bench Status</h4>
+                            <div class="text-[11px] text-gray-400 space-y-2">
+                                <div class="flex justify-between"><span>Oscilloscope Frequency:</span> <strong class="text-white">100 MHz</strong></div>
+                                <div class="flex justify-between"><span>Sandbox Isolation:</span> <strong class="text-emerald-400">SECURE</strong></div>
+                                <div class="flex justify-between"><span>Heated Vacuum Bed:</span> <strong class="text-white">82°C Stable</strong></div>
+                                <div class="flex justify-between"><span>Anti-Static Lock:</span> <strong class="text-emerald-400">ACTIVE</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (tabId === 'handover') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6 max-w-2xl mx-auto">
+                <div class="text-center space-y-2">
+                    <span class="inline-block bg-teal-500/15 text-teal-400 text-xs px-3 py-1 rounded-full font-bold">
+                        <i class="fa-solid fa-key mr-1"></i> OTP Handover Verification
+                    </span>
+                    <h3 class="text-xl md:text-2xl font-bold text-white font-display">OTP Handover Authorization</h3>
+                    <p class="text-xs text-gray-400">Secure doorstep ticket handovers and submission handbacks using verified 6-digit dynamic OTP codes.</p>
+                </div>
+                
+                <form onsubmit="verifyHandoverOTP(event)" class="space-y-4 bg-slate-950 border border-slate-800 p-6 rounded-2xl text-left">
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Select Ticket Number</label>
+                        <input type="text" id="handoverTicketNo" placeholder="e.g. RM-REQ-882" required class="w-full bg-slate-900 border border-slate-800 p-3 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Handover Event Type</label>
+                        <select id="handoverType" class="w-full bg-slate-900 border border-slate-800 p-3 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                            <option value="pickup">Pickup from Customer Address (Courier Handover)</option>
+                            <option value="submission">Submission to RepairMaster Lab (Technician Handover)</option>
+                            <option value="delivery">Handback/Delivery to Customer (Final Verification OTP)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Enter 6-Digit Verification OTP</label>
+                        <input type="text" id="handoverOTPCode" placeholder="e.g. 524912" required class="w-full bg-slate-900 border border-slate-800 p-3 rounded-xl text-xs text-white text-center font-mono font-bold tracking-widest focus:border-teal-400 outline-none">
+                    </div>
+                    <button type="submit" class="w-full bg-teal-600 hover:bg-teal-500 text-slate-950 hover:text-white font-bold py-3 rounded-xl transition text-xs uppercase tracking-wider">
+                        Verify &amp; Confirm Handover Action
+                    </button>
+                </form>
+            </div>
+        `;
+    } else if (tabId === 'finances') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+                <div>
+                    <h3 class="text-xl font-bold text-white font-display">Financial Ledger Sheet Overview</h3>
+                    <p class="text-xs text-gray-400">Total earnings, gross margins, spare part costs, and regional hub performance ledgers</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-slate-950 border border-slate-800 p-5 rounded-xl text-center">
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block mb-1">Total System Revenue</span>
+                        <h4 class="text-2xl font-black text-white">₹48,500</h4>
+                        <span class="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full mt-2 inline-block">+18.5% margin</span>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 p-5 rounded-xl text-center">
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block mb-1">Spare Parts Investment</span>
+                        <h4 class="text-2xl font-black text-white">₹16,400</h4>
+                        <span class="text-[9px] text-gray-400 mt-2 block">Premium screens, sub-boards</span>
+                    </div>
+                    <div class="bg-slate-950 border border-slate-800 p-5 rounded-xl text-center">
+                        <span class="text-[10px] text-gray-500 uppercase font-bold block mb-1">Disbursed Hub Earnings</span>
+                        <h4 class="text-2xl font-black text-teal-400">₹32,100</h4>
+                        <span class="text-[9px] text-emerald-400 font-bold bg-emerald-500/10 px-2 py-0.5 rounded-full mt-2 inline-block">Protected Escrow</span>
+                    </div>
+                </div>
+                
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 overflow-x-auto">
+                    <table class="w-full text-left text-xs text-gray-400 divide-y divide-slate-800">
+                        <thead>
+                            <tr class="text-gray-500 font-bold">
+                                <th class="py-3 px-4">Regional Hub Name</th>
+                                <th class="py-3 px-4">Active Jobs</th>
+                                <th class="py-3 px-4">Revenue Logged</th>
+                                <th class="py-3 px-4">Parts Expenses</th>
+                                <th class="py-3 px-4">Disbursed Margin</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-800/60 font-medium text-white">
+                            <tr>
+                                <td class="py-3.5 px-4">Wardha HQ Hub</td>
+                                <td class="py-3.5 px-4">12 Tickets</td>
+                                <td class="py-3.5 px-4 text-emerald-400">₹24,500</td>
+                                <td class="py-3.5 px-4 text-gray-400">₹8,100</td>
+                                <td class="py-3.5 px-4 text-teal-400">₹16,400</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 px-4">Nagpur Satellite Hub</td>
+                                <td class="py-3.5 px-4">5 Tickets</td>
+                                <td class="py-3.5 px-4 text-emerald-400">₹14,200</td>
+                                <td class="py-3.5 px-4 text-gray-400">₹4,800</td>
+                                <td class="py-3.5 px-4 text-teal-400">₹9,400</td>
+                            </tr>
+                            <tr>
+                                <td class="py-3.5 px-4">Amravati Satellite Hub</td>
+                                <td class="py-3.5 px-4">3 Tickets</td>
+                                <td class="py-3.5 px-4 text-emerald-400">₹9,800</td>
+                                <td class="py-3.5 px-4 text-gray-400">₹3,500</td>
+                                <td class="py-3.5 px-4 text-teal-400">₹6,300</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    } else if (tabId === 'subcontractor-approvals') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+                <div>
+                    <h3 class="text-xl font-bold text-white font-display">Sub-Contractor Approvals &amp; Task Audits</h3>
+                    <p class="text-xs text-gray-400">Verify registrations, insurance bonds, and service capabilities of third-party repair partners</p>
+                </div>
+                
+                <div class="space-y-4">
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center text-xl text-purple-400"><i class="fa-solid fa-microchip"></i></div>
+                            <div>
+                                <h4 class="font-bold text-white text-sm">Amravati Motherboard Experts</h4>
+                                <p class="text-xs text-gray-500">Service Class: Level 3 CPU Reballing & Micro-Soldering</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="showToast('📋 Subcontractor partnership contract rejected.', 'error')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-bold px-4 py-2 rounded-xl text-xs transition">Reject Partner</button>
+                            <button onclick="showToast('✅ Subcontractor partnership contract approved!', 'success')" class="bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Approve &amp; Onboard Partner</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (tabId === 'timeline') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6 max-w-2xl mx-auto text-left">
+                <div class="border-b border-slate-800/60 pb-4">
+                    <h3 class="text-xl font-bold text-white font-display">Active Courier Timeline status</h3>
+                    <p class="text-xs text-gray-400">Real-time status checkpoints for your picked smartphone</p>
+                </div>
+                
+                <div class="relative pl-6 border-l border-slate-800 space-y-8">
+                    <div class="relative">
+                        <span class="absolute -left-[30px] top-1.5 w-4.5 h-4.5 rounded-full bg-emerald-500 border-4 border-slate-950 flex items-center justify-center"></span>
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Step 1: Repair Request Submitted</h4>
+                        <p class="text-[10px] text-gray-500 mt-1">Request successfully logged on central platform.</p>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute -left-[30px] top-1.5 w-4.5 h-4.5 rounded-full bg-emerald-500 border-4 border-slate-950 flex items-center justify-center"></span>
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Step 2: Courier Assigned for Pick-up</h4>
+                        <p class="text-[10px] text-gray-500 mt-1">DTC Hub Agent #2 assigned for pickup from Wardha address.</p>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute -left-[30px] top-1.5 w-4.5 h-4.5 rounded-full bg-emerald-500 border-4 border-slate-950 flex items-center justify-center"></span>
+                        <h4 class="text-xs font-bold text-white uppercase tracking-wider">Step 3: Device Picked Up (OTP Secured)</h4>
+                        <p class="text-[10px] text-gray-500 mt-1">Verified via OTP handover. Device safely packaged and locked.</p>
+                    </div>
+                    <div class="relative">
+                        <span class="absolute -left-[30px] top-1.5 w-4.5 h-4.5 rounded-full bg-slate-800 border-4 border-slate-950 flex items-center justify-center"></span>
+                        <h4 class="text-xs font-bold text-gray-400 uppercase tracking-wider">Step 4: Diagnostics & Laboratory Testing</h4>
+                        <p class="text-[10px] text-gray-500 mt-1">Technicians performing sandbox privacy checks and calibration.</p>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (tabId === 'escrow') {
+        container.innerHTML = `
+            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6 max-w-2xl mx-auto text-left">
+                <div class="border-b border-slate-800/60 pb-4">
+                    <h3 class="text-xl font-bold text-white font-display flex items-center gap-2"><i class="fa-solid fa-shield-halved text-teal-400"></i> Escrow Secure Payment Gateway</h3>
+                    <p class="text-xs text-gray-400">Verify your smartphone diagnostic quote and pay securely into local escrow protection.</p>
+                </div>
+                
+                <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+                    <div class="flex justify-between items-center text-xs">
+                        <span class="text-gray-400">Active Diagnostic Estimate:</span>
+                        <strong class="text-white text-base">₹3,400</strong>
+                    </div>
+                    <div class="text-[11px] text-gray-500 border-t border-slate-900 pt-4 leading-relaxed">
+                        <p class="font-bold text-teal-400 mb-1"><i class="fa-solid fa-lock"></i> How Escrow Protection Works:</p>
+                        Your payment is held safely in local Wardha escrow. The funds are only transferred to the technician after your phone is delivered back to you, and you complete the handback test and OTP verification!
+                    </div>
+                </div>
+                
+                <div class="space-y-3">
+                    <h4 class="text-xs font-bold text-white uppercase tracking-wider">Select Local Payment Option</h4>
+                    <button onclick="showToast('✅ UPI Payment authorization request sent!', 'success')" class="w-full bg-[#121B33]/40 hover:bg-slate-900 border border-slate-800 hover:border-teal-500/30 p-4 rounded-xl flex items-center justify-between transition text-xs">
+                        <span class="text-white font-bold"><i class="fa-solid fa-mobile-screen mr-2 text-teal-400"></i> Instant UPI (GPay, PhonePe, Paytm)</span>
+                        <i class="fa-solid fa-chevron-right text-gray-500"></i>
+                    </button>
+                    <button onclick="showToast('✅ Card payment form loaded.', 'success')" class="w-full bg-[#121B33]/40 hover:bg-slate-900 border border-slate-800 hover:border-teal-500/30 p-4 rounded-xl flex items-center justify-between transition text-xs">
+                        <span class="text-white font-bold"><i class="fa-regular fa-credit-card mr-2 text-teal-400"></i> Visa, Mastercard, RuPay Cards</span>
+                        <i class="fa-solid fa-chevron-right text-gray-500"></i>
+                    </button>
+                    <button onclick="showToast('✅ Netbanking terminal loaded.', 'success')" class="w-full bg-[#121B33]/40 hover:bg-slate-900 border border-slate-800 hover:border-teal-500/30 p-4 rounded-xl flex items-center justify-between transition text-xs">
+                        <span class="text-white font-bold"><i class="fa-solid fa-building-columns mr-2 text-teal-400"></i> Local Maharashtra Net Banking</span>
+                        <i class="fa-solid fa-chevron-right text-gray-500"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+}
+window.renderDynamicTabContent = renderDynamicTabContent;
+
+function verifyHandoverOTP(event) {
+    event.preventDefault();
+    const otp = document.getElementById('handoverOTPCode')?.value;
+    if (otp && otp.length === 6) {
+        showToast(`✅ Handover OTP ${otp} verified successfully! Ticket status updated.`, 'success');
+    } else {
+        showToast(`⚠️ Please enter a valid 6-digit OTP code.`, 'error');
+    }
+}
+window.verifyHandoverOTP = verifyHandoverOTP;
+
+function showAddSubcontractorForm() {
+    showToast(`📝 Partnership registration form loaded. Contact HQ.`, 'success');
+}
+window.showAddSubcontractorForm = showAddSubcontractorForm;

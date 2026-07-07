@@ -219,20 +219,9 @@
             </div>
         </div>
 
-        <!-- Modern Dashboard Tabs -->
-        <div class="flex items-center gap-1 border-b border-white/5 pb-0 mb-8 overflow-x-auto scrollbar-none">
-            <button id="tab-tickets-btn" onclick="switchDashboardTab('tickets')" class="px-5 py-3.5 text-xs md:text-sm font-bold text-teal border-b-2 border-teal outline-none whitespace-nowrap transition-all flex items-center gap-2">
-                <i class="fa-solid fa-ticket"></i> Assigned Tickets
-            </button>
-            <button id="tab-filters-btn" onclick="switchDashboardTab('filters')" class="px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2">
-                <i class="fa-solid fa-sliders"></i> Control Console
-            </button>
-            <button id="tab-inventory-btn" onclick="switchDashboardTab('inventory')" class="px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2">
-                <i class="fa-solid fa-boxes-stacked"></i> Lab Inventory
-            </button>
-            <button id="tab-sql-btn" onclick="switchDashboardTab('sql')" class="px-5 py-3.5 text-xs md:text-sm font-medium text-gray-400 border-b-2 border-transparent hover:text-white outline-none whitespace-nowrap transition-all flex items-center gap-2">
-                <i class="fa-solid fa-database"></i> Developer Console
-            </button>
+        <!-- Dynamic Dashboard Tabs -->
+        <div id="dashboard-tab-buttons-container" class="flex items-center gap-1 border-b border-white/5 pb-0 mb-8 overflow-x-auto scrollbar-none">
+            <!-- Dynamically populated in main.js based on role -->
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -499,6 +488,11 @@ CREATE TRIGGER on_auth_user_created
                             </button>
                         </div>
                     </div>
+                </div>
+
+                <!-- Tab Section: Dynamic Role Content -->
+                <div id="tab-dynamic-section" class="hidden space-y-6">
+                    <div id="dynamicTabContent"></div>
                 </div>
 
             </div>
