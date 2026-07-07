@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     styleEl.id = 'global-brand-logo-styles';
     styleEl.innerHTML = `
         .rm-logo {
-            background-image: url('repo-image-folder/brand-logo-circular.jpg') !important;
+            background-image: url('assets/images/logo.png') !important;
             background-size: cover !important;
             background-position: center !important;
             background-repeat: no-repeat !important;

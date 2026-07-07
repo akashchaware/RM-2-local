@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Login – RepairMaster Portal</title>
-    <link rel="icon" type="image/jpg" href="app/src/main/res/drawable/img_maintenance_mode_1782766826537.jpg" />
+    <link rel="icon" type="image/png" href="assets/images/logo.png" />
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Custom Theme Styling Config -->
@@ -175,63 +175,68 @@
 <body class="min-h-screen flex flex-col justify-between">
 
     <!-- HEADER -->
-    <header class="container-custom py-3 md:py-4 flex items-center justify-between gap-2 md:gap-4 sticky top-0 z-40 bg-[#0A0F1D]/85 backdrop-blur-md border-b border-white/5">
-        <div class="flex items-center gap-2 md:gap-4 cursor-pointer select-none" onclick="window.location.href='index.html'">
-            <!-- Logo Icon Container styled to match the mockup perfectly -->
-            <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-12 w-12 md:h-[68px] md:w-[68px] shadow-[0_0_15px_rgba(20,184,166,0.15)] shrink-0 transition-transform duration-300 hover:scale-105">
-                <img src="app/src/main/res/drawable/img_maintenance_mode_1782766826537.jpg" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
-            </div>
-            
-            <!-- Vertical Divider -->
-            <div class="h-10 md:h-[62px] w-[1.5px] bg-teal/60 shrink-0"></div>
-            
-            <!-- Branding Text Block -->
-            <div class="flex flex-col justify-center relative pr-4 md:pr-8">
-                <div class="font-display text-lg sm:text-xl md:text-[30px] font-bold tracking-tight leading-none text-white">
-                    Repair<span class="text-teal">Master</span>
-                </div>
-                <!-- Horizontal Line -->
-                <div class="w-full h-[1.5px] bg-teal/60 my-1 md:my-1.5"></div>
-                <!-- Tagline -->
-                <div class="text-[9px] sm:text-[11px] md:text-[14px] font-semibold text-white leading-none tracking-normal">
-                    Direct To Consumer
-                </div>
-                <!-- Powered By -->
-                <div class="text-[7px] sm:text-[9px] md:text-[11px] text-white/90 italic mt-0.5 md:mt-1 leading-none">
-                    powered by <span class="text-teal font-medium not-italic">cm2us.com</span>
+    <header class="fixed top-0 left-0 right-0 z-40 bg-[#0A0F1D]/90 backdrop-blur-md border-b border-white/5 py-2 md:py-3 shadow-lg">
+        <div class="container-custom flex items-center justify-between gap-2 md:gap-4">
+            <div class="flex items-center gap-2 md:gap-4 cursor-pointer select-none" onclick="window.location.href='index.html'">
+                <!-- Logo Icon Container styled to match the mockup perfectly -->
+                <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-10 w-10 md:h-[60px] md:w-[60px] shadow-[0_0_15px_rgba(20,184,166,0.15)] shrink-0 transition-transform duration-300 hover:scale-105">
+                    <img src="assets/images/logo.png" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
                 </div>
                 
-                <!-- Sparkles Sparkle on the Right of the text -->
-                <div class="absolute right-0 bottom-1 flex flex-col items-center gap-1">
-                    <!-- Large Sparkle -->
-                    <svg class="w-3 h-3 md:w-3.5 md:h-3.5 text-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
-                    </svg>
-                    <!-- Small Sparkle -->
-                    <svg class="w-1.5 h-1.5 md:w-2 md:h-2 text-teal/80 translate-x-1.5 md:translate-x-2 -translate-y-1 animate-pulse" viewBox="0 0 24 24" fill="currentColor" style="animation-delay: 0.5s;">
-                        <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
-                    </svg>
+                <!-- Vertical Divider -->
+                <div class="h-8 md:h-[54px] w-[1.5px] bg-teal/60 shrink-0"></div>
+                
+                <!-- Branding Text Block -->
+                <div class="flex flex-col justify-center relative pr-4 md:pr-8">
+                    <div class="font-display text-base sm:text-lg md:text-[24px] font-bold tracking-tight leading-none text-white">
+                        Repair<span class="text-teal">Master</span>
+                    </div>
+                    <!-- Horizontal Line -->
+                    <div class="w-full h-[1.5px] bg-teal/60 my-0.5 md:my-1"></div>
+                    <!-- Tagline -->
+                    <div class="text-[8px] sm:text-[10px] md:text-[12px] font-semibold text-white leading-none tracking-normal">
+                        Direct To Consumer
+                    </div>
+                    <!-- Powered By -->
+                    <div class="text-[6px] sm:text-[8px] md:text-[9px] text-white/90 italic mt-0.5 leading-none">
+                        powered by <span class="text-teal font-medium not-italic">cm2us.com</span>
+                    </div>
+                    
+                    <!-- Sparkles Sparkle on the Right of the text -->
+                    <div class="absolute right-0 bottom-1 flex flex-col items-center gap-1">
+                        <!-- Large Sparkle -->
+                        <svg class="w-2.5 h-2.5 md:w-3 md:h-3 text-teal animate-pulse" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 0L14.6 9.4L24 12L14.6 14.6L12 24L9.4 14.6L0 12L9.4 9.4L12 0Z"/>
+                        </svg>
+                    </div>
                 </div>
             </div>
+
+            <!-- Desktop Navigation tabs (Center) -->
+            <nav class="desktop-nav hidden md:flex items-center gap-8 text-sm font-semibold mx-auto" id="mainNav">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="request.html" class="nav-link">Repair Request</a>
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+            </nav>
+
+            <!-- Sign In/Sign Up or Profile dropdown (Right) -->
+            <div class="desktop-nav hidden md:flex items-center gap-4">
+                <a href="login.html" class="nav-link text-sm font-semibold active" id="navLogin">Login</a>
+                <a href="signup.html" class="btn-teal py-2 px-5 text-xs font-bold rounded-xl shadow-none hover:scale-105 transition" id="navSignup">Sign Up</a>
+                <span id="navUserInfo" class="hidden flex items-center gap-4">
+                    <!-- Loaded dynamically in main.js -->
+                </span>
+            </div>
+
+            <!-- Mobile Menu Toggle Button -->
+            <button class="md:hidden text-white text-2xl focus:outline-none" onclick="toggleMobileMenu()">
+                <i class="fa-solid fa-bars"></i>
+            </button>
         </div>
-
-        <nav class="desktop-nav flex items-center gap-8 text-sm font-medium">
-            <a href="index.html" class="nav-link">Home</a>
-            <a href="request.html" class="nav-link">Repair Request</a>
-            <a href="app.html" class="nav-link">Download</a>
-            <a href="dashboard.html" class="nav-link">Dashboard</a>
-            <a href="login.html" class="nav-link active">Login</a>
-            <a href="signup.html" class="nav-link">Sign Up</a>
-        </nav>
-
-        <!-- Mobile Menu Toggle Button -->
-        <button class="mobile-menu text-white text-2xl" onclick="toggleMobileMenu()">
-            <i class="fa-solid fa-bars"></i>
-        </button>
     </header>
 
     <!-- MAIN FORM CONTAINER -->
-    <main class="py-16 flex items-center justify-center flex-1">
+    <main class="pt-[96px] md:pt-[116px] pb-16 flex items-center justify-center flex-1">
         <div class="form-card max-w-md w-full">
             <div class="text-center mb-8">
                 <div class="rm-logo mx-auto mb-4" style="width:64px;height:64px;font-size:28px;">RM</div>
@@ -275,9 +280,42 @@
     </main>
 
     <!-- FOOTER -->
-    <footer class="border-t border-white/5 bg-[#080D1A] py-6 text-center text-xs text-gray-600">
-        <p>© 2026 RepairMaster Direct To Consumer Support. Wardha Hub. All rights reserved.</p>
+    <footer class="border-t border-white/5 bg-[#080D1A] py-12 pb-24 md:pb-12 mt-20 text-sm text-grayText">
+        <div class="container-custom grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="space-y-4">
+                <div class="flex items-center gap-3">
+                    <div class="rm-logo w-10 h-10 text-lg rounded-xl"></div>
+                    <span class="font-bold text-white text-lg font-display">RepairMaster</span>
+                </div>
+                <p class="text-xs text-gray-500 leading-relaxed">Premium Doorstep &amp; Laboratory Repairs for Nagpur, Wardha &amp; Amravati regions. Fast, reliable, and secure.</p>
+                <p class="text-[10px] text-gray-600">© 2026 RepairMaster. All rights reserved.</p>
+            </div>
+            <div>
+                <h4 class="font-bold text-white mb-4 uppercase text-xs tracking-wider">Service Locations</h4>
+                <ul class="space-y-2.5 text-xs">
+                    <li><span class="text-teal"><i class="fa-solid fa-location-dot mr-1"></i> Wardha Hub</span> (Fully Active)</li>
+                    <li class="text-gray-600"><i class="fa-solid fa-location-dot mr-1"></i> Nagpur Hub (Coming soon)</li>
+                    <li class="text-gray-600"><i class="fa-solid fa-location-dot mr-1"></i> Amravati Hub (Coming soon)</li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-white mb-4 uppercase text-xs tracking-wider">Quick Links</h4>
+                <ul class="space-y-2.5 text-xs">
+                    <li><a href="request.html" class="hover:text-teal transition"><i class="fa-regular fa-file-lines mr-1.5 text-teal"></i> Submit Repair Request</a></li>
+                    <li><a href="dashboard.html" class="hover:text-teal transition"><i class="fa-solid fa-chart-line mr-1.5 text-teal"></i> Customer Portal Dashboard</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4 class="font-bold text-white mb-4 uppercase text-xs tracking-wider">Platform Details</h4>
+                <p class="text-xs text-gray-500 leading-relaxed mb-3">RepairMaster is a next-gen Direct-To-Consumer smartphone service network. Engineered using Supabase Real-time PostgreSQL, Tailwind CSS, and Kotlin, our mission is to deliver transparent, fast, and high-density doorstep repairs across Maharashtra.</p>
+            </div>
+        </div>
     </footer>
+
+    <!-- Floating Back to Top Button (Mobile) -->
+    <button id="backToTopBtn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" class="fixed bottom-24 right-6 z-40 bg-teal-600 hover:bg-teal-500 text-slate-950 p-3 rounded-full shadow-2xl transition duration-300 transform scale-0 focus:outline-none">
+        <i class="fa-solid fa-arrow-up text-base"></i>
+    </button>
 
     <!-- Mobile App Bottom Navigation Bar -->
     <div class="md:hidden fixed bottom-0 left-0 w-full bg-[#070b14]/95 border-t border-white/10 backdrop-blur-lg flex justify-around py-3 z-50 text-center font-display shadow-2xl">
@@ -293,9 +331,9 @@
             <i class="fa-solid fa-chart-simple text-base mb-1"></i>
             <span>Hub</span>
         </a>
-        <a href="app.html" class="flex flex-col items-center text-[10px] text-gray-400 hover:text-teal transition">
-            <i class="fa-solid fa-download text-base mb-1"></i>
-            <span>App</span>
+        <a href="index.html#marketplace-section" class="flex flex-col items-center text-[10px] text-gray-400 hover:text-teal transition">
+            <i class="fa-solid fa-store text-base mb-1"></i>
+            <span>Store</span>
         </a>
     </div>
 

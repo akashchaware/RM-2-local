@@ -2877,11 +2877,11 @@ function toggleMobileMenu() {
                         <a href="request.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-request">
                             <i class="fa-solid fa-screwdriver-wrench text-tealAccent/80"></i> Repair Request
                         </a>
-                        <a href="app.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-app">
-                            <i class="fa-solid fa-mobile-screen text-tealAccent/80"></i> Download App
-                        </a>
                         <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
                             <i class="fa-solid fa-chart-line text-tealAccent/80"></i> Dashboard
+                        </a>
+                        <a href="index.html#marketplace-section" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-store" onclick="toggleMobileMenu()">
+                            <i class="fa-solid fa-store text-tealAccent/80"></i> Certified Store
                         </a>
                     </nav>
                 </div>
@@ -2939,7 +2939,6 @@ function toggleMobileMenu() {
     const path = window.location.pathname.toLowerCase();
     let activeId = 'mLink-index';
     if (path.includes('request')) activeId = 'mLink-request';
-    else if (path.includes('app')) activeId = 'mLink-app';
     else if (path.includes('dashboard')) activeId = 'mLink-dashboard';
     
     document.querySelectorAll('.mobile-nav-link').forEach(link => {
@@ -3406,3 +3405,17 @@ async function deleteInventoryItem(itemId) {
     }
 }
 window.deleteInventoryItem = deleteInventoryItem;
+
+// Floating Back to Top Scroll Behavior
+window.addEventListener('scroll', () => {
+    const btn = document.getElementById('backToTopBtn');
+    if (btn) {
+        if (window.scrollY > 300) {
+            btn.classList.remove('scale-0');
+            btn.classList.add('scale-100');
+        } else {
+            btn.classList.remove('scale-100');
+            btn.classList.add('scale-0');
+        }
+    }
+});
