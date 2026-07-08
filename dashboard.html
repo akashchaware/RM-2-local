@@ -494,16 +494,25 @@ CREATE TABLE IF NOT EXISTS public.parts_pricing (
     model TEXT NOT NULL,
     issue_type TEXT NOT NULL,
     part_name TEXT NOT NULL,
+    tier TEXT NOT NULL,
     price DECIMAL(10,2) NOT NULL,
     labor DECIMAL(10,2) NOT NULL,
+    compatible_models TEXT,
+    warranty TEXT,
+    turnaround TEXT,
+    source_hub TEXT,
+    wholesale_price DECIMAL(10,2),
+    wholesale_source TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
-INSERT INTO public.parts_pricing (brand, model, issue_type, part_name, price, labor) VALUES
-('iPhone', 'iPhone 15 Pro Max', 'Screen replacement', 'OEM OLED Panel', 14500.00, 1500.00),
-('iPhone', 'iPhone 15 Pro Max', 'Battery replacement', 'High Capacity Battery', 3200.00, 800.00),
-('Vivo', 'Vivo V30 Pro', 'Screen replacement', '3D Curved Glass & Screen', 5800.00, 1000.00),
-('Vivo', 'Vivo V30 Pro', 'Charging Port issue', 'Charging Jack sub-board', 850.00, 400.00)
+INSERT INTO public.parts_pricing (brand, model, issue_type, part_name, tier, price, labor, compatible_models, warranty, turnaround, source_hub, wholesale_price, wholesale_source) VALUES
+('Apple', 'iPhone 15 Pro Max', 'Screen Replacement', '[Premium] Superb OEM-equivalent component for iPhone 15 Pro Max', 'Premium', 14500.00, 1500.00, 'iPhone 15 Pro', '180 Days Direct Hub Warranty', '1-2 Hours', 'Wardha Central Hub', 9500.00, 'Telipura Market, Sitabuldi, Nagpur'),
+('Apple', 'iPhone 15 Pro Max', 'Screen Replacement', '[Standard] High-grade certified third-party component for iPhone 15 Pro Max', 'Standard', 8400.00, 1250.00, 'iPhone 15 Pro', '90 Days Local Warranty', '1-2 Hours', 'Nagpur Local Hub', 5500.00, 'Gaffar Market, Karol Bagh, Delhi'),
+('Apple', 'iPhone 15 Pro Max', 'Screen Replacement', '[Compatible] Cost-effective functional component for iPhone 15 Pro Max', 'Compatible', 4600.00, 1100.00, 'iPhone 15 Pro', '30 Days Basic Warranty', '1-2 Hours', 'Mumbai Hub', 3000.00, 'Manish Market, Fort, Mumbai'),
+('Apple', 'iPhone 15 Pro Max', 'Battery Replacement', '[Premium] Superb OEM-equivalent component for iPhone 15 Pro Max', 'Premium', 3200.00, 800.00, 'iPhone 15 Pro', '180 Days Direct Hub Warranty', '30-45 Mins', 'Wardha Central Hub', 2100.00, 'SP Road, Halasuru, Bengaluru'),
+('Vivo', 'Vivo V30 Pro', 'Screen Replacement', '[Premium] Superb OEM-equivalent component for Vivo V30 Pro', 'Premium', 5800.00, 1000.00, 'Vivo V30', '180 Days Direct Hub Warranty', '1-2 Hours', 'Nagpur Local Hub', 3800.00, 'Telipura Market, Sitabuldi, Nagpur'),
+('Vivo', 'Vivo V30 Pro', 'Charging Port Repair', '[Standard] High-grade certified third-party component for Vivo V30 Pro', 'Standard', 850.00, 400.00, 'Vivo V30', '90 Days Local Warranty', '30 Mins', 'Nagpur Local Hub', 550.00, 'Modi No. 3, Sitabuldi, Nagpur')
 ON CONFLICT DO NOTHING;
 
 -- 9. Create Repair Parts Inventory Table (For Lab Stock)

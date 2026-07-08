@@ -705,13 +705,15 @@ async function calculateEstimate() {
     const brandSelect = document.getElementById('brandSelect');
     const modelSelect = document.getElementById('modelSelect');
     const repairSelect = document.getElementById('repairTypeSelect');
+    const qualitySelect = document.getElementById('qualitySelect');
     const surveyContainer = document.getElementById('partsSurveyContainer');
     
     if (!brandSelect || !modelSelect || !repairSelect) return;
     
-    const brandName = brandSelect.options[brandSelect.selectedIndex]?.text;
-    const modelName = modelSelect.options[modelSelect.selectedIndex]?.text;
-    const issueType = repairSelect.options[repairSelect.selectedIndex]?.text;
+    const brandName = brandSelect.options[brandSelect.selectedIndex]?.text || '';
+    const modelName = modelSelect.options[modelSelect.selectedIndex]?.text || '';
+    const rtId = repairSelect.value;
+    const rtObj = allRepairTypes.find(rt => rt.id === rtId);
     
     if (!brandSelect.value || !modelSelect.value || !repairSelect.value) {
         if (surveyContainer) {
@@ -724,24 +726,52 @@ async function calculateEstimate() {
         return;
     }
     
+    const cleanBrand = (brandName.toLowerCase() === 'apple') ? 'Apple' : brandName;
+    const issueTypeName = rtObj ? rtObj.name : ''; // e.g. 'screen'
+    const issueTypeLabel = rtObj ? rtObj.label.replace(/^[\s\S]*?\s/, '').trim() : ''; // e.g. 'Screen Replacement'
+    const selectedQuality = qualitySelect?.value || 'standard';
+    
     try {
         if (!supabase) throw new Error("Supabase client not connected");
         
-        // Fetch from parts_pricing table
-        const { data, error } = await supabase
+        // Fetch all matching rows for the model
+        const { data: rows, error } = await supabase
             .from('parts_pricing')
             .select('*')
-            .eq('brand', brandName)
-            .eq('model', modelName)
-            .eq('issue_type', issueType)
-            .maybeSingle();
+            .eq('model', modelName);
             
         if (error) throw error;
         
-        if (data) {
-            const partName = data.part_name || 'Genuine Spare Part';
-            const price = parseFloat(data.price) || 0;
-            const labor = parseFloat(data.labor) || 0;
+        let matchingRow = null;
+        if (rows && rows.length > 0) {
+            // Filter by issue_type matching
+            const issueRows = rows.filter(r => {
+                const dbIssue = (r.issue_type || '').toLowerCase();
+                return dbIssue.includes(issueTypeName.toLowerCase()) || 
+                       dbIssue.includes(issueTypeLabel.toLowerCase()) ||
+                       issueTypeLabel.toLowerCase().includes(dbIssue) ||
+                       dbIssue.replace(/[^a-z0-9]/g, '').includes(issueTypeName.toLowerCase());
+            });
+            
+            if (issueRows.length > 0) {
+                // Try to find the exact tier
+                matchingRow = issueRows.find(r => (r.tier || '').toLowerCase() === selectedQuality.toLowerCase()) || 
+                              issueRows.find(r => (r.tier || '').toLowerCase() === 'standard') || 
+                              issueRows[0];
+            }
+        }
+        
+        if (matchingRow) {
+            const partName = matchingRow.part_name || `${issueTypeLabel} Spare Part`;
+            const price = parseFloat(matchingRow.price) || 0;
+            const labor = parseFloat(matchingRow.labor) || 0;
+            
+            // Extra metadata
+            const warranty = matchingRow.warranty ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">🛡️ Warranty:</span><span class="text-white font-semibold">${matchingRow.warranty}</span></div>` : '';
+            const turnaround = matchingRow.turnaround ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">⚡ Turnaround:</span><span class="text-white font-semibold">${matchingRow.turnaround}</span></div>` : '';
+            const sourceHub = matchingRow.source_hub ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">📍 Hub:</span><span class="text-white font-semibold">${matchingRow.source_hub}</span></div>` : '';
+            const tierBadge = matchingRow.tier ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">💎 Tier Grade:</span><span class="text-white font-semibold">${matchingRow.tier}</span></div>` : '';
+            
             const serviceFee = (price + labor) * 0.10; // 10% service fee
             const diagnosisCharge = 250.0;
             const total = price + labor + serviceFee + diagnosisCharge;
@@ -749,15 +779,19 @@ async function calculateEstimate() {
             if (surveyContainer) {
                 surveyContainer.innerHTML = `
                     <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 space-y-2 text-left">
-                        <p class="text-xs font-bold text-teal mb-2 uppercase tracking-wider"><i class="fa-solid fa-layer-group mr-1"></i> Part & Service Breakdown</p>
+                        <p class="text-xs font-bold text-teal mb-2 uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-layer-group"></i> Part & Service Breakdown</p>
                         <div class="flex justify-between text-xs py-1">
                             <span class="text-gray-400">Spare: ${partName}</span>
-                            <span class="text-white font-bold">₹${price.toFixed(2)}</span>
+                            <span class="text-white font-bold">₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
                         <div class="flex justify-between text-xs py-1">
                             <span class="text-gray-400">Labor / Installation:</span>
-                            <span class="text-white font-bold">₹${labor.toFixed(2)}</span>
+                            <span class="text-white font-bold">₹${labor.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                         </div>
+                        ${tierBadge}
+                        ${warranty}
+                        ${turnaround}
+                        ${sourceHub}
                     </div>
                 `;
             }
@@ -767,10 +801,10 @@ async function calculateEstimate() {
             const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
             const totalPriceDisplay = document.getElementById('totalPriceDisplay');
             
-            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + (price + labor).toFixed(2);
-            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toFixed(2);
-            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toFixed(2);
-            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toFixed(2);
+            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + (price + labor).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
             
             const btn = document.getElementById('bookServiceBtn');
             if (btn) {
