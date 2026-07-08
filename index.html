@@ -1064,87 +1064,127 @@
         cycleBgSlides();
         setInterval(cycleBgSlides, 5000);
 
-        // Estimation Calculator Default Select Override Configuration
-        let isInitialLoad = true;
+        // ─── FIX: Dynamic Brand & Model Dropdown from Supabase ───
+let isInitialLoad = true;
 
-        function populateBrands() {
-            const select = document.getElementById('brandSelect');
-            if (!select) return;
+async function populateBrands() {
+    const select = document.getElementById('brandSelect');
+    if (!select) return;
 
-            // Ensure Apple brand exists in allBrands
-            let appleBrand = allBrands.find(b => b.name.toLowerCase() === 'apple');
-            if (!appleBrand) {
-                appleBrand = { id: 'b1', name: 'Apple' };
-                if (!allBrands.some(b => b.id === 'b1')) {
-                    allBrands.push(appleBrand);
-                }
-            }
+    select.innerHTML = '<option value="">Loading brands...</option>';
 
-            // Ensure iPhone 13 exists in allDevices
-            let iphone13 = allDevices.find(d => d.name.toLowerCase() === 'iphone 13');
-            if (!iphone13) {
-                iphone13 = { id: 'd_iphone13', brand_id: appleBrand.id, name: 'iPhone 13' };
-                allDevices.push(iphone13);
-            }
+    try {
+        // Fetch distinct brands from Supabase
+        const { data, error } = await supabase
+            .from('parts_pricing')
+            .select('brand', { distinct: true })
+            .order('brand');
 
-            select.innerHTML = '<option value="">— Select Brand —</option>';
-            allBrands.forEach(b => {
+        if (error) throw error;
+
+        select.innerHTML = '<option value="">— Select Brand —</option>';
+
+        if (data && data.length > 0) {
+            data.forEach(item => {
                 const opt = document.createElement('option');
-                opt.value = b.id;
-                opt.textContent = b.name;
+                opt.value = item.brand;
+                opt.textContent = item.brand;
                 // On initial load, select Apple as default
-                if (isInitialLoad && b.id === appleBrand.id) {
-                    opt.selected = true;
-                } else if (!isInitialLoad && b.name === "Vivo") {
+                if (isInitialLoad && item.brand === 'Apple') {
                     opt.selected = true;
                 }
                 select.appendChild(opt);
             });
-
-            updateModels();
+        } else {
+            select.innerHTML = '<option value="">No brands available</option>';
         }
+    } catch (err) {
+        console.error('Error fetching brands:', err);
+        // Fallback to hardcoded list if Supabase fails
+        const fallbackBrands = ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo', 'Realme', 'Google', 'Nothing'];
+        select.innerHTML = '<option value="">— Select Brand —</option>';
+        fallbackBrands.forEach(b => {
+            const opt = document.createElement('option');
+            opt.value = b;
+            opt.textContent = b;
+            if (isInitialLoad && b === 'Apple') opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
 
-        async function updateModels() {
-            const brandSelect = document.getElementById('brandSelect');
-            const modelSelect = document.getElementById('modelSelect');
-            if (!modelSelect) return;
-            modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+    // After brands loaded, update models
+    await updateModels();
+}
 
-            if (!brandSelect || !brandSelect.value) return;
+async function updateModels() {
+    const brandSelect = document.getElementById('brandSelect');
+    const modelSelect = document.getElementById('modelSelect');
+    if (!modelSelect) return;
 
-            const brandName = brandSelect.options[brandSelect.selectedIndex]?.text || '';
-            
-            let devices = [];
-            try {
-                if (!supabase) throw new Error("Supabase client not connected");
-                
-                const { data, error } = await supabase
-                    .from('parts_pricing')
-                    .select('model', { distinct: true })
-                    .eq('brand', brandName)
-                    .order('model');
-                    
-                if (error) throw error;
-                
-                if (data && data.length > 0) {
-                    devices = data.map(item => ({
-                        id: item.model,
-                        name: item.model
-                    }));
+    const brand = brandSelect?.value || '';
+    modelSelect.innerHTML = '<option value="">Loading models...</option>';
+
+    if (!brand) {
+        modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+        return;
+    }
+
+    try {
+        // Fetch distinct models for the selected brand
+        const { data, error } = await supabase
+            .from('parts_pricing')
+            .select('model', { distinct: true })
+            .eq('brand', brand)
+            .order('model');
+
+        if (error) throw error;
+
+        modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+
+        if (data && data.length > 0) {
+            data.forEach((item) => {
+                const opt = document.createElement('option');
+                opt.value = item.model;
+                opt.textContent = item.model;
+                // On initial load, try to select iPhone 13
+                if (isInitialLoad && item.model.toLowerCase().includes('iphone 13')) {
+                    opt.selected = true;
                 }
-            } catch (err) {
-                console.warn("Error fetching models from Supabase, using fallback:", err);
+                modelSelect.appendChild(opt);
+            });
+            // If no iPhone 13, select the first model
+            if (isInitialLoad && modelSelect.options.length > 1) {
+                let hasSelected = false;
+                for (let i = 0; i < modelSelect.options.length; i++) {
+                    if (modelSelect.options[i].selected) { hasSelected = true; break; }
+                }
+                if (!hasSelected && modelSelect.options[1]) {
+                    modelSelect.options[1].selected = true;
+                }
+                isInitialLoad = false;
             }
+        } else {
+            modelSelect.innerHTML = '<option value="">No models available</option>';
+        }
+    } catch (err) {
+        console.error('Error fetching models:', err);
+        modelSelect.innerHTML = '<option value="">Error loading models</option>';
+    }
 
-            if (devices.length === 0) {
-                const brandId = brandSelect.value;
-                const fallbackDevices = allDevices.filter(d => String(d.brand_id) === String(brandId));
-                devices = fallbackDevices.map(d => ({
-                    id: d.id,
-                    name: d.name
-                }));
-            }
-            
+    // Trigger repair types update (if it exists)
+    if (typeof updateRepairTypes === 'function') {
+        updateRepairTypes();
+    }
+}
+
+// ─── Initialize on page load ───
+document.addEventListener('DOMContentLoaded', function() {
+    populateBrands();
+});
+
+// ─── Expose to global scope ───
+window.populateBrands = populateBrands;
+window.updateModels = updateModels;
             // On initial load, we select iPhone 15 Pro Max or iPhone 13 if they exist
             let selectedIndex = 0;
             if (isInitialLoad) {
