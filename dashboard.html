@@ -361,19 +361,19 @@
 -- DROP statements first, as they will delete existing tables and data!
 -- =========================================================================
 
--- Optional: Clean up existing schema (uncomment if you want a fresh start)
--- DROP VIEW IF EXISTS public.profiles CASCADE;
--- DROP TABLE IF EXISTS public.alerts CASCADE;
--- DROP TABLE IF EXISTS public.orders CASCADE;
--- DROP TABLE IF EXISTS public.repair_parts_inventory CASCADE;
--- DROP TABLE IF EXISTS public.parts_pricing CASCADE;
--- DROP TABLE IF EXISTS public.parts CASCADE;
--- DROP TABLE IF EXISTS public.repair_types CASCADE;
--- DROP TABLE IF EXISTS public.devices CASCADE;
--- DROP TABLE IF EXISTS public.brands CASCADE;
--- DROP TABLE IF EXISTS public.user_roles CASCADE;
--- DROP TABLE IF EXISTS public.roles CASCADE;
--- DROP TABLE IF EXISTS public.users CASCADE;
+-- Optional: Clean up existing schema (active by default to prevent type mismatch on upgrade)
+DROP VIEW IF EXISTS public.profiles CASCADE;
+DROP TABLE IF EXISTS public.alerts CASCADE;
+DROP TABLE IF EXISTS public.orders CASCADE;
+DROP TABLE IF EXISTS public.repair_parts_inventory CASCADE;
+DROP TABLE IF EXISTS public.parts_pricing CASCADE;
+DROP TABLE IF EXISTS public.parts CASCADE;
+DROP TABLE IF EXISTS public.repair_types CASCADE;
+DROP TABLE IF EXISTS public.devices CASCADE;
+DROP TABLE IF EXISTS public.brands CASCADE;
+DROP TABLE IF EXISTS public.user_roles CASCADE;
+DROP TABLE IF EXISTS public.roles CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
 
 -- 1. Create Users Table (user schema mirroring)
 CREATE TABLE IF NOT EXISTS public.users (
