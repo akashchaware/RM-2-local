@@ -1064,128 +1064,256 @@
         cycleBgSlides();
         setInterval(cycleBgSlides, 5000);
 
-        // ─── FIX: Dynamic Brand & Model Dropdown from Supabase ───
-let isInitialLoad = true;
+        // Estimation Calculator Default Select Override Configuration
+        let isInitialLoad = true;
 
-async function populateBrands() {
-    const select = document.getElementById('brandSelect');
-    if (!select) return;
+        async function populateBrands() {
+            const select = document.getElementById('brandSelect');
+            if (!select) return;
+            select.innerHTML = '<option value="">— Loading Brands —</option>';
 
-    select.innerHTML = '<option value="">Loading brands...</option>';
+            try {
+                if (!supabase) throw new Error("Supabase client not connected");
 
-    try {
-        // Fetch distinct brands from Supabase
-        const { data, error } = await supabase
-            .from('parts_pricing')
-            .select('brand', { distinct: true })
-            .order('brand');
+                const { data, error } = await supabase
+                    .from('parts_pricing')
+                    .select('brand')
+                    .order('brand');
 
-        if (error) throw error;
+                if (error) throw error;
 
-        select.innerHTML = '<option value="">— Select Brand —</option>';
-
-        if (data && data.length > 0) {
-            data.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.brand;
-                opt.textContent = item.brand;
-                // On initial load, select Apple as default
-                if (isInitialLoad && item.brand === 'Apple') {
-                    opt.selected = true;
+                if (data && data.length > 0) {
+                    const uniqueBrands = [...new Set(data.map(item => item.brand).filter(Boolean))].sort();
+                    select.innerHTML = '<option value="">— Select Brand —</option>';
+                    uniqueBrands.forEach(bName => {
+                        const opt = document.createElement('option');
+                        opt.value = bName;
+                        opt.textContent = bName;
+                        if (isInitialLoad && bName.toLowerCase() === 'apple') {
+                            opt.selected = true;
+                        }
+                        select.appendChild(opt);
+                    });
+                } else {
+                    select.innerHTML = '<option value="">— No Brands Found —</option>';
                 }
-                select.appendChild(opt);
-            });
-        } else {
-            select.innerHTML = '<option value="">No brands available</option>';
+            } catch (err) {
+                console.error("Error populating brands from Supabase:", err);
+                select.innerHTML = '<option value="">— Error Loading —</option>';
+            }
+
+            await updateModels();
         }
-    } catch (err) {
-        console.error('Error fetching brands:', err);
-        // Fallback to hardcoded list if Supabase fails
-        const fallbackBrands = ['Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo', 'Realme', 'Google', 'Nothing'];
-        select.innerHTML = '<option value="">— Select Brand —</option>';
-        fallbackBrands.forEach(b => {
-            const opt = document.createElement('option');
-            opt.value = b;
-            opt.textContent = b;
-            if (isInitialLoad && b === 'Apple') opt.selected = true;
-            select.appendChild(opt);
-        });
-    }
 
-    // After brands loaded, update models
-    await updateModels();
-}
+        async function updateModels() {
+            const brandSelect = document.getElementById('brandSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            if (!modelSelect) return;
+            modelSelect.innerHTML = '<option value="">— Loading Models —</option>';
 
-async function updateModels() {
-    const brandSelect = document.getElementById('brandSelect');
-    const modelSelect = document.getElementById('modelSelect');
-    if (!modelSelect) return;
+            if (!brandSelect || !brandSelect.value) {
+                modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+                return;
+            }
 
-    const brand = brandSelect?.value || '';
-    modelSelect.innerHTML = '<option value="">Loading models...</option>';
+            const brandName = brandSelect.value;
 
-    if (!brand) {
-        modelSelect.innerHTML = '<option value="">— Select Model —</option>';
-        return;
-    }
+            try {
+                if (!supabase) throw new Error("Supabase client not connected");
 
-    try {
-        // Fetch distinct models for the selected brand
-        const { data, error } = await supabase
-            .from('parts_pricing')
-            .select('model', { distinct: true })
-            .eq('brand', brand)
-            .order('model');
+                const { data, error } = await supabase
+                    .from('parts_pricing')
+                    .select('model', { distinct: true })
+                    .eq('brand', brandName)
+                    .order('model');
 
-        if (error) throw error;
+                if (error) throw error;
 
-        modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+                if (data && data.length > 0) {
+                    const uniqueModels = [...new Set(data.map(item => item.model).filter(Boolean))].sort();
+                    
+                    modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+                    
+                    let selectedIndex = 0;
+                    if (isInitialLoad) {
+                        const idx = uniqueModels.findIndex(m => m.toLowerCase().includes('iphone 15 pro max') || m.toLowerCase().includes('iphone 13'));
+                        if (idx !== -1) selectedIndex = idx;
+                    }
 
-        if (data && data.length > 0) {
-            data.forEach((item) => {
-                const opt = document.createElement('option');
-                opt.value = item.model;
-                opt.textContent = item.model;
-                // On initial load, try to select iPhone 13
-                if (isInitialLoad && item.model.toLowerCase().includes('iphone 13')) {
-                    opt.selected = true;
+                    uniqueModels.forEach((mName, i) => {
+                        const opt = document.createElement('option');
+                        opt.value = mName;
+                        opt.textContent = mName;
+                        if (i === selectedIndex) opt.selected = true;
+                        modelSelect.appendChild(opt);
+                    });
+                } else {
+                    modelSelect.innerHTML = '<option value="">— No Models Found —</option>';
                 }
-                modelSelect.appendChild(opt);
-            });
-            // If no iPhone 13, select the first model
-            if (isInitialLoad && modelSelect.options.length > 1) {
-                let hasSelected = false;
-                for (let i = 0; i < modelSelect.options.length; i++) {
-                    if (modelSelect.options[i].selected) { hasSelected = true; break; }
-                }
-                if (!hasSelected && modelSelect.options[1]) {
-                    modelSelect.options[1].selected = true;
-                }
+            } catch (err) {
+                console.error("Error populating models from Supabase:", err);
+                modelSelect.innerHTML = '<option value="">— Error Loading —</option>';
+            }
+
+            if (isInitialLoad) {
                 isInitialLoad = false;
             }
-        } else {
-            modelSelect.innerHTML = '<option value="">No models available</option>';
+
+            updateRepairTypes();
         }
-    } catch (err) {
-        console.error('Error fetching models:', err);
-        modelSelect.innerHTML = '<option value="">Error loading models</option>';
-    }
 
-    // Trigger repair types update (if it exists)
-    if (typeof updateRepairTypes === 'function') {
-        updateRepairTypes();
-    }
-}
+        async function calculateEstimate() {
+            const brandSelect = document.getElementById('brandSelect');
+            const modelSelect = document.getElementById('modelSelect');
+            const repairSelect = document.getElementById('repairTypeSelect');
+            const qualitySelect = document.getElementById('tierInput') || document.getElementById('qualitySelect');
+            const surveyContainer = document.getElementById('partsSurveyContainer');
+            
+            if (!brandSelect || !modelSelect || !repairSelect) return;
+            
+            const brandName = brandSelect.value;
+            const modelName = modelSelect.value;
+            const rtId = repairSelect.value;
+            const rtObj = allRepairTypes.find(rt => rt.id === rtId);
+            
+            if (!brandName || !modelName || !rtId) {
+                if (surveyContainer) {
+                    surveyContainer.innerHTML = `
+                        <div class="text-center text-white/40 py-4 text-xs font-medium">
+                            <i class="fa-solid fa-circle-info mr-2"></i> Select dropdown options to display dynamic component breakdown.
+                        </div>
+                    `;
+                }
+                return;
+            }
+            
+            const issueTypeName = rtObj ? rtObj.name : ''; // e.g. 'screen'
+            const issueTypeLabel = rtObj ? rtObj.label.replace(/^[\s\S]*?\s/, '').trim() : ''; // e.g. 'Screen Replacement'
+            const selectedQuality = qualitySelect?.value || 'standard';
+            
+            try {
+                if (!supabase) throw new Error("Supabase client not connected");
+                
+                // Fetch all matching rows for the model
+                const { data: rows, error } = await supabase
+                    .from('parts_pricing')
+                    .select('*')
+                    .eq('model', modelName);
+                    
+                if (error) throw error;
+                
+                let matchingRow = null;
+                if (rows && rows.length > 0) {
+                    // Filter by issue_type matching
+                    const issueRows = rows.filter(r => {
+                        const dbIssue = (r.issue_type || '').toLowerCase();
+                        return dbIssue.includes(issueTypeName.toLowerCase()) || 
+                               dbIssue.includes(issueTypeLabel.toLowerCase()) ||
+                               issueTypeLabel.toLowerCase().includes(dbIssue) ||
+                               dbIssue.replace(/[^a-z0-9]/g, '').includes(issueTypeName.toLowerCase());
+                    });
+                    
+                    if (issueRows.length > 0) {
+                        // Try to find the exact tier
+                        matchingRow = issueRows.find(r => (r.tier || '').toLowerCase() === selectedQuality.toLowerCase()) || 
+                                      issueRows.find(r => (r.tier || '').toLowerCase() === 'standard') || 
+                                      issueRows[0];
+                    }
+                }
+                
+                if (matchingRow) {
+                    const partName = matchingRow.part_name || `${issueTypeLabel} Spare Part`;
+                    const price = parseFloat(matchingRow.price) || 0;
+                    const labor = parseFloat(matchingRow.labor) || 0;
+                    const total = price + labor;
+                    
+                    // Extra metadata (customer friendly, skipped if missing)
+                    const warrantyHtml = (matchingRow.warranty && matchingRow.warranty !== 'N/A' && matchingRow.warranty.trim() !== '') ? `
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">🛡️ Warranty Period:</span>
+                            <span class="text-white font-semibold">${matchingRow.warranty}</span>
+                        </div>
+                    ` : '';
+                    
+                    const turnaroundHtml = (matchingRow.turnaround && matchingRow.turnaround !== 'N/A' && matchingRow.turnaround.trim() !== '') ? `
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">⚡ Turnaround Time:</span>
+                            <span class="text-white font-semibold">${matchingRow.turnaround}</span>
+                        </div>
+                    ` : '';
+                    
+                    const tierHtml = (matchingRow.tier && matchingRow.tier !== 'N/A' && matchingRow.tier.trim() !== '') ? `
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">💎 Component Grade:</span>
+                            <span class="text-white font-semibold uppercase">${matchingRow.tier}</span>
+                        </div>
+                    ` : '';
 
-// ─── Initialize on page load ───
-document.addEventListener('DOMContentLoaded', function() {
-    populateBrands();
-});
+                    if (surveyContainer) {
+                        surveyContainer.innerHTML = `
+                            <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2 text-left">
+                                <p class="text-xs font-bold text-teal-400 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fa-solid fa-layer-group"></i> Part & Service Details
+                                </p>
+                                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">Component: ${partName}</span>
+                                    <span class="text-white font-bold">₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">Labor / Installation:</span>
+                                    <span class="text-white font-bold">₹${labor.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                                </div>
+                                ${tierHtml}
+                                ${warrantyHtml}
+                                ${turnaroundHtml}
+                            </div>
+                        `;
+                    }
+                    
+                    // Update bottom totals cleanly
+                    const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+                    const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+                    const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+                    const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+                    
+                    if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + labor.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹0.00';
+                    if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    
+                    const btn = document.getElementById('bookServiceBtn');
+                    if (btn) {
+                        btn.className = 'mt-6 w-full btn-primary h-12 text-sm font-bold rounded-xl flex items-center justify-center gap-2';
+                        btn.innerHTML = '<i class="fa-regular fa-calendar-check"></i> Book Doorstep Service';
+                    }
+                } else {
+                    if (surveyContainer) {
+                        surveyContainer.innerHTML = `
+                            <div class="bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs p-4 rounded-xl text-center">
+                                <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Custom pricing not available for this model/repair combination yet.
+                            </div>
+                        `;
+                    }
+                    
+                    const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+                    const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+                    const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+                    const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+                    
+                    if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
+                    if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹0.00';
+                    if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹250.00';
+                    if (totalPriceDisplay) totalPriceDisplay.textContent = '₹250.00';
+                }
+            } catch (err) {
+                console.error("Supabase fetch failed, using fallback:", err);
+            }
+        }
 
-// ─── Expose to global scope ───
-window.populateBrands = populateBrands;
-window.updateModels = updateModels;
-          
+        // Expose overridden functions to global scope
+        window.populateBrands = populateBrands;
+        window.updateModels = updateModels;
+        window.calculateEstimate = calculateEstimate;
 
         // Custom Mobile Slide-out Navigation Drawer
         async function toggleMobileMenu() {

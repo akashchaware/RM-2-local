@@ -802,7 +802,6 @@ async function calculateEstimate() {
             // Extra metadata
             const warranty = matchingRow.warranty ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">🛡️ Warranty:</span><span class="text-white font-semibold">${matchingRow.warranty}</span></div>` : '';
             const turnaround = matchingRow.turnaround ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">⚡ Turnaround:</span><span class="text-white font-semibold">${matchingRow.turnaround}</span></div>` : '';
-            const sourceHub = matchingRow.source_hub ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">📍 Hub:</span><span class="text-white font-semibold">${matchingRow.source_hub}</span></div>` : '';
             const tierBadge = matchingRow.tier ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">💎 Tier Grade:</span><span class="text-white font-semibold">${matchingRow.tier}</span></div>` : '';
             
             const serviceFee = (price + labor) * 0.10; // 10% service fee
@@ -824,7 +823,6 @@ async function calculateEstimate() {
                         ${tierBadge}
                         ${warranty}
                         ${turnaround}
-                        ${sourceHub}
                     </div>
                 `;
             }
