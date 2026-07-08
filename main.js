@@ -258,7 +258,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     <button onclick="showDiagnosisForm('${o.id}')" class="action-btn btn-diagnose">Diagnose Logs</button>
                     <button onclick="showAddPartForm('${o.id}')" class="action-btn btn-part">+ Add Part</button>
                 `;
-            } else if (status === 'Confirmed') {
+            } else if (status === 'Confirmed' || status === 'Under-Repair') {
                 actions += `
                     <div class="flex flex-col gap-1 items-end">
                         <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
@@ -277,6 +277,33 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                 <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
                 <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
             `;
+        } else if (status === 'Confirmed' || status === 'Under-Repair') {
+            if (!o.payment_status || o.payment_status === 'Unpaid') {
+                actions += `
+                    <div class="mt-2 space-y-2 text-left">
+                        <span class="text-xs text-amber-400 font-bold block"><i class="fa-solid fa-credit-card"></i> Choose Payment Method:</span>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="payForRepair('${o.id}', ${o.grand_total || o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm py-1.5 px-3 text-[11px]"><i class="fa-solid fa-shield-halved"></i> 💳 Pay Now (₹${(o.grand_total || o.total_price || 0).toLocaleString('en-IN')})</button>
+                            <button onclick="selectCODPayment('${o.id}')" class="action-btn btn-pickup py-1.5 px-3 text-[11px]"><i class="fa-solid fa-hand-holding-dollar"></i> 💵 Confirm COD</button>
+                        </div>
+                    </div>
+                `;
+            } else if (o.payment_status === 'Pending COD Confirmation') {
+                actions += `
+                    <div class="mt-2 text-left p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20 max-w-sm">
+                        <p class="text-xs font-bold text-amber-400 flex items-center gap-1.5">
+                            <i class="fa-solid fa-clock animate-pulse"></i> COD Awaiting Confirmation
+                        </p>
+                        <p class="text-[11px] text-gray-300 mt-1">You have selected Cash on Delivery. The regional Hub Coordinator will confirm and update status upon handset arrival and repair initiation.</p>
+                    </div>
+                `;
+            } else if (o.payment_status === 'Paid') {
+                actions += `
+                    <div class="mt-2 text-left space-y-2">
+                        <span class="text-xs text-emerald-400 font-bold block"><i class="fa-solid fa-circle-check"></i> Paid via ${o.payment_method || 'Online'}</span>
+                    </div>
+                `;
+            }
         } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
             const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
             actions += `
@@ -561,7 +588,10 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                 </div>
                 <div class="flex flex-col items-end gap-2">
                     ${isTechnician ? '' : `<span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>`}
-                    <div id="actions-${o.id}" class="flex flex-wrap gap-1 justify-end">${actions}</div>
+                    <div id="actions-${o.id}" class="flex flex-wrap gap-1 justify-end">
+                        ${actions}
+                        ${o.payment_status === 'Paid' ? `<button onclick="openInvoicePage('${o.id}')" class="action-btn btn-confirm bg-emerald-600 hover:bg-emerald-500 text-white font-bold my-1"><i class="fa-solid fa-file-invoice-dollar"></i> View Invoice</button>` : ''}
+                    </div>
                 </div>
             </div>
         </div>
@@ -1773,6 +1803,12 @@ async function submitFinalizedQuotation(orderId) {
         // Serialize parts list back
         const customPartsStr = serializeCustomQuoteParts(partsList);
         
+        // Calculate tax, platform fee, and grand total for invoice
+        const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        const taxAmount = parseFloat((liveTotal * 0.18).toFixed(2));
+        const platformFee = parseFloat((liveTotal * 0.10).toFixed(2));
+        const grandTotal = parseFloat((liveTotal + taxAmount + platformFee).toFixed(2));
+        
         const { error } = await supabase
             .from('orders')
             .update({
@@ -1781,7 +1817,11 @@ async function submitFinalizedQuotation(orderId) {
                 parts_total: originalPartsSum,
                 total_price: liveTotal,
                 custom_quote_parts: customPartsStr,
-                status: 'Quotation-Sent'
+                status: 'Quotation-Sent',
+                invoice_number: invoiceNum,
+                tax_amount: taxAmount,
+                platform_fee: platformFee,
+                grand_total: grandTotal
             })
             .eq('id', orderId);
             
@@ -1938,11 +1978,20 @@ async function sendQuotation(orderId) {
             return;
         }
         const finalizedTotal = parseFloat(editQuote);
+        const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+        const taxAmount = parseFloat((finalizedTotal * 0.18).toFixed(2));
+        const platformFee = parseFloat((finalizedTotal * 0.10).toFixed(2));
+        const grandTotal = parseFloat((finalizedTotal + taxAmount + platformFee).toFixed(2));
+
         const { error } = await supabase
             .from('orders')
             .update({
                 total_price: finalizedTotal,
-                status: 'Quotation-Sent'
+                status: 'Quotation-Sent',
+                invoice_number: invoiceNum,
+                tax_amount: taxAmount,
+                platform_fee: platformFee,
+                grand_total: grandTotal
             })
             .eq('id', orderId);
         if (error) throw error;
@@ -2163,7 +2212,7 @@ async function loadDashboard() {
         if (isRepairMaster) {
             const countNew = orders.filter(o => ['New', 'Pending'].includes(o.status)).length;
             const countDiagnosis = orders.filter(o => ['With-RepairMaster', 'Diagnosis-Pending'].includes(o.status)).length;
-            const countRepair = orders.filter(o => ['Repair-In-Progress', 'Confirmed'].includes(o.status)).length;
+            const countRepair = orders.filter(o => ['Repair-In-Progress', 'Confirmed', 'Under-Repair'].includes(o.status)).length;
             const countComplete = orders.filter(o => ['Repair-Completed', 'Completed'].includes(o.status)).length;
 
             const cur = window.customStatFilter || 'All';
@@ -2213,7 +2262,7 @@ async function loadDashboard() {
         } else {
             const total = orders.length;
             const pending = orders.filter(o => ['Pending', 'Technician Assigned', 'RepairMaster Assigned'].includes(o.status)).length;
-            const inProgress = orders.filter(o => ['Pickup-Pending', 'With-RepairMaster', 'In-Progress'].includes(o.status)).length;
+            const inProgress = orders.filter(o => ['Pickup-Pending', 'With-RepairMaster', 'In-Progress', 'Under-Repair'].includes(o.status)).length;
             const completed = orders.filter(o => ['Completed', 'Confirmed'].includes(o.status)).length;
 
             metricContainer.innerHTML = `
@@ -2299,9 +2348,9 @@ async function loadDashboard() {
                 } else if (selectedStatus === 'PendingAction') {
                     matchesStatus = ['Pending', 'Quotation-Sent'].includes(o.status);
                 } else if (selectedStatus === 'Active') {
-                    matchesStatus = ['Technician Assigned', 'Pickup-Pending', 'Confirmed', 'With-RepairMaster', 'Quotation-Sent', 'Awaiting-Payment'].includes(o.status);
+                    matchesStatus = ['Technician Assigned', 'Pickup-Pending', 'Confirmed', 'With-RepairMaster', 'Quotation-Sent', 'Awaiting-Payment', 'Under-Repair'].includes(o.status);
                 } else if (selectedStatus === 'Repair') {
-                    matchesStatus = o.status === 'With-RepairMaster' || o.status === 'Confirmed';
+                    matchesStatus = o.status === 'With-RepairMaster' || o.status === 'Confirmed' || o.status === 'Under-Repair';
                 } else if (selectedStatus === 'Delivery') {
                     matchesStatus = o.status === 'Ready-For-Delivery';
                 } else if (selectedStatus === 'Closed') {
@@ -2335,7 +2384,7 @@ async function loadDashboard() {
                     } else if (window.customStatFilter === 'Diagnosis') {
                         matchesStatCard = ['With-RepairMaster', 'Diagnosis-Pending'].includes(o.status);
                     } else if (window.customStatFilter === 'Repair') {
-                        matchesStatCard = ['Repair-In-Progress', 'Confirmed'].includes(o.status);
+                        matchesStatCard = ['Repair-In-Progress', 'Confirmed', 'Under-Repair'].includes(o.status);
                     } else if (window.customStatFilter === 'Complete') {
                         matchesStatCard = ['Repair-Completed', 'Completed'].includes(o.status);
                     }
@@ -3076,19 +3125,310 @@ async function payForRepair(orderId, amount, deviceName) {
 
 async function executePayment(orderId) {
     if (!supabase) return;
+    const payMethodElement = document.getElementById('payMethod');
+    const selectedPayMethod = payMethodElement ? payMethodElement.value : 'Online';
+    let displayMethod = 'Online';
+    if (selectedPayMethod === 'upi') displayMethod = 'Online (UPI)';
+    if (selectedPayMethod === 'card') displayMethod = 'Online (Card)';
+    if (selectedPayMethod === 'cod') displayMethod = 'COD';
+
     try {
         const handoverOtp = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit handover code
-        const { error } = await supabase.from('orders').update({
+        const updatePayload = {
+            payment_method: displayMethod,
+            payment_status: displayMethod === 'COD' ? 'Pending COD Confirmation' : 'Paid',
             pickup_otp: handoverOtp
-        }).eq('id', orderId);
+        };
+        // If paid online, automatically update status to Under-Repair as per Task 2
+        if (displayMethod !== 'COD') {
+            updatePayload.status = 'Under-Repair';
+        }
+
+        const { error } = await supabase.from('orders').update(updatePayload).eq('id', orderId);
         if (error) throw error;
         
         document.getElementById('paymentGatewayModal')?.remove();
-        showToast('💳 Payment Successful! Your Secure Handover OTP is generated.', 'success');
+        if (displayMethod === 'COD') {
+            showToast('💵 Cash on Delivery selection submitted! Coordinator approval pending.', 'success');
+        } else {
+            showToast('💳 Payment Successful! Your order status is updated to Under-Repair.', 'success');
+        }
         loadDashboard();
     } catch (err) {
         showToast('Failed to log payment: ' + err.message, 'error');
     }
+}
+
+async function selectCODPayment(orderId) {
+    if (!supabase) return;
+    try {
+        const handoverOtp = Math.floor(1000 + Math.random() * 9000).toString(); // 4-digit handover code
+        const { error } = await supabase.from('orders').update({
+            payment_method: 'COD',
+            payment_status: 'Pending COD Confirmation',
+            pickup_otp: handoverOtp
+        }).eq('id', orderId);
+        if (error) throw error;
+        showToast('💵 Cash on Delivery confirmed! Coordinator will acknowledge the payment upon handset arrival.', 'success');
+        loadDashboard();
+    } catch (err) {
+        showToast('Failed to confirm COD: ' + err.message, 'error');
+    }
+}
+
+async function confirmPaymentManual(orderId) {
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('orders').update({
+            payment_status: 'Paid',
+            status: 'Under-Repair'
+        }).eq('id', orderId);
+        if (error) throw error;
+        showToast('💵 Payment manually confirmed by Coordinator! Status updated to Under-Repair.', 'success');
+        closeOrderDetailModal();
+        loadDashboard();
+    } catch (err) {
+        showToast('Failed to confirm payment: ' + err.message, 'error');
+    }
+}
+
+function generateInvoiceHtml(order) {
+    const deviceName = getDeviceName(order.device_id) !== 'Device' ? getDeviceName(order.device_id) : (order.device_other || 'Device');
+    const repairLabel = getRepairLabel(order.repair_type_id) !== 'Repair' ? getRepairLabel(order.repair_type_id) : (order.repair_other || 'Repair');
+    const invoiceNum = order.invoice_number || `INV-2026-TEMP`;
+    const invoiceDate = order.created_at ? new Date(order.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+
+    const partsList = parseCustomQuoteParts(order.custom_quote_parts);
+    let partsRowsHtml = '';
+    if (partsList.length > 0) {
+        partsList.forEach(p => {
+            const cleanName = p.name.replace(/^\[Original\]\s*/, '').replace(/^\[Old\]\s*/, '').replace(/^\[Additional\]\s*/, '').replace(/^\[New\]\s*/, '');
+            partsRowsHtml += `
+                <tr class="item">
+                    <td>📦 ${cleanName}</td>
+                    <td>₹${p.price.toLocaleString('en-IN')}</td>
+                </tr>
+            `;
+        });
+    } else if (order.parts_total > 0) {
+        partsRowsHtml += `
+            <tr class="item">
+                <td>📦 Estimated Spare Components</td>
+                <td>₹${order.parts_total.toLocaleString('en-IN')}</td>
+            </tr>
+        `;
+    }
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice - ${invoiceNum}</title>
+    <style>
+        body {
+            font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 30px;
+            background-color: #fff;
+        }
+        .invoice-box {
+            max-width: 800px;
+            margin: auto;
+            padding: 30px;
+            border: 1px solid #eee;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
+            font-size: 14px;
+            line-height: 24px;
+            background-color: #fff;
+        }
+        .invoice-box table {
+            width: 100%;
+            line-height: inherit;
+            text-align: left;
+            border-collapse: collapse;
+        }
+        .invoice-box table td {
+            padding: 10px;
+            vertical-align: top;
+        }
+        .invoice-box table tr td:nth-child(2) {
+            text-align: right;
+        }
+        .invoice-box table tr.top table td {
+            padding-bottom: 20px;
+        }
+        .invoice-box table tr.top table td.title {
+            font-size: 35px;
+            line-height: 35px;
+            color: #14b8a6;
+            font-weight: bold;
+        }
+        .invoice-box table tr.information table td {
+            padding-bottom: 40px;
+        }
+        .invoice-box table tr.heading td {
+            background: #f3f4f6;
+            border-bottom: 1px solid #ddd;
+            font-weight: bold;
+        }
+        .invoice-box table tr.details td {
+            padding-bottom: 20px;
+        }
+        .invoice-box table tr.item td {
+            border-bottom: 1px solid #eee;
+        }
+        .invoice-box table tr.item.last td {
+            border-bottom: none;
+        }
+        .invoice-box table tr.total td:nth-child(2) {
+            border-top: 2px solid #eee;
+            font-weight: bold;
+        }
+        .grand-total-row {
+            background-color: #f0fdfa;
+            font-weight: bold;
+            color: #0f766e;
+        }
+        .btn-print {
+            display: inline-block;
+            background: #14b8a6;
+            color: #fff;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            cursor: pointer;
+            border: none;
+        }
+        @media print {
+            .btn-print {
+                display: none;
+            }
+            body {
+                padding: 0;
+            }
+            .invoice-box {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 800px; margin: auto; text-align: right;">
+        <button class="btn-print" onclick="window.print()">🖨️ Print Invoice</button>
+    </div>
+    <div class="invoice-box">
+        <table>
+            <tr class="top">
+                <td colspan="2">
+                    <table>
+                        <tr>
+                            <td class="title">
+                                RepairMaster
+                            </td>
+                            <td>
+                                <strong>Invoice #:</strong> ${invoiceNum}<br>
+                                <strong>Date:</strong> ${invoiceDate}<br>
+                                <strong>Status:</strong> <span style="color: #059669; font-weight: bold;">PAID</span>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr class="information">
+                <td colspan="2">
+                    <table>
+                        <tr>
+                            <td>
+                                <strong>Billed To:</strong><br>
+                                ${order.customer_name || 'N/A'}<br>
+                                ${order.customer_phone || 'N/A'}<br>
+                                ${order.customer_email || 'N/A'}
+                            </td>
+                            <td>
+                                <strong>Device / Fault:</strong><br>
+                                ${deviceName}<br>
+                                ${repairLabel}<br>
+                                📍 ${order.address || 'N/A'}
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            
+            <tr class="heading">
+                <td>Payment details</td>
+                <td>Method / Txn</td>
+            </tr>
+            <tr class="details">
+                <td>Secure Escrow Gateway</td>
+                <td>${order.payment_method || 'Online Payment'}</td>
+            </tr>
+            
+            <tr class="heading">
+                <td>Itemized Repair Service</td>
+                <td>Price</td>
+            </tr>
+            
+            <tr class="item">
+                <td>🩺 Scientific Bench Diagnosis</td>
+                <td>₹${(order.diagnosis_charge || 250).toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="item">
+                <td>🔧 Workmanship &amp; Labor</td>
+                <td>₹${(order.service_fee || 100).toLocaleString('en-IN')}</td>
+            </tr>
+            ${partsRowsHtml}
+            
+            <tr class="heading">
+                <td>Subtotal &amp; Fees</td>
+                <td>Amount</td>
+            </tr>
+            <tr class="item">
+                <td>Subtotal</td>
+                <td>₹${(order.total_price || 0).toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="item">
+                <td>Tax (18% GST)</td>
+                <td>₹${(order.tax_amount || 0).toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="item">
+                <td>Platform Fee (10%)</td>
+                <td>₹${(order.platform_fee || 0).toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="total grand-total-row">
+                <td>Grand Total (Incl. All Taxes & Fees)</td>
+                <td>₹${(order.grand_total || order.total_price || 0).toLocaleString('en-IN')}</td>
+            </tr>
+        </table>
+        
+        <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px; border-t: 1px solid #eee; padding-top: 20px;">
+            Thank you for choosing RepairMaster! Your premium doorstep device diagnostic is securely validated.
+        </div>
+    </div>
+</body>
+</html>
+    `;
+}
+
+function openInvoicePage(orderId) {
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    if (!order) {
+        showToast('Invoice reference order not found.', 'error');
+        return;
+    }
+    const invoiceWindow = window.open('', '_blank');
+    if (!invoiceWindow) {
+        showToast('Please allow popups to view/print the invoice.', 'error');
+        return;
+    }
+    invoiceWindow.document.write(generateInvoiceHtml(order));
+    invoiceWindow.document.close();
 }
 
 async function closeTicket(orderId, enteredOtp) {
@@ -4861,6 +5201,84 @@ async function viewOrderDetails(orderId, alertId = null) {
         `;
     }
 
+    // Build Payment & Billing HTML
+    const paymentMethod = order.payment_method || 'Pending Selection';
+    const paymentStatus = order.payment_status || 'Unpaid';
+    const invoiceNumber = order.invoice_number || 'Not Generated';
+    
+    let statusColorClass = 'text-red-400 bg-red-500/10 border-red-500/20';
+    if (paymentStatus === 'Paid') {
+        statusColorClass = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+    } else if (paymentStatus === 'Pending COD Confirmation') {
+        statusColorClass = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+    }
+
+    let confirmBtnHtml = '';
+    if (isCoordinator && paymentStatus !== 'Paid' && (paymentMethod === 'COD' || paymentStatus === 'Pending COD Confirmation' || paymentMethod === 'Online' || paymentStatus === 'Unpaid')) {
+        confirmBtnHtml = `
+            <div class="mt-3">
+                <button onclick="confirmPaymentManual('${order.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition">
+                    💵 Confirm Payment &amp; Mark Paid
+                </button>
+            </div>
+        `;
+    }
+
+    let invoiceDetailsHtml = 'Pending Quotation Dispatch';
+    if (order.invoice_number) {
+        invoiceDetailsHtml = `
+            <div class="space-y-1.5">
+                <div class="flex justify-between">
+                    <span>🧾 Invoice Number:</span>
+                    <span class="text-white font-semibold">${invoiceNumber}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span class="text-gray-300">₹${(order.total_price || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Tax (18% GST):</span>
+                    <span class="text-gray-300">₹${(order.tax_amount || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Platform Fee (10%):</span>
+                    <span class="text-gray-300">₹${(order.platform_fee || 0).toLocaleString('en-IN')}</span>
+                </div>
+                <div class="flex justify-between border-t border-slate-800 pt-1.5 text-teal font-extrabold">
+                    <span>Grand Total:</span>
+                    <span>₹${(order.grand_total || order.total_price || 0).toLocaleString('en-IN')}</span>
+                </div>
+                ${paymentStatus === 'Paid' ? `
+                    <div class="pt-2">
+                        <button onclick="openInvoicePage('${order.id}')" class="w-full bg-slate-800 hover:bg-slate-750 text-teal-300 border border-teal-500/20 font-bold py-1.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-file-invoice-dollar"></i> View/Print Invoice
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    const paymentBillingHtml = `
+        <div class="p-4 bg-slate-950/40 border border-slate-850 rounded-2xl space-y-3 text-xs text-gray-300">
+            <p class="text-xs font-bold text-white uppercase tracking-wider mb-2 font-display"><i class="fa-solid fa-file-invoice-dollar text-teal mr-1"></i> Payment &amp; Billing</p>
+            <div class="grid grid-cols-2 gap-3 mb-2">
+                <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
+                    <span class="text-gray-500 block uppercase font-bold text-[9px] mb-0.5">PAYMENT METHOD</span>
+                    <span class="text-white font-bold">${paymentMethod}</span>
+                </div>
+                <div class="p-2.5 bg-slate-900 border border-slate-800 rounded-xl">
+                    <span class="text-gray-500 block uppercase font-bold text-[9px] mb-0.5">PAYMENT STATUS</span>
+                    <span class="inline-block border px-2 py-0.5 rounded-full font-bold uppercase text-[9px] ${statusColorClass}">${paymentStatus}</span>
+                </div>
+            </div>
+            <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800/80">
+                ${invoiceDetailsHtml}
+            </div>
+            ${confirmBtnHtml}
+        </div>
+    `;
+
     const bodyContainer = document.getElementById('modalOrderBody');
     bodyContainer.innerHTML = `
         <div class="space-y-5">
@@ -4887,6 +5305,8 @@ async function viewOrderDetails(orderId, alertId = null) {
                 </div>
             </div>
 
+            ${paymentBillingHtml}
+
             ${actionPanelHtml}
         </div>
     `;
@@ -4911,3 +5331,6 @@ window.createAlert = createAlert;
 window.viewOrderDetails = viewOrderDetails;
 window.closeOrderDetailModal = closeOrderDetailModal;
 window.clearSingleOrderFilter = clearSingleOrderFilter;
+window.selectCODPayment = selectCODPayment;
+window.confirmPaymentManual = confirmPaymentManual;
+window.openInvoicePage = openInvoicePage;
