@@ -88,6 +88,9 @@
         .status-Confirmed { background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); }
         .status-Completed { background: rgba(16, 185, 129, 0.2); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.3); }
         .status-Rejected { background: rgba(239, 68, 68, 0.12); color: #EF4444; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .status-Reassign-Needed { background: rgba(239, 68, 68, 0.12); color: #F59E0B; border: 1px solid rgba(239, 68, 68, 0.2); }
+        .status-Ready-For-Delivery { background: rgba(16, 185, 129, 0.12); color: #10B981; border: 1px solid rgba(16, 185, 129, 0.2); }
+        .status-Awaiting-Payment { background: rgba(245, 158, 11, 0.12); color: #F59E0B; border: 1px solid rgba(245, 158, 11, 0.2); }
 
         .action-btn {
             padding: 6px 14px;
@@ -200,7 +203,7 @@
         </div>
 
         <!-- Metric Stat Cards -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <div id="metric-cards-container" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
             <div class="bg-navyBG/40 border border-grayBorder/40 rounded-xl p-5 text-center">
                 <div class="text-3xl font-black text-teal" id="statTotal">0</div>
                 <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Total Tickets</div>
@@ -270,6 +273,7 @@
                                 <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Workflow Status</label>
                                 <select id="filterStatus" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none cursor-pointer">
                                     <option value="All">All Statuses</option>
+                                    <option value="PendingAction">Pending Action (Needs Attention)</option>
                                     <option value="New">New</option>
                                     <option value="Active">Active</option>
                                     <option value="Repair">Repair</option>

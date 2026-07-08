@@ -533,6 +533,22 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     ${o.photo_url ? `<img src="${o.photo_url}" class="mt-3 max-h-24 rounded-lg border border-grayBorder" />` : ''}
                     ${o.diagnosis_notes ? `<p class="mt-2 text-xs text-grayText italic bg-navyBG/20 p-2 rounded border border-grayBorder">Lab Diagnosis Logs: ${o.diagnosis_notes}</p>` : ''}
                     ${o.custom_quote_parts ? `<p class="mt-2 text-xs text-amber-300 italic bg-navyBG/20 p-2 rounded border border-grayBorder">Requested Spare Parts: ${o.custom_quote_parts}</p>` : ''}
+                    ${(() => {
+                        if (status === 'Pending' && o.created_at) {
+                            const createdDate = new Date(o.created_at);
+                            const twoDaysAgo = new Date();
+                            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+                            if (createdDate < twoDaysAgo) {
+                                return `
+                                    <div class="mt-2 text-xs text-rose-400 font-semibold bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 animate-pulse">
+                                        <i class="fa-solid fa-triangle-exclamation text-rose-400 text-sm"></i>
+                                        <span>Alert: Pending assignment for over 2 days! Urgent action required.</span>
+                                    </div>
+                                `;
+                            }
+                        }
+                        return '';
+                    })()}
                     ${metadataPanel}
                     ${quotationHtml}
                     ${otpNoticeHtml}
@@ -2077,10 +2093,8 @@ async function loadDashboard() {
     if (supabase) {
         try {
             let query = supabase.from('orders').select('*');
-            if (isAdmin) {
-                // Load all
-            } else if (isCoordinator) {
-                query = query.in('status', ['Pending', 'Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Completed', 'Rejected', 'Cancelled']);
+            if (isAdmin || isCoordinator) {
+                // Coordinators and Admins load all orders for comprehensive control console
             } else if (isTechnician) {
                 query = query.eq('technician_id', currentUser.id);
             } else if (isRepairMaster) {
@@ -2100,15 +2114,84 @@ async function loadDashboard() {
     }
 
     // Update stats counters
-    const total = orders.length;
-    const pending = orders.filter(o => ['Pending', 'Technician Assigned', 'RepairMaster Assigned'].includes(o.status)).length;
-    const inProgress = orders.filter(o => ['Pickup-Pending', 'With-RepairMaster', 'In-Progress'].includes(o.status)).length;
-    const completed = orders.filter(o => ['Completed', 'Confirmed'].includes(o.status)).length;
+    const metricContainer = document.getElementById('metric-cards-container');
+    if (metricContainer) {
+        if (isRepairMaster) {
+            const countNew = orders.filter(o => ['New', 'Pending'].includes(o.status)).length;
+            const countDiagnosis = orders.filter(o => ['With-RepairMaster', 'Diagnosis-Pending'].includes(o.status)).length;
+            const countRepair = orders.filter(o => ['Repair-In-Progress', 'Confirmed'].includes(o.status)).length;
+            const countComplete = orders.filter(o => ['Repair-Completed', 'Completed'].includes(o.status)).length;
 
-    if (document.getElementById('statTotal')) document.getElementById('statTotal').textContent = total;
-    if (document.getElementById('statPending')) document.getElementById('statPending').textContent = pending;
-    if (document.getElementById('statInProgress')) document.getElementById('statInProgress').textContent = inProgress;
-    if (document.getElementById('statCompleted')) document.getElementById('statCompleted').textContent = completed;
+            const cur = window.customStatFilter || 'All';
+            metricContainer.innerHTML = `
+                <div onclick="setStatFilter('New')" data-filter="New" class="stat-card cursor-pointer bg-slate-900/40 border ${cur === 'New' ? 'border-teal bg-teal-500/5' : 'border-slate-800'} rounded-2xl p-5 text-center hover:border-teal/50 transition">
+                    <div class="text-3xl font-black text-amber-400">${countNew}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">New Requests</div>
+                </div>
+                <div onclick="setStatFilter('Diagnosis')" data-filter="Diagnosis" class="stat-card cursor-pointer bg-slate-900/40 border ${cur === 'Diagnosis' ? 'border-teal bg-teal-500/5' : 'border-slate-800'} rounded-2xl p-5 text-center hover:border-teal/50 transition">
+                    <div class="text-3xl font-black text-blue-400">${countDiagnosis}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Under Diagnosis</div>
+                </div>
+                <div onclick="setStatFilter('Repair')" data-filter="Repair" class="stat-card cursor-pointer bg-slate-900/40 border ${cur === 'Repair' ? 'border-teal bg-teal-500/5' : 'border-slate-800'} rounded-2xl p-5 text-center hover:border-teal/50 transition">
+                    <div class="text-3xl font-black text-teal">${countRepair}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Under Repair</div>
+                </div>
+                <div onclick="setStatFilter('Complete')" data-filter="Complete" class="stat-card cursor-pointer bg-slate-900/40 border ${cur === 'Complete' ? 'border-teal bg-teal-500/5' : 'border-slate-800'} rounded-2xl p-5 text-center hover:border-teal/50 transition">
+                    <div class="text-3xl font-black text-emerald-400">${countComplete}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Complete</div>
+                </div>
+            `;
+        } else if (isTechnician) {
+            const countNew = orders.filter(o => ['Technician Assigned', 'RepairMaster Assigned'].includes(o.status)).length;
+            const countPickup = orders.filter(o => ['Pickup-Pending', 'Pickup-In-Progress'].includes(o.status)).length;
+            const countDelivery = orders.filter(o => ['Delivery-Pending', 'Ready-For-Delivery', 'Delivery-In-Progress'].includes(o.status)).length;
+            const countComplete = orders.filter(o => ['Delivered', 'Completed'].includes(o.status)).length;
+
+            const cur = window.customStatFilter || 'All';
+            metricContainer.innerHTML = `
+                <div onclick="setStatFilter('New')" data-filter="New" class="stat-card cursor-pointer bg-slate-900/40 border ${cur === 'New' ? 'border-teal bg-teal-500/5' : 'border-slate-800'} rounded-2xl p-5 text-center hover:border-teal/50 transition">
+                    <div class="text-3xl font-black text-amber-400">${countNew}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">New Requests</div>
+                </div>
+                <div onclick="setStatFilter('Pickup')" data-filter="Pickup" class="stat-card cursor-pointer bg-slate-900/40 border ${cur === 'Pickup' ? 'border-teal bg-teal-500/5' : 'border-slate-800'} rounded-2xl p-5 text-center hover:border-teal/50 transition">
+                    <div class="text-3xl font-black text-blue-400">${countPickup}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Under Pickup</div>
+                </div>
+                <div onclick="setStatFilter('Delivery')" data-filter="Delivery" class="stat-card cursor-pointer bg-slate-900/40 border ${cur === 'Delivery' ? 'border-teal bg-teal-500/5' : 'border-slate-800'} rounded-2xl p-5 text-center hover:border-teal/50 transition">
+                    <div class="text-3xl font-black text-teal">${countDelivery}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Under Delivery</div>
+                </div>
+                <div onclick="setStatFilter('Complete')" data-filter="Complete" class="stat-card cursor-pointer bg-slate-900/40 border ${cur === 'Complete' ? 'border-teal bg-teal-500/5' : 'border-slate-800'} rounded-2xl p-5 text-center hover:border-teal/50 transition">
+                    <div class="text-3xl font-black text-emerald-400">${countComplete}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Complete</div>
+                </div>
+            `;
+        } else {
+            const total = orders.length;
+            const pending = orders.filter(o => ['Pending', 'Technician Assigned', 'RepairMaster Assigned'].includes(o.status)).length;
+            const inProgress = orders.filter(o => ['Pickup-Pending', 'With-RepairMaster', 'In-Progress'].includes(o.status)).length;
+            const completed = orders.filter(o => ['Completed', 'Confirmed'].includes(o.status)).length;
+
+            metricContainer.innerHTML = `
+                <div class="stat-card bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-center">
+                    <div class="text-3xl font-black text-teal" id="statTotal">${total}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Total Tickets</div>
+                </div>
+                <div class="stat-card bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-center">
+                    <div class="text-3xl font-black text-amber-400" id="statPending">${pending}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Pending Assignment</div>
+                </div>
+                <div class="stat-card bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-center">
+                    <div class="text-3xl font-black text-blue-400" id="statInProgress">${inProgress}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Active Handover</div>
+                </div>
+                <div class="stat-card bg-slate-900/40 border border-slate-800 rounded-2xl p-5 text-center">
+                    <div class="text-3xl font-black text-emerald-400" id="statCompleted">${completed}</div>
+                    <div class="text-xs text-gray-400 mt-1 uppercase tracking-wider font-bold">Completed &amp; Fixed</div>
+                </div>
+            `;
+        }
+    }
 
     window.allFetchedOrders = orders;
 
@@ -2152,11 +2235,9 @@ async function loadDashboard() {
         const filterStartDate = document.getElementById('filterStartDate')?.value || '';
         const filterEndDate = document.getElementById('filterEndDate')?.value || '';
 
-        const hasActiveFilter = !!(searchQuery || selectedStatus !== 'All' || selectedTechnician !== 'All' || filterStartDate || filterEndDate);
+        const hasActiveFilter = !!(searchQuery || selectedStatus !== 'All' || selectedTechnician !== 'All' || filterStartDate || filterEndDate || (window.customStatFilter && window.customStatFilter !== 'All'));
 
         function isOrderMatching(o) {
-            if (!hasActiveFilter) return true;
-
             let matchesSearch = true;
             if (searchQuery) {
                 matchesSearch = (o.order_number || '').toLowerCase().includes(searchQuery) ||
@@ -2168,6 +2249,8 @@ async function loadDashboard() {
             if (selectedStatus !== 'All') {
                 if (selectedStatus === 'New') {
                     matchesStatus = o.status === 'Pending';
+                } else if (selectedStatus === 'PendingAction') {
+                    matchesStatus = ['Pending', 'Quotation-Sent'].includes(o.status);
                 } else if (selectedStatus === 'Active') {
                     matchesStatus = ['Technician Assigned', 'Pickup-Pending', 'Confirmed', 'With-RepairMaster', 'Quotation-Sent', 'Awaiting-Payment'].includes(o.status);
                 } else if (selectedStatus === 'Repair') {
@@ -2181,7 +2264,7 @@ async function loadDashboard() {
 
             let matchesTechnician = true;
             if (selectedTechnician !== 'All') {
-                matchesTechnician = (o.technician_id === selectedTechnician);
+                matchesTechnician = (String(o.technician_id) === String(selectedTechnician));
             }
 
             let matchesDate = true;
@@ -2197,7 +2280,32 @@ async function loadDashboard() {
                 matchesDate = false;
             }
 
-            return matchesSearch && matchesStatus && matchesTechnician && matchesDate;
+            let matchesStatCard = true;
+            if (window.customStatFilter && window.customStatFilter !== 'All') {
+                if (activeRole === 'repairmaster') {
+                    if (window.customStatFilter === 'New') {
+                        matchesStatCard = ['New', 'Pending'].includes(o.status);
+                    } else if (window.customStatFilter === 'Diagnosis') {
+                        matchesStatCard = ['With-RepairMaster', 'Diagnosis-Pending'].includes(o.status);
+                    } else if (window.customStatFilter === 'Repair') {
+                        matchesStatCard = ['Repair-In-Progress', 'Confirmed'].includes(o.status);
+                    } else if (window.customStatFilter === 'Complete') {
+                        matchesStatCard = ['Repair-Completed', 'Completed'].includes(o.status);
+                    }
+                } else if (activeRole === 'technician') {
+                    if (window.customStatFilter === 'New') {
+                        matchesStatCard = ['Technician Assigned', 'RepairMaster Assigned'].includes(o.status);
+                    } else if (window.customStatFilter === 'Pickup') {
+                        matchesStatCard = ['Pickup-Pending', 'Pickup-In-Progress'].includes(o.status);
+                    } else if (window.customStatFilter === 'Delivery') {
+                        matchesStatCard = ['Delivery-Pending', 'Ready-For-Delivery', 'Delivery-In-Progress'].includes(o.status);
+                    } else if (window.customStatFilter === 'Complete') {
+                        matchesStatCard = ['Delivered', 'Completed'].includes(o.status);
+                    }
+                }
+            }
+
+            return matchesSearch && matchesStatus && matchesTechnician && matchesDate && matchesStatCard;
         }
 
         let ordersToRender = [...window.allFetchedOrders];
@@ -2211,8 +2319,39 @@ async function loadDashboard() {
             return new Date(b.created_at || 0) - new Date(a.created_at || 0);
         });
 
+        let pillFilterHtml = '';
+        if (isRepairMaster || isTechnician) {
+            const currentFilter = window.customStatFilter || 'All';
+            const options = isRepairMaster ? [
+                { id: 'All', label: 'All Jobs' },
+                { id: 'New', label: 'New Requests' },
+                { id: 'Diagnosis', label: 'Under Diagnosis' },
+                { id: 'Repair', label: 'Under Repair' },
+                { id: 'Complete', label: 'Completed' }
+            ] : [
+                { id: 'All', label: 'All Jobs' },
+                { id: 'New', label: 'New Requests' },
+                { id: 'Pickup', label: 'Under Pickup' },
+                { id: 'Delivery', label: 'Under Delivery' },
+                { id: 'Complete', label: 'Completed' }
+            ];
+
+            pillFilterHtml = `
+                <div class="flex flex-wrap items-center gap-1.5 pb-4 mb-2">
+                    <span class="text-[10px] text-gray-500 font-bold uppercase tracking-wider mr-1.5"><i class="fa-solid fa-filter text-teal"></i> Active Stat Filter:</span>
+                    ${options.map(opt => {
+                        const active = currentFilter === opt.id;
+                        const btnClass = active 
+                            ? "bg-teal/20 border-teal text-teal text-[11px] font-black px-3.5 py-1.5 rounded-full border transition"
+                            : "bg-slate-900/60 border-slate-800 text-gray-400 hover:text-white text-[11px] font-bold px-3.5 py-1.5 rounded-full border transition";
+                        return `<button onclick="setStatFilter('${opt.id}')" class="${btnClass}">${opt.label}</button>`;
+                    }).join('')}
+                </div>
+            `;
+        }
+
         if (ordersToRender.length === 0) {
-            container.innerHTML = `
+            container.innerHTML = pillFilterHtml + `
                 <div class="text-center text-grayText/60 py-12">
                     <i class="fa-regular fa-folder-open text-5xl mb-3 text-tealAccent"></i>
                     <p class="text-base font-semibold text-white">No Tickets Available</p>
@@ -2233,7 +2372,7 @@ async function loadDashboard() {
             `;
         }
 
-        let html = matchAlertHtml + `<div class="grid grid-cols-1 gap-4">`;
+        let html = pillFilterHtml + matchAlertHtml + `<div class="grid grid-cols-1 gap-4">`;
         ordersToRender.forEach(o => {
             const matched = isOrderMatching(o);
             html += buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, false, matched);
@@ -3376,6 +3515,9 @@ document.addEventListener('DOMContentLoaded', async function() {
             if (isDashboard) {
                 await loadDashboard();
             }
+            if (isRequest) {
+                await prefillRequestForm();
+            }
         } else {
             updateNavForAuth(null);
             // Protect dashboard page (handled inline on dashboard.html via login container)
@@ -4320,3 +4462,53 @@ function showAddSubcontractorForm() {
     showToast(`📝 Partnership registration form loaded. Contact HQ.`, 'success');
 }
 window.showAddSubcontractorForm = showAddSubcontractorForm;
+
+function setStatFilter(filter) {
+    if (window.customStatFilter === filter) {
+        window.customStatFilter = 'All';
+    } else {
+        window.customStatFilter = filter;
+    }
+    
+    if (window.renderFilteredOrders) {
+        window.renderFilteredOrders();
+    }
+}
+window.setStatFilter = setStatFilter;
+
+async function prefillRequestForm() {
+    if (!supabase || !currentUser) return;
+    try {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', currentUser.id)
+            .maybeSingle();
+
+        if (error) throw error;
+        
+        if (profile) {
+            const nameField = document.getElementById('reqName');
+            const phoneField = document.getElementById('reqPhone');
+            const emailField = document.getElementById('reqEmail');
+            const addressField = document.getElementById('reqAddressLine');
+
+            if (nameField && profile.full_name) {
+                nameField.value = profile.full_name;
+            }
+            if (phoneField && profile.phone) {
+                phoneField.value = profile.phone;
+            }
+            if (emailField && currentUser.email) {
+                emailField.value = currentUser.email;
+            }
+            if (addressField && profile.address) {
+                addressField.value = profile.address;
+            }
+            showToast('📋 Form pre-filled with your sign-up profile data!', 'success');
+        }
+    } catch (e) {
+        console.warn('Could not prefill form from profiles:', e);
+    }
+}
+window.prefillRequestForm = prefillRequestForm;
