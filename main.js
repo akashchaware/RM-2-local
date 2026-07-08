@@ -328,7 +328,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     }
 
     let quotationHtml = '';
-    if (status === 'Quotation-Sent' || o.total_price) {
+    if ((status === 'Quotation-Sent' || o.total_price) && !isTechnician) {
         const partsList = parseCustomQuoteParts(o.custom_quote_parts);
         const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
         const additionalParts = partsList.filter(p => !p.name.startsWith('[Original]') && !p.name.startsWith('[Old]'));
@@ -528,7 +528,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                         <span>ID: ${o.order_number}</span>
                         <span class="mx-2">•</span>
                         <span>📅 ${new Date(o.created_at).toLocaleDateString()}</span>
-                        ${o.address ? `<span class="mx-2">•</span><span>📍 ${o.address}</span>` : ''}
+                        ${o.address && !isRepairMaster ? `<span class="mx-2">•</span><span>📍 ${o.address}</span>` : ''}
                     </div>
                     ${o.photo_url ? `<img src="${o.photo_url}" class="mt-3 max-h-24 rounded-lg border border-grayBorder" />` : ''}
                     ${o.diagnosis_notes ? `<p class="mt-2 text-xs text-grayText italic bg-navyBG/20 p-2 rounded border border-grayBorder">Lab Diagnosis Logs: ${o.diagnosis_notes}</p>` : ''}
@@ -540,7 +540,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     <div id="inline-form-container-${o.id}"></div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
-                    <span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>
+                    ${isTechnician ? '' : `<span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>`}
                     <div id="actions-${o.id}" class="flex flex-wrap gap-1 justify-end">${actions}</div>
                 </div>
             </div>
@@ -1276,88 +1276,200 @@ async function submitAssignDelivery(orderId) {
 }
 
 function showDiagnosisForm(orderId) {
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    const currentDiag = order ? (order.diagnosis_notes || '') : '';
+    const currentNotes = order ? (order.notes || '') : '';
+    const currentPartsTotal = order ? (order.parts_total || 0) : 0;
+    const currentTotalPrice = order ? (order.total_price || 0) : 0;
+
+    // Load available inventory items for quick selection
+    let partOptionsHtml = '<option value="">— Select from Lab Inventory (Optional) —</option>';
+    if (window.allInventoryItems && window.allInventoryItems.length > 0) {
+        window.allInventoryItems.forEach(item => {
+            partOptionsHtml += `<option value="${item.part_name}|${item.price}">${item.part_name} (Stock: ${item.quantity}, Price: ₹${item.price})</option>`;
+        });
+    }
+
     const contentHtml = `
-        <div class="space-y-4">
+        <div class="space-y-4 text-left font-sans">
             <div class="flex items-center gap-2 border-b border-white/5 pb-2">
-                <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl">
+                <div class="w-10 h-10 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-full flex items-center justify-center text-xl animate-pulse">
                     <i class="fa-solid fa-stethoscope"></i>
                 </div>
                 <div>
-                    <h3 class="text-sm font-bold text-teal-400 uppercase tracking-wider">Lab Diagnosis Logs</h3>
-                    <p class="text-[10px] text-gray-400">RepairMaster Bench Desk</p>
+                    <h3 class="text-sm font-bold text-amber-400 uppercase tracking-wider font-display">Bench Diagnosis &amp; Parts Workstation</h3>
+                    <p class="text-[10px] text-gray-400">Order Ref: ${order ? order.order_number : orderId}</p>
                 </div>
             </div>
+
+            <!-- 1. Diagnosis Notes -->
             <div>
-                <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Diagnosis Notes &amp; Test Results</label>
-                <textarea id="diag-notes-${orderId}" rows="4" placeholder="Describe hardware test results, motherboard diagnostics, or microscopic inspection notes..." class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none resize-none focus:border-teal"></textarea>
+                <label class="block text-[10px] text-gray-400 uppercase font-bold mb-1">1. Diagnosis Notes &amp; Test Results</label>
+                <textarea id="diag-notes-${orderId}" rows="3" placeholder="Describe diagnostic results, e.g., Microscopic check verified glass lamination intact..." class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none resize-none focus:border-amber-400">${currentDiag}</textarea>
             </div>
+
+            <!-- 2. Advise Coordinator -->
+            <div>
+                <label class="block text-[10px] text-amber-400 uppercase font-bold mb-1 flex items-center gap-1">
+                    <i class="fa-solid fa-comments"></i> 2. Advise Coordinator (Notes / Communication)
+                </label>
+                <textarea id="diag-advise-${orderId}" rows="2" placeholder="Send notes to coordinator, e.g., 'Part is out of stock, need to order from hub...'" class="w-full bg-slate-950 border border-amber-500/20 rounded-lg p-2.5 text-xs text-white outline-none resize-none focus:border-amber-400">${currentNotes}</textarea>
+            </div>
+
+            <!-- 3. Parts Request & Update Estimate -->
+            <div class="border-t border-white/5 pt-3 space-y-3">
+                <span class="block text-[10px] text-gray-400 uppercase font-bold">3. Request Parts &amp; Estimate Pricing</span>
+                
+                <!-- Quick Selection Dropdown -->
+                <div>
+                    <select id="diag-inventory-select-${orderId}" onchange="selectInventoryPart('${orderId}')" class="w-full bg-slate-950 border border-white/10 p-2 rounded-xl text-xs text-white outline-none focus:border-amber-400 cursor-pointer">
+                        ${partOptionsHtml}
+                    </select>
+                </div>
+
+                <!-- Custom request inputs -->
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[9px] text-gray-400 uppercase mb-1">Part / Service Name</label>
+                        <input type="text" id="diag-part-name-${orderId}" placeholder="e.g. Back Glass replacement" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400" />
+                    </div>
+                    <div>
+                        <label class="block text-[9px] text-gray-400 uppercase mb-1">Estimated Price (₹)</label>
+                        <input type="number" id="diag-part-price-${orderId}" placeholder="e.g. 1200" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400" />
+                    </div>
+                </div>
+
+                <div class="flex justify-end">
+                    <button onclick="addPartFromDiagnosis('${orderId}')" class="bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/20 px-3 py-1.5 rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> Add Part to Quote
+                    </button>
+                </div>
+
+                <!-- Adjust Total Estimate -->
+                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
+                    <div>
+                        <label class="block text-[9px] text-gray-400 uppercase mb-1">Adjust Parts Estimate (₹)</label>
+                        <input type="number" id="diag-parts-total-${orderId}" value="${currentPartsTotal}" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400" />
+                    </div>
+                    <div>
+                        <label class="block text-[9px] text-gray-400 uppercase mb-1">Adjust Total Estimate (₹)</label>
+                        <input type="number" id="diag-total-price-${orderId}" value="${currentTotalPrice}" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Buttons -->
             <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
                 <button onclick="closeAllDashboardModals()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
-                <button onclick="submitDiagnosis('${orderId}')" class="px-4 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Save Logs</button>
+                <button onclick="submitRedesignedDiagnosis('${orderId}')" class="px-4 py-1.5 rounded bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-400 transition">Save &amp; Update Bench</button>
             </div>
         </div>
     `;
     createDashboardModal(`diagModal-${orderId}`, contentHtml, 'max-w-md');
 }
 
-async function submitDiagnosis(orderId) {
-    const notesInput = document.getElementById(`diag-notes-${orderId}`);
-    if (!notesInput) return;
-    
-    const notes = notesInput.value.trim();
-    if (!notes) {
-        showToast('Please enter diagnosis notes.', 'error');
-        return;
+function selectInventoryPart(orderId) {
+    const select = document.getElementById(`diag-inventory-select-${orderId}`);
+    const nameInput = document.getElementById(`diag-part-name-${orderId}`);
+    const priceInput = document.getElementById(`diag-part-price-${orderId}`);
+    if (select && select.value && nameInput && priceInput) {
+        const [name, price] = select.value.split('|');
+        nameInput.value = name;
+        priceInput.value = price;
     }
-    
-    await updateDiagnosis(orderId, notes);
 }
 
-function showAddPartForm(orderId) {
-    const contentHtml = `
-        <div class="space-y-4">
-            <div class="flex items-center gap-2 border-b border-white/5 pb-2">
-                <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-puzzle-piece"></i>
-                </div>
-                <div>
-                    <h3 class="text-sm font-bold text-teal-400 uppercase tracking-wider">Request Additional Part</h3>
-                    <p class="text-[10px] text-gray-400">Bench Lab extra component log</p>
-                </div>
-            </div>
-            <div class="space-y-3">
-                <div>
-                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Part / Service Name</label>
-                    <input type="text" id="add-part-name-${orderId}" placeholder="e.g. Back Glass panel" class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal" />
-                </div>
-                <div>
-                    <label class="block text-[10px] text-gray-400 uppercase font-semibold mb-1">Estimated Cost (₹)</label>
-                    <input type="number" id="add-part-price-${orderId}" placeholder="e.g. 1500" class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal" />
-                </div>
-            </div>
-            <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
-                <button onclick="closeAllDashboardModals()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
-                <button onclick="submitAddPart('${orderId}')" class="px-4 py-1.5 rounded bg-teal text-slate-950 text-xs font-bold hover:bg-tealAccent transition">Submit Request</button>
-            </div>
-        </div>
-    `;
-    createDashboardModal(`addPartModal-${orderId}`, contentHtml, 'max-w-md');
-}
-
-async function submitAddPart(orderId) {
-    const nameInput = document.getElementById(`add-part-name-${orderId}`);
-    const priceInput = document.getElementById(`add-part-price-${orderId}`);
+async function addPartFromDiagnosis(orderId) {
+    const nameInput = document.getElementById(`diag-part-name-${orderId}`);
+    const priceInput = document.getElementById(`diag-part-price-${orderId}`);
     if (!nameInput || !priceInput) return;
-    
+
     const partName = nameInput.value.trim();
     const price = parseFloat(priceInput.value) || 0;
-    
+
     if (!partName) {
         showToast('Please enter a part name.', 'error');
         return;
     }
-    
-    await requestAdditionalParts(orderId, partName, price);
+
+    if (!supabase) {
+        showToast('Database disconnected. Saved locally.', 'success');
+        return;
+    }
+
+    try {
+        const { data: ticket } = await supabase.from('orders').select('custom_quote_parts').eq('id', orderId).single();
+        let existing = ticket?.custom_quote_parts ? ticket.custom_quote_parts + '\n' : '';
+        existing += `[Additional] ${partName},${price}`;
+        
+        const { error } = await supabase.from('orders').update({ custom_quote_parts: existing }).eq('id', orderId);
+        if (error) throw error;
+
+        // Auto-increment estimate inputs on form
+        const partsTotalInput = document.getElementById(`diag-parts-total-${orderId}`);
+        const totalPriceInput = document.getElementById(`diag-total-price-${orderId}`);
+        if (partsTotalInput) {
+            partsTotalInput.value = (parseFloat(partsTotalInput.value) || 0) + price;
+        }
+        if (totalPriceInput) {
+            totalPriceInput.value = (parseFloat(totalPriceInput.value) || 0) + price;
+        }
+
+        showToast('Part successfully requested and added to estimate.', 'success');
+        nameInput.value = '';
+        priceInput.value = '';
+    } catch (err) {
+        showToast('Failed to add part: ' + err.message, 'error');
+    }
+}
+
+async function submitRedesignedDiagnosis(orderId) {
+    const notesVal = document.getElementById(`diag-notes-${orderId}`)?.value.trim() || '';
+    const adviseVal = document.getElementById(`diag-advise-${orderId}`)?.value.trim() || '';
+    const partsTotalVal = parseFloat(document.getElementById(`diag-parts-total-${orderId}`)?.value) || 0;
+    const totalPriceVal = parseFloat(document.getElementById(`diag-total-price-${orderId}`)?.value) || 0;
+
+    if (!notesVal) {
+        showToast('Please enter diagnosis notes.', 'error');
+        return;
+    }
+
+    if (!supabase) {
+        showToast('Saved locally in offline mode.', 'success');
+        closeAllDashboardModals();
+        return;
+    }
+
+    try {
+        const { error } = await supabase.from('orders').update({
+            diagnosis_notes: notesVal,
+            notes: adviseVal,
+            parts_total: partsTotalVal,
+            total_price: totalPriceVal
+        }).eq('id', orderId);
+
+        if (error) throw error;
+
+        showToast('📋 Lab diagnostics and coordinator advice updated!', 'success');
+        closeAllDashboardModals();
+        loadDashboard();
+    } catch (err) {
+        showToast('Update failed: ' + err.message, 'error');
+    }
+}
+
+// Backward compatibility helper
+function showAddPartForm(orderId) {
+    showDiagnosisForm(orderId);
+}
+
+async function submitAddPart(orderId) {
+    await submitRedesignedDiagnosis(orderId);
+}
+
+// Keep submitDiagnosis for legacy references
+async function submitDiagnosis(orderId) {
+    await submitRedesignedDiagnosis(orderId);
 }
 
 function parseCustomQuoteParts(customPartsStr) {
@@ -2022,11 +2134,25 @@ async function loadDashboard() {
             }
         }
 
-        const searchQuery = document.getElementById('filterSearch')?.value.trim().toLowerCase() || '';
-        const selectedHub = document.getElementById('filterHub')?.value || 'All';
-        const selectedStatus = document.getElementById('filterStatus')?.value || 'All';
+        // Populate technician dropdown dynamically if it has not been loaded yet
+        const filterTechSelect = document.getElementById('filterTechnician');
+        if (filterTechSelect && filterTechSelect.options.length <= 1) {
+            const techs = window.allTechnicians || [];
+            techs.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t.id;
+                opt.textContent = t.name;
+                filterTechSelect.appendChild(opt);
+            });
+        }
 
-        const hasActiveFilter = !!(searchQuery || selectedHub !== 'All' || selectedStatus !== 'All');
+        const searchQuery = document.getElementById('filterSearch')?.value.trim().toLowerCase() || '';
+        const selectedStatus = document.getElementById('filterStatus')?.value || 'All';
+        const selectedTechnician = document.getElementById('filterTechnician')?.value || 'All';
+        const filterStartDate = document.getElementById('filterStartDate')?.value || '';
+        const filterEndDate = document.getElementById('filterEndDate')?.value || '';
+
+        const hasActiveFilter = !!(searchQuery || selectedStatus !== 'All' || selectedTechnician !== 'All' || filterStartDate || filterEndDate);
 
         function isOrderMatching(o) {
             if (!hasActiveFilter) return true;
@@ -2038,35 +2164,40 @@ async function loadDashboard() {
                     (o.customer_phone || '').toLowerCase().includes(searchQuery);
             }
 
-            let matchesHub = true;
-            if (selectedHub !== 'All') {
-                matchesHub = (o.address || '').toLowerCase().includes(selectedHub.toLowerCase());
-            }
-
             let matchesStatus = true;
             if (selectedStatus !== 'All') {
-                if (selectedStatus === 'Pending') {
+                if (selectedStatus === 'New') {
                     matchesStatus = o.status === 'Pending';
-                } else if (selectedStatus === 'Pickup') {
-                    matchesStatus = ['Technician Assigned', 'Pickup-Pending'].includes(o.status);
-                } else if (selectedStatus === 'Lab') {
-                    matchesStatus = o.status === 'With-RepairMaster';
-                } else if (selectedStatus === 'Quotation') {
-                    matchesStatus = o.status === 'Quotation-Sent';
-                } else if (selectedStatus === 'Repairing') {
-                    matchesStatus = o.status === 'Confirmed';
-                } else if (selectedStatus === 'Payment') {
-                    matchesStatus = o.status === 'Awaiting-Payment';
+                } else if (selectedStatus === 'Active') {
+                    matchesStatus = ['Technician Assigned', 'Pickup-Pending', 'Confirmed', 'With-RepairMaster', 'Quotation-Sent', 'Awaiting-Payment'].includes(o.status);
+                } else if (selectedStatus === 'Repair') {
+                    matchesStatus = o.status === 'With-RepairMaster' || o.status === 'Confirmed';
                 } else if (selectedStatus === 'Delivery') {
                     matchesStatus = o.status === 'Ready-For-Delivery';
-                } else if (selectedStatus === 'Completed') {
-                    matchesStatus = o.status === 'Completed';
-                } else if (selectedStatus === 'Rejected') {
-                    matchesStatus = o.status === 'Rejected';
+                } else if (selectedStatus === 'Closed') {
+                    matchesStatus = ['Completed', 'Rejected'].includes(o.status);
                 }
             }
 
-            return matchesSearch && matchesHub && matchesStatus;
+            let matchesTechnician = true;
+            if (selectedTechnician !== 'All') {
+                matchesTechnician = (o.technician_id === selectedTechnician);
+            }
+
+            let matchesDate = true;
+            if (o.created_at) {
+                const orderDate = o.created_at.substring(0, 10); // YYYY-MM-DD
+                if (filterStartDate && orderDate < filterStartDate) {
+                    matchesDate = false;
+                }
+                if (filterEndDate && orderDate > filterEndDate) {
+                    matchesDate = false;
+                }
+            } else if (filterStartDate || filterEndDate) {
+                matchesDate = false;
+            }
+
+            return matchesSearch && matchesStatus && matchesTechnician && matchesDate;
         }
 
         let ordersToRender = [...window.allFetchedOrders];
@@ -2221,6 +2352,21 @@ function toggleNotificationDropdown(event) {
     if (dropdown) dropdown.classList.toggle('hidden');
 }
 window.toggleNotificationDropdown = toggleNotificationDropdown;
+
+function toggleProfileDropdown(event) {
+    if (event) event.stopPropagation();
+    const dropdown = document.getElementById('profileDropdown');
+    if (dropdown) dropdown.classList.toggle('hidden');
+}
+window.toggleProfileDropdown = toggleProfileDropdown;
+
+// Global outside click listener to close dropdowns
+document.addEventListener('click', () => {
+    const pDropdown = document.getElementById('profileDropdown');
+    if (pDropdown) pDropdown.classList.add('hidden');
+    const nDropdown = document.getElementById('notificationDropdown');
+    if (nDropdown) nDropdown.classList.add('hidden');
+});
 
 function clearNotifications() {
     const badge = document.getElementById('navNotificationBadge');
@@ -2415,10 +2561,27 @@ async function updateNavForAuth(user) {
                 <!-- Role Switcher Dropdown in navbar if multiple roles -->
                 ${roleSwitcherHtml}
 
-                <!-- Custom Avatar Menu trigger (Compact round avatar) -->
-                <div onclick="toggleProfileDrawer()" class="relative cursor-pointer select-none" title="View Account Profile">
-                    <div class="w-9 h-9 rounded-full bg-teal-500/10 border-2 border-teal-500/40 text-teal-400 font-bold text-sm flex items-center justify-center shadow-lg shadow-teal-500/5 hover:border-teal-400 transition-all duration-300">
+                <!-- Custom Avatar Menu trigger (Compact round avatar with dropdown) -->
+                <div class="relative inline-block text-left" id="profileDropdownContainer">
+                    <button onclick="toggleProfileDropdown(event)" class="w-9 h-9 rounded-full bg-teal-500/10 border-2 border-teal-500/40 text-teal-400 font-bold text-sm flex items-center justify-center shadow-lg shadow-teal-500/5 hover:border-teal-400 transition-all duration-300 focus:outline-none" title="View Account Profile">
                         ${initials}
+                    </button>
+                    <!-- Desktop Profile Dropdown -->
+                    <div id="profileDropdown" class="hidden absolute right-0 mt-3 w-52 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl z-50 py-2.5 text-left">
+                        <div class="px-4 py-2 border-b border-slate-800/60 mb-1">
+                            <p class="text-xs font-black text-white truncate">${username}</p>
+                            <p class="text-[9px] text-gray-400 truncate">${user.email}</p>
+                        </div>
+                        <button onclick="toggleProfileDrawer(); toggleProfileDropdown(event);" class="w-full text-left px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-slate-800/40 flex items-center gap-2 transition">
+                            <i class="fa-regular fa-user text-teal"></i> Account Profile
+                        </button>
+                        <a href="dashboard.html" class="w-full text-left px-4 py-2 text-xs text-gray-300 hover:text-white hover:bg-slate-800/40 flex items-center gap-2 transition">
+                            <i class="fa-solid fa-chart-line text-teal"></i> Go to Dashboard
+                        </a>
+                        <div class="border-t border-slate-800/60 my-1"></div>
+                        <button onclick="logoutUser()" class="w-full text-left px-4 py-2 text-xs text-red-400 hover:bg-red-500/10 flex items-center gap-2 transition">
+                            <i class="fa-solid fa-power-off text-red-500"></i> Log Out
+                        </button>
                     </div>
                 </div>
             `;
@@ -3622,23 +3785,22 @@ const ROLE_TABS = {
         { id: 'filters', label: 'Control Console', icon: 'fa-sliders' },
         { id: 'map', label: 'Live Active Map', icon: 'fa-map-location-dot' },
         { id: 'cities', label: 'Cities Coverage', icon: 'fa-city' },
-        { id: 'subcontractors', label: 'Log Sub-Contractors', icon: 'fa-handshake' }
+        { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' }
     ],
     technician: [
         { id: 'tickets', label: 'Diagnostic Workstation', icon: 'fa-laptop-code' },
         { id: 'diagnostics', label: 'Lab Diagnostic Checklist', icon: 'fa-circle-check' },
-        { id: 'handover', label: 'OTP Handover', icon: 'fa-key' },
-        { id: 'inventory', label: 'Lab Inventory', icon: 'fa-boxes-stacked' }
+        { id: 'handover', label: 'OTP Handover', icon: 'fa-key' }
     ],
     repairmaster: [
-        { id: 'tickets', label: 'Full Database Ledger', icon: 'fa-book-open' },
-        { id: 'inventory', label: 'Lab Inventory', icon: 'fa-boxes-stacked' },
-        { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' },
-        { id: 'subcontractor-approvals', label: 'Subcontractor Approvals', icon: 'fa-user-check' }
+        { id: 'tickets', label: 'Repair Bench', icon: 'fa-screwdriver-wrench' },
+        { id: 'inventory', label: 'Lab Inventory', icon: 'fa-boxes-stacked' }
     ],
     admin: [
         { id: 'tickets', label: 'System Tickets', icon: 'fa-ticket' },
         { id: 'filters', label: 'System Diagnostics', icon: 'fa-gauge-high' },
+        { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' },
+        { id: 'subcontractor-approvals', label: 'Subcontractor Approvals', icon: 'fa-user-check' },
         { id: 'sql', label: 'Developer Console', icon: 'fa-database' }
     ],
     customer: [

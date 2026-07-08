@@ -259,36 +259,37 @@
                             <span class="text-xs font-bold uppercase tracking-wider text-teal-400 flex items-center gap-1.5">
                                 <i class="fa-solid fa-filter"></i> Coordinator Control Console
                             </span>
-                            <span class="text-[10px] text-gray-400 font-bold bg-teal-500/10 px-2.5 py-0.5 rounded-full">Group requests by hub or status</span>
+                            <span class="text-[10px] text-gray-400 font-bold bg-teal-500/10 px-2.5 py-0.5 rounded-full">Apply precise status, technician, and date range filters</span>
                         </div>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
                             <div>
                                 <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Search Client / Order No</label>
-                                <input type="text" id="filterSearch" oninput="applyDashboardFilters()" placeholder="Search Name, Phone, ID..." class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
+                                <input type="text" id="filterSearch" oninput="applyDashboardFilters()" placeholder="Name, Phone, ID..." class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
                             </div>
                             <div>
-                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Filter by City Hub</label>
-                                <select id="filterHub" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
-                                    <option value="All">All Hubs (Wardha, Nagpur, Amravati)</option>
-                                    <option value="Wardha">Wardha Hub Only</option>
-                                    <option value="Nagpur">Nagpur Hub Only</option>
-                                    <option value="Amravati">Amravati Hub Only</option>
+                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Workflow Status</label>
+                                <select id="filterStatus" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none cursor-pointer">
+                                    <option value="All">All Statuses</option>
+                                    <option value="New">New</option>
+                                    <option value="Active">Active</option>
+                                    <option value="Repair">Repair</option>
+                                    <option value="Delivery">Delivery</option>
+                                    <option value="Closed">Closed</option>
                                 </select>
                             </div>
                             <div>
-                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Group by Workflow Status</label>
-                                <select id="filterStatus" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none">
-                                    <option value="All">All Tickets</option>
-                                    <option value="Pending">Pending Action</option>
-                                    <option value="Pickup">Pickup &amp; Handover</option>
-                                    <option value="Lab">With RepairMaster (Lab)</option>
-                                    <option value="Quotation">Quotation Awaiting Approval</option>
-                                    <option value="Repairing">Under Repairing</option>
-                                    <option value="Payment">Awaiting Payment</option>
-                                    <option value="Delivery">Ready for Delivery</option>
-                                    <option value="Completed">Completed &amp; Closed</option>
-                                    <option value="Rejected">Rejected / Minimum Service Fee</option>
+                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Assigned Technician</label>
+                                <select id="filterTechnician" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none cursor-pointer">
+                                    <option value="All">All Technicians</option>
                                 </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">Start Date</label>
+                                <input type="date" id="filterStartDate" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="text-[10px] text-gray-400 font-bold uppercase tracking-wider block mb-1.5">End Date</label>
+                                <input type="date" id="filterEndDate" onchange="applyDashboardFilters()" class="w-full bg-slate-950 border border-slate-800 p-2.5 rounded-xl text-xs text-white focus:border-teal-400 outline-none cursor-pointer">
                             </div>
                         </div>
                     </div>
