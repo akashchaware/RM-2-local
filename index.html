@@ -1185,31 +1185,7 @@ document.addEventListener('DOMContentLoaded', function() {
 // ─── Expose to global scope ───
 window.populateBrands = populateBrands;
 window.updateModels = updateModels;
-            // On initial load, we select iPhone 15 Pro Max or iPhone 13 if they exist
-            let selectedIndex = 0;
-            if (isInitialLoad) {
-                const idx = devices.findIndex(d => d.name.toLowerCase().includes('iphone 15 pro max') || d.name.toLowerCase().includes('iphone 13'));
-                if (idx !== -1) selectedIndex = idx;
-            }
-
-            devices.forEach((d, i) => {
-                const opt = document.createElement('option');
-                opt.value = d.id;
-                opt.textContent = d.name;
-                if (i === selectedIndex) opt.selected = true;
-                modelSelect.appendChild(opt);
-            });
-
-            if (isInitialLoad) {
-                isInitialLoad = false;
-            }
-
-            updateRepairTypes();
-        }
-
-        // Expose overridden functions to global scope
-        window.populateBrands = populateBrands;
-        window.updateModels = updateModels;
+          
 
         // Custom Mobile Slide-out Navigation Drawer
         async function toggleMobileMenu() {
