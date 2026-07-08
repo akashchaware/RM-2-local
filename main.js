@@ -194,7 +194,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     `;
                 }
             }
-            if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster'].includes(status)) {
+            if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Diagnosis-Completed'].includes(status)) {
                 actions += `
                     <button onclick="showQuotationForm('${o.id}', ${o.total_price || 0}, '${(o.custom_quote_parts || '').replace(/'/g, "\\'")}')" class="action-btn btn-quote">Manage Price</button>
                 `;
@@ -513,8 +513,12 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const opacityClass = isMatched ? '' : 'opacity-40 hover:opacity-100 transition-opacity duration-300';
     const borderClass = isMatched ? 'border-teal-500/20' : 'border-grayBorder/40';
 
+    const isClickableCard = isCoordinator || isAdmin;
+    const cardClickHandler = isClickableCard ? `onclick="viewOrderDetails('${o.id}')"` : '';
+    const cursorClass = isClickableCard ? 'cursor-pointer hover:bg-slate-900/10 hover:shadow-lg hover:shadow-teal-500/5' : '';
+
     return `
-        <div class="order-card bg-navyBG/40 border ${borderClass} rounded-xl p-5 hover:border-teal-500/30 transition-all ${opacityClass}">
+        <div ${cardClickHandler} class="order-card bg-navyBG/40 border ${borderClass} rounded-xl p-5 hover:border-teal-500/30 transition-all ${opacityClass} ${cursorClass}">
             <div class="flex flex-wrap items-start justify-between gap-3">
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-3 flex-wrap">
@@ -1298,6 +1302,9 @@ function showDiagnosisForm(orderId) {
     const currentPartsTotal = order ? (order.parts_total || 0) : 0;
     const currentTotalPrice = order ? (order.total_price || 0) : 0;
 
+    const activeRole = localStorage.getItem('activeRole') || 'customer';
+    const isRepairMaster = activeRole === 'repairmaster';
+
     // Load available inventory items for quick selection
     let partOptionsHtml = '<option value="">— Select from Lab Inventory (Optional) —</option>';
     if (window.allInventoryItems && window.allInventoryItems.length > 0) {
@@ -1305,6 +1312,11 @@ function showDiagnosisForm(orderId) {
             partOptionsHtml += `<option value="${item.part_name}|${item.price}">${item.part_name} (Stock: ${item.quantity}, Price: ₹${item.price})</option>`;
         });
     }
+
+    const priceStyle = isRepairMaster ? 'readonly class="w-full bg-slate-950/60 border border-white/5 p-2 rounded-lg text-xs text-gray-500 outline-none"' : 'class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400"';
+    const totalPartsStyle = isRepairMaster ? 'readonly class="w-full bg-slate-950/60 border border-white/5 p-2 rounded-lg text-xs text-gray-500 outline-none"' : 'class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400"';
+    const totalStyle = isRepairMaster ? 'readonly class="w-full bg-slate-950/60 border border-white/5 p-2 rounded-lg text-xs text-gray-500 outline-none"' : 'class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400"';
+    const submitBtnText = isRepairMaster ? 'Submit Recommended Diagnosis' : 'Save &amp; Update Bench';
 
     const contentHtml = `
         <div class="space-y-4 text-left font-sans">
@@ -1351,7 +1363,7 @@ function showDiagnosisForm(orderId) {
                     </div>
                     <div>
                         <label class="block text-[9px] text-gray-400 uppercase mb-1">Estimated Price (₹)</label>
-                        <input type="number" id="diag-part-price-${orderId}" placeholder="e.g. 1200" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400" />
+                        <input type="number" id="diag-part-price-${orderId}" placeholder="e.g. 1200" ${priceStyle} />
                     </div>
                 </div>
 
@@ -1364,12 +1376,16 @@ function showDiagnosisForm(orderId) {
                 <!-- Adjust Total Estimate -->
                 <div class="grid grid-cols-2 gap-2 pt-2 border-t border-white/5">
                     <div>
-                        <label class="block text-[9px] text-gray-400 uppercase mb-1">Adjust Parts Estimate (₹)</label>
-                        <input type="number" id="diag-parts-total-${orderId}" value="${currentPartsTotal}" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400" />
+                        <label class="block text-[9px] text-gray-400 uppercase mb-1 flex items-center gap-1">
+                            Adjust Parts Estimate (₹) ${isRepairMaster ? '<i class="fa-solid fa-lock text-[9px] text-gray-500"></i>' : ''}
+                        </label>
+                        <input type="number" id="diag-parts-total-${orderId}" value="${currentPartsTotal}" ${totalPartsStyle} />
                     </div>
                     <div>
-                        <label class="block text-[9px] text-gray-400 uppercase mb-1">Adjust Total Estimate (₹)</label>
-                        <input type="number" id="diag-total-price-${orderId}" value="${currentTotalPrice}" class="w-full bg-slate-950 border border-white/10 p-2 rounded-lg text-xs text-white outline-none focus:border-amber-400" />
+                        <label class="block text-[9px] text-gray-400 uppercase mb-1 flex items-center gap-1">
+                            Adjust Total Estimate (₹) ${isRepairMaster ? '<i class="fa-solid fa-lock text-[9px] text-gray-500"></i>' : ''}
+                        </label>
+                        <input type="number" id="diag-total-price-${orderId}" value="${currentTotalPrice}" ${totalStyle} />
                     </div>
                 </div>
             </div>
@@ -1377,7 +1393,7 @@ function showDiagnosisForm(orderId) {
             <!-- Submit Buttons -->
             <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
                 <button onclick="closeAllDashboardModals()" class="px-3 py-1.5 rounded bg-gray-800 text-white text-xs font-medium hover:bg-gray-750 transition">Cancel</button>
-                <button onclick="submitRedesignedDiagnosis('${orderId}')" class="px-4 py-1.5 rounded bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-400 transition">Save &amp; Update Bench</button>
+                <button onclick="submitRedesignedDiagnosis('${orderId}')" class="px-4 py-1.5 rounded bg-amber-500 text-slate-950 text-xs font-bold hover:bg-amber-400 transition">${submitBtnText}</button>
             </div>
         </div>
     `;
@@ -1456,17 +1472,32 @@ async function submitRedesignedDiagnosis(orderId) {
         return;
     }
 
-    try {
-        const { error } = await supabase.from('orders').update({
-            diagnosis_notes: notesVal,
-            notes: adviseVal,
-            parts_total: partsTotalVal,
-            total_price: totalPriceVal
-        }).eq('id', orderId);
+    const activeRole = localStorage.getItem('activeRole') || 'customer';
+    const isRepairMaster = activeRole === 'repairmaster';
 
+    try {
+        const updateData = {
+            diagnosis_notes: notesVal,
+            notes: adviseVal
+        };
+        if (isRepairMaster) {
+            updateData.status = 'Diagnosis-Completed';
+        } else {
+            updateData.parts_total = partsTotalVal;
+            updateData.total_price = totalPriceVal;
+        }
+
+        const { error } = await supabase.from('orders').update(updateData).eq('id', orderId);
         if (error) throw error;
 
-        showToast('📋 Lab diagnostics and coordinator advice updated!', 'success');
+        if (isRepairMaster) {
+            const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+            const devName = order ? (getDeviceName(order.device_id) !== 'Device' ? getDeviceName(order.device_id) : (order.device_other || 'Device')) : 'Device';
+            await createAlert(orderId, `Bench diagnosis completed for ${devName}. Estimate review required.`, 'diagnosis_completed');
+            showToast('📋 Lab diagnosis recommendation submitted to Coordinator!', 'success');
+        } else {
+            showToast('📋 Lab diagnostics and coordinator advice updated!', 'success');
+        }
         closeAllDashboardModals();
         loadDashboard();
     } catch (err) {
@@ -2089,6 +2120,19 @@ async function loadDashboard() {
     }
 
     // Load orders
+    const ticketsCol = document.getElementById('ticketsCol');
+    const alertsCol = document.getElementById('coordinatorAlertsCol');
+    if (ticketsCol && alertsCol) {
+        if (isCoordinator || isAdmin) {
+            ticketsCol.className = "lg:col-span-2 space-y-6";
+            alertsCol.className = "lg:col-span-1 space-y-6";
+            fetchAndRenderAlerts();
+        } else {
+            ticketsCol.className = "lg:col-span-3 space-y-6";
+            alertsCol.className = "hidden lg:col-span-1 space-y-6";
+        }
+    }
+
     let orders = [];
     if (supabase) {
         try {
@@ -2238,6 +2282,9 @@ async function loadDashboard() {
         const hasActiveFilter = !!(searchQuery || selectedStatus !== 'All' || selectedTechnician !== 'All' || filterStartDate || filterEndDate || (window.customStatFilter && window.customStatFilter !== 'All'));
 
         function isOrderMatching(o) {
+            if (window.singleOrderFilter && window.singleOrderFilter !== o.id) {
+                return false;
+            }
             let matchesSearch = true;
             if (searchQuery) {
                 matchesSearch = (o.order_number || '').toLowerCase().includes(searchQuery) ||
@@ -2443,7 +2490,7 @@ function switchDashboardTab(tabId) {
     const inventoryPanel = document.getElementById('repairmasterInventoryArea');
     const inventoryNotice = document.getElementById('nonStaffInventoryNotice');
     if (inventoryPanel && inventoryNotice) {
-        if (isRepairMaster || isAdmin) {
+        if (isRepairMaster || isCoordinator || isAdmin) {
             inventoryPanel.classList.remove('hidden');
             inventoryNotice.classList.add('hidden');
         } else {
@@ -3693,7 +3740,7 @@ async function loadRepairPartsInventory() {
     if (!area) return;
     
     const activeRole = localStorage.getItem('activeRole') || 'customer';
-    if (activeRole !== 'repairmaster' && activeRole !== 'admin') {
+    if (activeRole !== 'repairmaster' && activeRole !== 'coordinator' && activeRole !== 'admin') {
         area.classList.add('hidden');
         return;
     }
@@ -3725,22 +3772,40 @@ function renderInventoryTable(items) {
     const area = document.getElementById('repairmasterInventoryArea');
     if (!area) return;
     
-    let rowsHtml = items.map(item => `
-        <tr class="border-b border-slate-800 hover:bg-slate-900/30">
-            <td class="p-3 text-xs font-bold text-white">${item.part_name}</td>
-            <td class="p-3 text-xs text-teal font-extrabold">₹${parseFloat(item.price).toLocaleString('en-IN')}</td>
-            <td class="p-3 text-xs">
+    const activeRole = localStorage.getItem('activeRole') || 'customer';
+    const isReadOnly = (activeRole === 'repairmaster');
+    
+    let rowsHtml = items.map(item => {
+        let actionsCol = '';
+        let quantitySelector = `<span class="text-white font-mono font-bold px-1">${item.quantity}</span>`;
+        if (!isReadOnly) {
+            quantitySelector = `
                 <div class="flex items-center gap-2">
                     <button onclick="updateInventoryQty('${item.id}', -1)" class="w-6 h-6 bg-slate-800 text-white hover:bg-red-500 hover:text-white rounded flex items-center justify-center font-bold transition">-</button>
                     <span class="text-white font-mono font-bold px-1">${item.quantity}</span>
                     <button onclick="updateInventoryQty('${item.id}', 1)" class="w-6 h-6 bg-slate-800 text-white hover:bg-emerald-500 hover:text-white rounded flex items-center justify-center font-bold transition">+</button>
                 </div>
-            </td>
-            <td class="p-3 text-xs text-right">
-                <button onclick="deleteInventoryItem('${item.id}')" class="text-red-400 hover:text-red-300 font-bold text-xs"><i class="fa-regular fa-trash-can"></i> Remove</button>
-            </td>
-        </tr>
-    `).join('');
+            `;
+            actionsCol = `
+                <td class="p-3 text-xs text-right">
+                    <button onclick="deleteInventoryItem('${item.id}')" class="text-red-400 hover:text-red-300 font-bold text-xs"><i class="fa-regular fa-trash-can"></i> Remove</button>
+                </td>
+            `;
+        } else {
+            actionsCol = `<td class="p-3 text-xs text-right text-gray-500 italic">Locked (Read-Only)</td>`;
+        }
+        
+        return `
+            <tr class="border-b border-slate-800 hover:bg-slate-900/30">
+                <td class="p-3 text-xs font-bold text-white">${item.part_name}</td>
+                <td class="p-3 text-xs text-teal font-extrabold">₹${parseFloat(item.price).toLocaleString('en-IN')}</td>
+                <td class="p-3 text-xs">
+                    ${quantitySelector}
+                </td>
+                ${actionsCol}
+            </tr>
+        `;
+    }).join('');
     
     if (items.length === 0) {
         rowsHtml = `
@@ -3749,6 +3814,8 @@ function renderInventoryTable(items) {
             </tr>
         `;
     }
+    
+    const registerBtn = isReadOnly ? '' : `<button onclick="toggleAddInventoryForm()" class="btn-teal px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> Register Spare Part</button>`;
     
     area.innerHTML = `
         <div class="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
@@ -3759,7 +3826,7 @@ function renderInventoryTable(items) {
                     </h3>
                     <p class="text-[11px] text-gray-500">Track and manage available spare parts stock level & rates.</p>
                 </div>
-                <button onclick="toggleAddInventoryForm()" class="btn-teal px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5"><i class="fa-solid fa-plus"></i> Register Spare Part</button>
+                ${registerBtn}
             </div>
             
             <!-- Quick Add Inventory Form (Hidden by default) -->
@@ -3925,6 +3992,7 @@ const ROLE_TABS = {
     coordinator: [
         { id: 'tickets', label: 'Overview', icon: 'fa-ticket' },
         { id: 'filters', label: 'Control Console', icon: 'fa-sliders' },
+        { id: 'inventory', label: 'Lab Inventory', icon: 'fa-boxes-stacked' },
         { id: 'map', label: 'Live Active Map', icon: 'fa-map-location-dot' },
         { id: 'cities', label: 'Cities Coverage', icon: 'fa-city' },
         { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' }
@@ -4512,3 +4580,334 @@ async function prefillRequestForm() {
     }
 }
 window.prefillRequestForm = prefillRequestForm;
+
+// ─── 12. COORDINATOR ALERT HUB & ORDER DETAIL MODAL FUNCTIONS ───
+
+async function fetchAndRenderAlerts() {
+    const alertsListContainer = document.getElementById('coordinatorAlertsList');
+    const badge = document.getElementById('coordinatorAlertBadge');
+    if (!alertsListContainer) return;
+
+    let alerts = [];
+    let dbSuccess = false;
+
+    // Try to fetch from Supabase
+    if (supabase) {
+        try {
+            const { data, error } = await supabase
+                .from('alerts')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(20);
+            if (!error && data) {
+                alerts = data;
+                dbSuccess = true;
+            }
+        } catch (err) {
+            console.warn("Could not query 'alerts' table, falling back to dynamic generation:", err);
+        }
+    }
+
+    // Merge with local storage alerts if database failed or is empty
+    const localAlerts = JSON.parse(localStorage.getItem('localAlerts') || '[]');
+    alerts = [...alerts, ...localAlerts];
+
+    // Fallback/Dynamic alerts generation based on orders status
+    const orders = window.allFetchedOrders || [];
+    orders.forEach(o => {
+        const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
+        // Filter out read local storage alerts
+        const isReadLocally = localStorage.getItem(`dyn-alert-read-${o.id}`) === 'true';
+
+        if (o.status === 'Pending') {
+            alerts.push({
+                id: `dyn-pending-${o.id}`,
+                order_id: o.id,
+                message: `New Service Request: ${deviceName} needs staff assignment.`,
+                type: 'new_request',
+                is_read: isReadLocally,
+                created_at: o.created_at
+            });
+        } else if (o.status === 'Diagnosis-Completed') {
+            alerts.push({
+                id: `dyn-diag-${o.id}`,
+                order_id: o.id,
+                message: `Diagnosis Completed: ${deviceName} has repair recommendations. Review & quote.`,
+                type: 'diagnosis_completed',
+                is_read: isReadLocally,
+                created_at: o.created_at
+            });
+        } else if (o.status === 'Pickup-Pending' && o.pickup_otp) {
+            alerts.push({
+                id: `dyn-pickup-${o.id}`,
+                order_id: o.id,
+                message: `Active Pickup: OTP generated for ${deviceName} verification.`,
+                type: 'pickup_pending',
+                is_read: isReadLocally,
+                created_at: o.created_at
+            });
+        } else if (o.status === 'Ready-For-Delivery' && o.pickup_otp) {
+            alerts.push({
+                id: `dyn-delivery-${o.id}`,
+                order_id: o.id,
+                message: `Pending Dispatch: ${deviceName} is ready for delivery. Assign dispatcher.`,
+                type: 'ready_for_delivery',
+                is_read: isReadLocally,
+                created_at: o.created_at
+            });
+        }
+    });
+
+    // Remove duplicates by ID (if local/database alerts conflict with fallback)
+    const uniqueAlertsMap = new Map();
+    alerts.forEach(a => {
+        uniqueAlertsMap.set(a.id || `dyn-alert-${a.order_id}`, a);
+    });
+    alerts = Array.from(uniqueAlertsMap.values());
+
+    // Sort by created_at descending
+    alerts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+    // Render alerts
+    const unreadCount = alerts.filter(a => !a.is_read).length;
+    if (badge) {
+        badge.textContent = `${unreadCount} New`;
+    }
+
+    if (alerts.length === 0) {
+        alertsListContainer.innerHTML = `
+            <div class="text-center py-8 text-xs text-gray-500">
+                <i class="fa-solid fa-circle-check text-emerald-500 mb-2 text-lg block animate-bounce"></i> No outstanding alerts. System healthy!
+            </div>
+        `;
+        return;
+    }
+
+    alertsListContainer.innerHTML = alerts.map(a => {
+        let iconHtml = '<i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm"></i>';
+        if (a.type === 'new_request') {
+            iconHtml = '<i class="fa-solid fa-plus-circle text-teal text-sm animate-pulse"></i>';
+        } else if (a.type === 'diagnosis_completed') {
+            iconHtml = '<i class="fa-solid fa-stethoscope text-amber-400 text-sm"></i>';
+        } else if (a.type === 'ready_for_delivery') {
+            iconHtml = '<i class="fa-solid fa-truck-ramp-box text-sky-400 text-sm"></i>';
+        } else if (a.type === 'pickup_pending') {
+            iconHtml = '<i class="fa-solid fa-key text-emerald-400 text-sm"></i>';
+        }
+
+        const unreadBorder = !a.is_read ? 'border-amber-500/20 bg-amber-500/5' : 'border-slate-800 bg-slate-900/30 opacity-60';
+        return `
+            <div onclick="viewOrderDetails('${a.order_id}', '${a.id}')" class="p-3 border ${unreadBorder} rounded-xl text-xs hover:border-teal/40 hover:bg-slate-800/40 cursor-pointer transition flex items-start gap-3">
+                <div class="mt-0.5">${iconHtml}</div>
+                <div class="flex-1 min-w-0">
+                    <p class="font-medium text-white leading-snug">${a.message}</p>
+                    <p class="text-[10px] text-gray-500 mt-1 flex items-center justify-between">
+                        <span>${new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        ${!a.is_read ? '<span class="text-[9px] font-black text-amber-400 uppercase tracking-wider">New</span>' : ''}
+                    </p>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function createAlert(orderId, message, type = 'system_alert') {
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('alerts').insert({
+            order_id: orderId,
+            message: message,
+            type: type,
+            is_read: false
+        });
+        if (error) throw error;
+    } catch (e) {
+        console.warn("Could not write alert to public.alerts, storing locally:", e);
+        const localAlerts = JSON.parse(localStorage.getItem('localAlerts') || '[]');
+        localAlerts.push({
+            id: `dyn-local-${Date.now()}`,
+            order_id: orderId,
+            message: message,
+            type: type,
+            is_read: false,
+            created_at: new Date().toISOString()
+        });
+        localStorage.setItem('localAlerts', JSON.stringify(localAlerts));
+    }
+}
+
+async function viewOrderDetails(orderId, alertId = null) {
+    if (event && (event.target.tagName === 'BUTTON' || event.target.closest('button') || event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT')) {
+        return;
+    }
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    if (!order) {
+        showToast('Order details sync reference not found.', 'error');
+        return;
+    }
+
+    // Mark alert as read
+    if (alertId) {
+        if (alertId.startsWith('dyn-pending-') || alertId.startsWith('dyn-diag-') || alertId.startsWith('dyn-pickup-') || alertId.startsWith('dyn-delivery-')) {
+            localStorage.setItem(`dyn-alert-read-${orderId}`, 'true');
+        } else if (alertId.startsWith('dyn-local-')) {
+            const localAlerts = JSON.parse(localStorage.getItem('localAlerts') || '[]');
+            const idx = localAlerts.findIndex(la => la.id === alertId);
+            if (idx !== -1) {
+                localAlerts[idx].is_read = true;
+                localStorage.setItem('localAlerts', JSON.stringify(localAlerts));
+            }
+        } else if (supabase) {
+            try {
+                await supabase.from('alerts').update({ is_read: true }).eq('id', alertId);
+            } catch (e) {
+                console.warn("Could not update database alert:", e);
+            }
+        }
+        fetchAndRenderAlerts();
+    }
+
+    // Apply "view only this order" filter
+    window.singleOrderFilter = orderId;
+    
+    // Highlight and select this order in the list
+    const renderBtn = document.getElementById('clearSingleOrderFilterBtn');
+    if (!renderBtn) {
+        const container = document.getElementById('tab-tickets-section');
+        if (container) {
+            const header = container.querySelector('h3');
+            if (header) {
+                const clearBtnHtml = `
+                    <button id="clearSingleOrderFilterBtn" onclick="clearSingleOrderFilter()" class="ml-4 px-2.5 py-1 bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg text-[10px] font-bold transition flex items-center gap-1">
+                        <i class="fa-solid fa-xmark"></i> Clear Order Filter
+                    </button>
+                `;
+                header.insertAdjacentHTML('afterend', clearBtnHtml);
+            }
+        }
+    }
+    renderFilteredOrders();
+
+    // Setup Detail Modal
+    const modal = document.getElementById('orderDetailModal');
+    if (!modal) return;
+
+    const deviceName = getDeviceName(order.device_id) !== 'Device' ? getDeviceName(order.device_id) : (order.device_other || 'Device');
+    const repairLabel = getRepairLabel(order.repair_type_id) !== 'Repair' ? getRepairLabel(order.repair_type_id) : (order.repair_other || 'Repair');
+
+    document.getElementById('modalOrderTitle').textContent = `${deviceName} — ${repairLabel}`;
+    document.getElementById('modalOrderNumber').textContent = `ID: ${order.order_number} | Status: ${order.status}`;
+
+    const activeRole = localStorage.getItem('activeRole') || 'customer';
+    const isCoordinator = activeRole === 'coordinator' || activeRole === 'admin';
+    const isRepairMaster = activeRole === 'repairmaster';
+
+    let actionPanelHtml = '';
+    if (isCoordinator) {
+        if (order.status === 'Pending') {
+            actionPanelHtml = `
+                <div class="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl space-y-3">
+                    <p class="text-xs font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-user-plus text-teal mr-1"></i> Assignment Controls</p>
+                    <p class="text-[11px] text-gray-400">This request is waiting to be dispatched or assigned to active bench staff.</p>
+                    <div class="flex gap-2">
+                        <button onclick="showAssignForm('${order.id}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Staff</button>
+                        <button onclick="assignSelfAsTechnician('${order.id}'); closeOrderDetailModal();" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition">Take as Tech</button>
+                    </div>
+                </div>
+            `;
+        } else if (order.status === 'Diagnosis-Completed') {
+            actionPanelHtml = `
+                <div class="p-4 bg-amber-500/5 border border-amber-500/20 rounded-2xl space-y-3">
+                    <p class="text-xs font-bold text-amber-400 uppercase tracking-wider"><i class="fa-solid fa-clipboard-list mr-1"></i> Review Diagnosis &amp; Quote</p>
+                    <p class="text-[11px] text-gray-300">RepairMaster has completed diagnosis. Please review recommended parts pricing, adjust if needed, and dispatch quotation to the customer.</p>
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1.5 text-xs text-gray-300">
+                        <p>📋 <strong>Bench Notes:</strong> ${order.diagnosis_notes || 'N/A'}</p>
+                        <p>💬 <strong>Advice to Coordinator:</strong> ${order.notes || 'N/A'}</p>
+                        <p>💰 <strong>Recommended Total:</strong> <span class="text-teal font-extrabold">₹${(order.total_price || 0).toLocaleString('en-IN')}</span></p>
+                    </div>
+                    <button onclick="showQuotationForm('${order.id}', ${order.total_price || 0}, '${(order.custom_quote_parts || '').replace(/'/g, "\\'") || ''}'); closeOrderDetailModal();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">✏️ Adjust Pricing &amp; Send Quotation</button>
+                </div>
+            `;
+        } else if (order.status === 'Ready-For-Delivery') {
+            actionPanelHtml = `
+                <div class="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl space-y-3">
+                    <p class="text-xs font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-truck-ramp-box text-teal mr-1"></i> Dispatch Courier Controls</p>
+                    <p class="text-[11px] text-gray-400">Repair successfully fixed. Ready for regional delivery handover.</p>
+                    <button onclick="showAssignDeliveryForm('${order.id}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Delivery Tech</button>
+                </div>
+            `;
+        }
+    }
+
+    let customerPanelHtml = '';
+    if (!isRepairMaster) {
+        customerPanelHtml = `
+            <div class="p-4 bg-slate-950/40 border border-slate-850 rounded-2xl space-y-2 text-xs text-gray-300">
+                <p class="text-xs font-bold text-white uppercase tracking-wider mb-2 font-display"><i class="fa-regular fa-user-circle text-teal mr-1"></i> DTC Customer Contact</p>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-1 gap-x-4">
+                    <div>👤 <strong>Name:</strong> ${order.customer_name || 'N/A'}</div>
+                    <div>📞 <strong>Phone:</strong> ${order.customer_phone || 'N/A'}</div>
+                    <div>✉️ <strong>Email:</strong> ${order.customer_email || 'N/A'}</div>
+                    <div>📍 <strong>Address:</strong> ${order.address || 'N/A'}</div>
+                </div>
+            </div>
+        `;
+    } else {
+        customerPanelHtml = `
+            <div class="p-4 bg-slate-950/40 border border-amber-500/10 rounded-2xl text-xs text-gray-400">
+                <p class="text-[10px] font-bold text-amber-500 uppercase tracking-wider mb-1"><i class="fa-solid fa-user-shield mr-1"></i> Customer Info Masked</p>
+                <p class="text-[11px] text-gray-500 leading-normal">Direct contact identifiers masked for Bench roles. Coordinate logistics with Regional Hub Coordinator.</p>
+            </div>
+        `;
+    }
+
+    const bodyContainer = document.getElementById('modalOrderBody');
+    bodyContainer.innerHTML = `
+        <div class="space-y-5">
+            <div class="grid grid-cols-2 gap-3 text-xs">
+                <div class="p-3 bg-slate-950/60 border border-slate-850 rounded-xl">
+                    <span class="text-gray-500 block uppercase font-bold text-[9px] mb-0.5">CURRENT STATUS</span>
+                    <span class="inline-block bg-teal-500/10 text-teal border border-teal-500/20 px-2 py-0.5 rounded-full font-black uppercase text-[9px]">${order.status}</span>
+                </div>
+                <div class="p-3 bg-slate-950/60 border border-slate-850 rounded-xl">
+                    <span class="text-gray-500 block uppercase font-bold text-[9px] mb-0.5">ESTIMATED PRICE</span>
+                    <span class="text-white font-black text-sm">₹${(order.total_price || 0).toLocaleString('en-IN')}</span>
+                </div>
+            </div>
+
+            ${customerPanelHtml}
+
+            <div class="p-4 bg-slate-950/40 border border-slate-850 rounded-2xl space-y-2 text-xs text-gray-300">
+                <p class="text-xs font-bold text-white uppercase tracking-wider mb-2 font-display"><i class="fa-solid fa-stethoscope text-teal mr-1"></i> Diagnostic Summary</p>
+                <div class="space-y-1.5">
+                    <p>🔬 <strong>Diagnosis Notes:</strong> ${order.diagnosis_notes || 'Pending technician diagnosis.'}</p>
+                    <p>📝 <strong>Fault Description:</strong> ${order.additional_notes || 'N/A'}</p>
+                    <p>🛠️ <strong>Assigned Tech ID:</strong> <span class="text-gray-400">${order.technician_id || 'Not Assigned'}</span></p>
+                    <p>🧪 <strong>Assigned Master ID:</strong> <span class="text-gray-400">${order.repairmaster_id || 'Not Assigned'}</span></p>
+                </div>
+            </div>
+
+            ${actionPanelHtml}
+        </div>
+    `;
+
+    modal.classList.remove('hidden');
+}
+
+function closeOrderDetailModal() {
+    document.getElementById('orderDetailModal')?.classList.add('hidden');
+}
+
+function clearSingleOrderFilter() {
+    window.singleOrderFilter = null;
+    document.getElementById('clearSingleOrderFilterBtn')?.remove();
+    if (window.renderFilteredOrders) {
+        window.renderFilteredOrders();
+    }
+}
+
+window.fetchAndRenderAlerts = fetchAndRenderAlerts;
+window.createAlert = createAlert;
+window.viewOrderDetails = viewOrderDetails;
+window.closeOrderDetailModal = closeOrderDetailModal;
+window.clearSingleOrderFilter = clearSingleOrderFilter;
