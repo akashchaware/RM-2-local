@@ -483,6 +483,38 @@ DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+
+-- 8. Create Profiles View for frontend backward compatibility
+CREATE OR REPLACE VIEW public.profiles AS
+WITH user_highest_role AS (
+    SELECT DISTINCT ON (ur.user_id)
+        ur.user_id,
+        r.name AS role_name
+    FROM public.user_roles ur
+    JOIN public.roles r ON ur.role_id = r.id
+    ORDER BY ur.user_id,
+        CASE r.name
+            WHEN 'admin' THEN 1
+            WHEN 'coordinator' THEN 2
+            WHEN 'technician' THEN 3
+            WHEN 'repairmaster' THEN 4
+            WHEN 'customer' THEN 5
+            ELSE 6
+        END ASC
+)
+SELECT 
+    u.id,
+    u.email,
+    u.name AS full_name,
+    u.phone,
+    u.address,
+    u.created_at,
+    COALESCE(uhr.role_name, 'customer') AS role
+FROM public.users u
+LEFT JOIN user_highest_role uhr ON u.id = uhr.user_id;
+
+-- 9. Grant Permissions on Profiles View to Public API Roles
+GRANT SELECT ON public.profiles TO authenticated, anon;
                             </pre>
                             <button onclick="navigator.clipboard.writeText(document.querySelector('#tab-sql-section pre').textContent); showToast('📋 SQL Code copied to clipboard!', 'success');" class="btn-teal text-xs py-2 px-4 rounded-lg">
                                 <i class="fa-regular fa-copy mr-1"></i> Copy Schema SQL
