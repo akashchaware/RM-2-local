@@ -705,7 +705,7 @@ async function calculateEstimate() {
     const brandSelect = document.getElementById('brandSelect');
     const modelSelect = document.getElementById('modelSelect');
     const repairSelect = document.getElementById('repairTypeSelect');
-    const qualitySelect = document.getElementById('qualitySelect');
+    const qualitySelect = document.getElementById('tierInput') || document.getElementById('qualitySelect');
     const surveyContainer = document.getElementById('partsSurveyContainer');
     
     if (!brandSelect || !modelSelect || !repairSelect) return;
@@ -825,7 +825,8 @@ window.calculateEstimate = calculateEstimate;
 function runCatalogFallbackCalculation() {
     const modelId = document.getElementById('modelSelect')?.value;
     const repairTypeId = document.getElementById('repairTypeSelect')?.value;
-    const quality = document.getElementById('qualitySelect')?.value || 'standard';
+    const qualitySelectElement = document.getElementById('tierInput') || document.getElementById('qualitySelect');
+    const quality = qualitySelectElement?.value || 'standard';
     const offerClaimed = document.getElementById('offerToggle')?.checked || false;
     const surveyContainer = document.getElementById('partsSurveyContainer');
 
@@ -1106,7 +1107,8 @@ async function createOrder() {
     const brandId = document.getElementById('brandSelect').value;
     const deviceId = document.getElementById('modelSelect').value;
     const repairTypeId = document.getElementById('repairTypeSelect').value;
-    const quality = document.getElementById('qualitySelect').value;
+    const qualitySelectElement = document.getElementById('tierInput') || document.getElementById('qualitySelect');
+    const quality = qualitySelectElement ? qualitySelectElement.value : 'standard';
     const offerClaimed = document.getElementById('offerToggle').checked;
     if (!brandId || !deviceId || !repairTypeId) {
         showToast('⚠️ Please select brand, model, and repair type first.', 'error');
