@@ -662,14 +662,47 @@ function populateBrands() {
     updateModels();
 }
 
-function updateModels() {
-    const brandId = document.getElementById('brandSelect')?.value;
+async function updateModels() {
+    const brandSelect = document.getElementById('brandSelect');
     const modelSelect = document.getElementById('modelSelect');
     if (!modelSelect) return;
     modelSelect.innerHTML = '<option value="">— Select Model —</option>';
 
-    if (!brandId) return;
-    const devices = allDevices.filter(d => String(d.brand_id) === String(brandId));
+    if (!brandSelect || !brandSelect.value) return;
+
+    const brandName = brandSelect.options[brandSelect.selectedIndex]?.text || '';
+    
+    let devices = [];
+    try {
+        if (!supabase) throw new Error("Supabase client not connected");
+        
+        const { data, error } = await supabase
+            .from('parts_pricing')
+            .select('model', { distinct: true })
+            .eq('brand', brandName)
+            .order('model');
+            
+        if (error) throw error;
+        
+        if (data && data.length > 0) {
+            devices = data.map(item => ({
+                id: item.model,
+                name: item.model
+            }));
+        }
+    } catch (err) {
+        console.warn("Error fetching models from Supabase, using fallback:", err);
+    }
+
+    if (devices.length === 0) {
+        const brandId = brandSelect.value;
+        const fallbackDevices = allDevices.filter(d => String(d.brand_id) === String(brandId));
+        devices = fallbackDevices.map(d => ({
+            id: d.id,
+            name: d.name
+        }));
+    }
+
     devices.forEach((d, i) => {
         const opt = document.createElement('option');
         opt.value = d.id;
