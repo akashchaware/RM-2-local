@@ -40,35 +40,39 @@ function showToast(message, type = 'info') {
 
 // ─── 1. DATABASE & CATALOG SYNCHRONIZER ───
 async function loadCatalog() {
-    // ─── STATIC DATA MODE ───
-    // Catalog is now loaded from the bundled repair-data.js file.
-    // No Supabase call needed for the calculator.
-    if (window.REPAIR_DATA) {
-        allBrands = window.REPAIR_DATA.BRANDS.map((name, i) => ({ id: 'b' + (i + 1), name: name }));
-        // Build devices list from MODELS_BY_BRAND
-        allDevices = [];
-        Object.keys(window.REPAIR_DATA.MODELS_BY_BRAND).forEach(brandName => {
-            const brandId = 'b' + (window.REPAIR_DATA.BRANDS.indexOf(brandName) + 1);
-            window.REPAIR_DATA.MODELS_BY_BRAND[brandName].forEach((modelName, i) => {
-                allDevices.push({ id: brandId + '_m' + (i + 1), brand_id: brandId, name: modelName });
-            });
-        });
-        // Map repair types to the UI-friendly labels
-        allRepairTypes = window.REPAIR_DATA.REPAIR_TYPES.map(rt => ({
-            id: rt.id,
-            name: rt.name,
-            label: rt.label,
-            csvName: rt.csvName   // NEW: original CSV issue_type name, used for pricing lookup
-        }));
-        // Legacy allParts kept for compatibility (other functions still reference it)
-        allParts = [];
-        console.log('✅ Catalog loaded from static repair-data.js:', allBrands.length, 'brands,', allDevices.length, 'models');
+    if (!supabase) {
+        useComprehensiveFallback();
         return true;
     }
-    // Fallback if repair-data.js is missing
-    console.warn('repair-data.js not loaded — using comprehensive fallback.');
-    useComprehensiveFallback();
-    return true;
+    try {
+        const [brandsRes, devicesRes, repairTypesRes, partsRes] = await Promise.all([
+            supabase.from('brands').select('*').order('name'),
+            supabase.from('devices').select('*').order('name'),
+            supabase.from('repair_types').select('*').order('label'),
+            supabase.from('parts').select('*')
+        ]);
+        if (brandsRes.error) throw brandsRes.error;
+        if (devicesRes.error) throw devicesRes.error;
+        if (repairTypesRes.error) throw repairTypesRes.error;
+        if (partsRes.error) throw partsRes.error;
+
+        allBrands = brandsRes.data || [];
+        allDevices = devicesRes.data || [];
+        allRepairTypes = repairTypesRes.data || [];
+        allParts = partsRes.data || [];
+
+        if (allBrands.length === 0) {
+            console.warn('No brands found in Supabase. Loading fallbacks...');
+            useComprehensiveFallback();
+        } else {
+            console.log('✅ Synchronized Catalog with Supabase successfully!');
+        }
+        return true;
+    } catch (err) {
+        console.warn('Supabase fetch error. Loading fallbacks...', err);
+        useComprehensiveFallback();
+        return true;
+    }
 }
 
 function useComprehensiveFallback() {
@@ -644,17 +648,38 @@ function renderOffers(offers) {
 }
 
 // ─── 3. ESTIMATION CALCULATOR ENGINE ───
+let isInitialLoad = true;
+
 function populateBrands() {
     const select = document.getElementById('brandSelect');
     if (!select) return;
-    select.innerHTML = '<option value="">— Select Brand —</option>';
-    allBrands.forEach(b => {
-        const opt = document.createElement('option');
-        opt.value = b.id;
-        opt.textContent = b.name;
-        if (b.name === "Vivo") opt.selected = true;
-        select.appendChild(opt);
-    });
+    select.innerHTML = '<option value="">— Loading Brands —</option>';
+
+    try {
+        const allParts = window.RECORDS || [];
+        console.log("🔍 populateBrands: window.RECORDS loaded. Total parts:", allParts.length);
+
+        if (allParts.length > 0) {
+            const uniqueBrands = [...new Set(allParts.map(item => item.brand).filter(Boolean))].sort();
+            console.log("🔍 populateBrands: unique brands found:", uniqueBrands);
+            select.innerHTML = '<option value="">— Select Brand —</option>';
+            uniqueBrands.forEach(bName => {
+                const opt = document.createElement('option');
+                opt.value = bName;
+                opt.textContent = bName;
+                if (isInitialLoad && bName.toLowerCase() === 'apple') {
+                    opt.selected = true;
+                }
+                select.appendChild(opt);
+            });
+        } else {
+            select.innerHTML = '<option value="">— No Brands Found —</option>';
+        }
+    } catch (err) {
+        console.error("Error populating brands from local RECORDS:", err);
+        select.innerHTML = '<option value="">— Error Loading —</option>';
+    }
+
     updateModels();
 }
 
@@ -662,38 +687,50 @@ async function updateModels() {
     const brandSelect = document.getElementById('brandSelect');
     const modelSelect = document.getElementById('modelSelect');
     if (!modelSelect) return;
-    modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+    modelSelect.innerHTML = '<option value="">— Loading Models —</option>';
 
-    if (!brandSelect || !brandSelect.value) return;
-
-    const brandName = brandSelect.options[brandSelect.selectedIndex]?.text || '';
-
-    // ─── STATIC DATA MODE ───
-    // Models come straight from the bundled repair-data.js. No Supabase call.
-    let devices = [];
-    if (window.REPAIR_DATA && window.REPAIR_DATA.MODELS_BY_BRAND[brandName]) {
-        devices = window.REPAIR_DATA.MODELS_BY_BRAND[brandName].map((modelName, i) => {
-            const brandId = brandSelect.value;
-            // Reuse the same id scheme as loadCatalog so allDevices lookups work
-            const existing = allDevices.find(d => d.brand_id === brandId && d.name === modelName);
-            return { id: existing ? existing.id : (brandId + '_m' + (i + 1)), name: modelName };
-        });
+    if (!brandSelect || !brandSelect.value) {
+        modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+        return;
     }
 
-    // Fallback to legacy allDevices if static data is missing
-    if (devices.length === 0) {
-        const brandId = brandSelect.value;
-        const fallbackDevices = allDevices.filter(d => String(d.brand_id) === String(brandId));
-        devices = fallbackDevices.map(d => ({ id: d.id, name: d.name }));
+    const brandName = brandSelect.value;
+    console.log("🔍 updateModels: brandName =", brandName);
+
+    try {
+        const allParts = window.RECORDS || [];
+        const brandParts = allParts.filter(p => p.brand === brandName);
+        const uniqueModels = [...new Set(brandParts.map(item => item.model).filter(Boolean))].sort();
+        console.log("🔍 updateModels: unique models for brand:", uniqueModels.length);
+
+        if (uniqueModels.length > 0) {
+            modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+            
+            let selectedIndex = 0;
+            if (isInitialLoad) {
+                const idx = uniqueModels.findIndex(m => m.toLowerCase().includes('iphone 14 pro') || m.toLowerCase().includes('iphone 13'));
+                if (idx !== -1) selectedIndex = idx;
+            }
+
+            uniqueModels.forEach((mName, i) => {
+                const opt = document.createElement('option');
+                opt.value = mName;
+                opt.textContent = mName;
+                if (i === selectedIndex) opt.selected = true;
+                modelSelect.appendChild(opt);
+            });
+        } else {
+            modelSelect.innerHTML = '<option value="">— No Models Found —</option>';
+        }
+    } catch (err) {
+        console.error("Error populating models from local RECORDS:", err);
+        modelSelect.innerHTML = '<option value="">— Error Loading —</option>';
     }
 
-    devices.forEach((d, i) => {
-        const opt = document.createElement('option');
-        opt.value = d.id;
-        opt.textContent = d.name;
-        if (i === 0) opt.selected = true;
-        modelSelect.appendChild(opt);
-    });
+    if (isInitialLoad) {
+        isInitialLoad = false;
+    }
+
     updateRepairTypes();
 }
 
@@ -727,98 +764,142 @@ async function calculateEstimate() {
     
     if (!brandSelect || !modelSelect || !repairSelect) return;
     
-    const brandName = brandSelect.options[brandSelect.selectedIndex]?.text || '';
-    const modelName = modelSelect.options[modelSelect.selectedIndex]?.text || '';
+    const brandName = brandSelect.value;
+    const modelName = modelSelect.value;
     const rtId = repairSelect.value;
     const rtObj = allRepairTypes.find(rt => rt.id === rtId);
     
-    if (!brandSelect.value || !modelSelect.value || !repairSelect.value) {
+    if (!brandName || !modelName || !rtId) {
         if (surveyContainer) {
             surveyContainer.innerHTML = `
-                <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 text-center text-gray-400/50">
-                    <i class="fa-solid fa-circle-info mr-2"></i> Select a brand, model, and repair type to see parts.
+                <div class="text-center text-white/40 py-4 text-xs font-medium">
+                    <i class="fa-solid fa-circle-info mr-2"></i> Select dropdown options to display dynamic component breakdown.
                 </div>
             `;
         }
         return;
     }
     
-    const cleanBrand = (brandName.toLowerCase() === 'apple') ? 'Apple' : brandName;
     const issueTypeName = rtObj ? rtObj.name : ''; // e.g. 'screen'
     const issueTypeLabel = rtObj ? rtObj.label.replace(/^[\s\S]*?\s/, '').trim() : ''; // e.g. 'Screen Replacement'
     const selectedQuality = qualitySelect?.value || 'standard';
-    // The CSV issue_type name (e.g. "Screen", "Charging port") — used for static lookup
-    const csvIssueName = rtObj ? (rtObj.csvName || '') : '';
+    
+    console.log(`🔍 calculateEstimate: brand=${brandName}, model=${modelName}, issueType=${issueTypeName}, tier=${selectedQuality}`);
 
-    // ─── STATIC DATA MODE ───
-    // Replace the Supabase parts_pricing query with a direct lookup in REPAIR_DATA.
-    let matchingRow = null;
-    if (window.REPAIR_DATA && csvIssueName) {
-        // Map UI tier values (e.g. 'premium' / 'standard' / 'compatible') to CSV tier names
-        const tierMap = {
-            'premium':    'Premium (OEM)',
-            'standard':   'Standard (HQ)',
-            'compatible': 'Compatible (Budget)',
-            'economy':    'Compatible (Budget)'
+    try {
+        const allParts = window.RECORDS || [];
+        const modelParts = allParts.filter(p => p.model === modelName);
+        
+        // Map the issueName to the issue_type in the RECORDS
+        const issueMapping = {
+            "screen": "Screen",
+            "battery": "Battery",
+            "chargingport": "Charging port",
+            "camera": "Camera",
+            "speaker": "Speaker/Mic",
+            "button": "Buttons/Flex",
+            "motherboard": "Motherboard",
+            "waterdamage": "Water damage"
         };
-        const preferredTier = tierMap[selectedQuality.toLowerCase()] || null;
-        matchingRow = window.REPAIR_DATA.getEstimate(cleanBrand, modelName, csvIssueName, preferredTier);
-    }
-
-    // If static data didn't find a row, fall through to legacy catalog logic
-    if (matchingRow) {
-        const partName = matchingRow.partName || matchingRow.part_name || `${issueTypeLabel} Spare Part`;
-        const price = parseFloat(matchingRow.price) || 0;
-        const labor = parseFloat(matchingRow.labor) || 0;
-
-        // Extra metadata
-        const warranty = matchingRow.warranty ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">🛡️ Warranty:</span><span class="text-white font-semibold">${matchingRow.warranty}</span></div>` : '';
-        const turnaround = matchingRow.turnaround ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">⚡ Turnaround:</span><span class="text-white font-semibold">${matchingRow.turnaround}</span></div>` : '';
-        const tierBadge = matchingRow.tier ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">💎 Tier Grade:</span><span class="text-white font-semibold">${matchingRow.tier}</span></div>` : '';
-        const hubBadge = matchingRow.sourceHub ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">📍 Source Hub:</span><span class="text-white font-semibold">${matchingRow.sourceHub}</span></div>` : '';
-
-        const serviceFee = (price + labor) * 0.10; // 10% service fee
-        const diagnosisCharge = 250.0;
-        const total = price + labor + serviceFee + diagnosisCharge;
-
-        if (surveyContainer) {
-            surveyContainer.innerHTML = `
-                <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 space-y-2 text-left">
-                    <p class="text-xs font-bold text-teal mb-2 uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-layer-group"></i> Part & Service Breakdown</p>
-                    <div class="flex justify-between text-xs py-1">
-                        <span class="text-gray-400">Spare: ${partName}</span>
-                        <span class="text-white font-bold">₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    <div class="flex justify-between text-xs py-1">
-                        <span class="text-gray-400">Labor / Installation:</span>
-                        <span class="text-white font-bold">₹${labor.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    ${tierBadge}
-                    ${warranty}
-                    ${turnaround}
-                    ${hubBadge}
+        
+        const targetIssueType = issueMapping[issueTypeName.toLowerCase()] || "";
+        const targetTierPrefix = selectedQuality.charAt(0).toUpperCase() + selectedQuality.slice(1); // premium -> Premium
+        
+        let matchingRow = modelParts.find(p => p.issue_type === targetIssueType && p.tier.startsWith(targetTierPrefix));
+        
+        // Fallback to any tier of that issue type if exact tier is missing
+        if (!matchingRow && targetIssueType) {
+            matchingRow = modelParts.find(p => p.issue_type === targetIssueType);
+        }
+        
+        if (matchingRow) {
+            console.log("🔍 calculateEstimate: found matching row:", matchingRow);
+            const partName = matchingRow.part_name || `${issueTypeLabel} Spare Part`;
+            const price = parseFloat(matchingRow.price) || 0;
+            const labor = parseFloat(matchingRow.labor) || 0;
+            const total = price + labor;
+            
+            // Extra metadata (customer friendly, skipped if missing)
+            const warrantyHtml = (matchingRow.warranty && matchingRow.warranty !== 'N/A' && matchingRow.warranty.trim() !== '') ? `
+                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                    <span class="text-slate-400">🛡️ Warranty Period:</span>
+                    <span class="text-white font-semibold">${matchingRow.warranty}</span>
                 </div>
-            `;
+            ` : '';
+            
+            const turnaroundHtml = (matchingRow.turnaround && matchingRow.turnaround !== 'N/A' && matchingRow.turnaround.trim() !== '') ? `
+                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                    <span class="text-slate-400">⚡ Turnaround Time:</span>
+                    <span class="text-white font-semibold">${matchingRow.turnaround}</span>
+                </div>
+            ` : '';
+            
+            const tierHtml = (matchingRow.tier && matchingRow.tier !== 'N/A' && matchingRow.tier.trim() !== '') ? `
+                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                    <span class="text-slate-400">💎 Component Grade:</span>
+                    <span class="text-white font-semibold uppercase">${matchingRow.tier}</span>
+                </div>
+            ` : '';
+
+            if (surveyContainer) {
+                surveyContainer.innerHTML = `
+                    <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2 text-left">
+                        <p class="text-xs font-bold text-teal-400 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-layer-group"></i> Part & Service Details
+                        </p>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Component: ${partName}</span>
+                            <span class="text-white font-bold">₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Labor / Installation:</span>
+                            <span class="text-white font-bold">₹${labor.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        ${tierHtml}
+                        ${warrantyHtml}
+                        ${turnaroundHtml}
+                    </div>
+                `;
+            }
+            
+            // Update bottom totals cleanly
+            const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+            const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+            const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+            const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+            
+            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + labor.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹0.00';
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            
+            const btn = document.getElementById('bookServiceBtn');
+            if (btn) {
+                btn.className = 'mt-6 w-full btn-primary h-12 text-sm font-bold rounded-xl flex items-center justify-center gap-2';
+                btn.innerHTML = '<i class="fa-regular fa-calendar-check"></i> Book Doorstep Service';
+            }
+        } else {
+            console.log(`🔍 calculateEstimate: No pricing available for brand=${brandName}, model=${modelName}, issueType=${issueTypeName}`);
+            if (surveyContainer) {
+                surveyContainer.innerHTML = `
+                    <div class="bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs p-4 rounded-xl text-center">
+                        <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> Custom pricing not available for this model/repair combination yet.
+                    </div>
+                `;
+            }
+            
+            const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+            const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+            const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+            const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+            
+            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
+            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹0.00';
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹250.00';
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹250.00';
         }
-
-        const partsTotalDisplay = document.getElementById('partsTotalDisplay');
-        const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
-        const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
-        const totalPriceDisplay = document.getElementById('totalPriceDisplay');
-
-        if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + (price + labor).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-
-        const btn = document.getElementById('bookServiceBtn');
-        if (btn) {
-            btn.className = 'flex-1 text-center btn-teal font-extrabold py-3.5 rounded-xl shadow-md hover:scale-[1.02] transition-all';
-            btn.innerHTML = '<i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service';
-        }
-    } else {
-        // No pricing row found in static data — fall back to catalog logic
-        runCatalogFallbackCalculation();
+    } catch (err) {
+        console.error("Local records estimation calculation failed:", err);
     }
 }
 window.calculateEstimate = calculateEstimate;
