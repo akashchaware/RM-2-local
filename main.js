@@ -5395,7 +5395,6 @@ async function fetchAndRenderAlerts() {
     let alerts = [];
     let dbSuccess = false;
 
-    // Try to fetch from Supabase
     if (supabase) {
         try {
             const { data, error } = await supabase
@@ -5412,15 +5411,18 @@ async function fetchAndRenderAlerts() {
         }
     }
 
-    // Merge with local storage alerts if database failed or is empty
     const localAlerts = JSON.parse(localStorage.getItem('localAlerts') || '[]');
     alerts = [...alerts, ...localAlerts];
 
-    // Fallback/Dynamic alerts generation based on orders status
+    // ✅ FILTER: Only keep alerts that have a valid order_id
+    alerts = alerts.filter(a => a.order_id && a.order_id !== 'undefined' && a.order_id !== 'null');
+
+    // Dynamic alerts from orders (only if order has a valid id)
     const orders = window.allFetchedOrders || [];
     orders.forEach(o => {
+        if (!o.id || o.id === 'undefined' || o.id === 'null') return; // skip invalid
+
         const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
-        // Filter out read local storage alerts
         const isReadLocally = localStorage.getItem(`dyn-alert-read-${o.id}`) === 'true';
 
         if (o.status === 'Pending') {
@@ -5462,17 +5464,15 @@ async function fetchAndRenderAlerts() {
         }
     });
 
-    // Remove duplicates by ID (if local/database alerts conflict with fallback)
+    // Remove duplicates
     const uniqueAlertsMap = new Map();
     alerts.forEach(a => {
         uniqueAlertsMap.set(a.id || `dyn-alert-${a.order_id}`, a);
     });
     alerts = Array.from(uniqueAlertsMap.values());
 
-    // Sort by created_at descending
     alerts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-    // Render alerts
     const unreadCount = alerts.filter(a => !a.is_read).length;
     if (badge) {
         badge.textContent = `${unreadCount} New`;
@@ -5488,6 +5488,9 @@ async function fetchAndRenderAlerts() {
     }
 
     alertsListContainer.innerHTML = alerts.map(a => {
+        // ✅ SAFETY: ensure order_id is valid before generating onclick
+        const orderId = a.order_id && a.order_id !== 'undefined' && a.order_id !== 'null' ? a.order_id : '';
+
         let iconHtml = '<i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm"></i>';
         if (a.type === 'new_request') {
             iconHtml = '<i class="fa-solid fa-plus-circle text-teal text-sm animate-pulse"></i>';
@@ -5500,8 +5503,10 @@ async function fetchAndRenderAlerts() {
         }
 
         const unreadBorder = !a.is_read ? 'border-amber-500/20 bg-amber-500/5' : 'border-slate-800 bg-slate-900/30 opacity-60';
+        const alertId = a.id && a.id !== 'undefined' && a.id !== 'null' ? a.id : '';
+
         return `
-            <div onclick="viewOrderDetails('${a.order_id}', '${a.id}')" class="p-3 border ${unreadBorder} rounded-xl text-xs hover:border-teal/40 hover:bg-slate-800/40 cursor-pointer transition flex items-start gap-3">
+            <div onclick="viewOrderDetails('${orderId}', '${alertId}')" class="p-3 border ${unreadBorder} rounded-xl text-xs hover:border-teal/40 hover:bg-slate-800/40 cursor-pointer transition flex items-start gap-3">
                 <div class="mt-0.5">${iconHtml}</div>
                 <div class="flex-1 min-w-0">
                     <p class="font-medium text-white leading-snug">${a.message}</p>
