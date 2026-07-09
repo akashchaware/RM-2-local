@@ -40,39 +40,8 @@ function showToast(message, type = 'info') {
 
 // ─── 1. DATABASE & CATALOG SYNCHRONIZER ───
 async function loadCatalog() {
-    if (!supabase) {
-        useComprehensiveFallback();
-        return true;
-    }
-    try {
-        const [brandsRes, devicesRes, repairTypesRes, partsRes] = await Promise.all([
-            supabase.from('brands').select('*').order('name'),
-            supabase.from('devices').select('*').order('name'),
-            supabase.from('repair_types').select('*').order('label'),
-            supabase.from('parts').select('*')
-        ]);
-        if (brandsRes.error) throw brandsRes.error;
-        if (devicesRes.error) throw devicesRes.error;
-        if (repairTypesRes.error) throw repairTypesRes.error;
-        if (partsRes.error) throw partsRes.error;
-
-        allBrands = brandsRes.data || [];
-        allDevices = devicesRes.data || [];
-        allRepairTypes = repairTypesRes.data || [];
-        allParts = partsRes.data || [];
-
-        if (allBrands.length === 0) {
-            console.warn('No brands found in Supabase. Loading fallbacks...');
-            useComprehensiveFallback();
-        } else {
-            console.log('✅ Synchronized Catalog with Supabase successfully!');
-        }
-        return true;
-    } catch (err) {
-        console.warn('Supabase fetch error. Loading fallbacks...', err);
-        useComprehensiveFallback();
-        return true;
-    }
+    useComprehensiveFallback();
+    return true;
 }
 
 function useComprehensiveFallback() {
@@ -1278,13 +1247,18 @@ async function submitRequest(e) {
             created_at: new Date().toISOString()
         };
 
-        const { data, error } = await supabase.from('orders').insert([orderData]).select();
-        if (error) throw error;
-        const coordinatorId = await getCoordinatorId();
-        if (coordinatorId && data && data[0]) {
-            await supabase.from('orders').update({ assigned_to: coordinatorId }).eq('id', data[0].id);
+        // Bypassing Supabase and storing locally as requested:
+        console.log("POST captured form data locally:", orderData);
+        let localOrders = [];
+        try {
+            localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+        } catch(e) {
+            console.error(e);
         }
-        const orderNumber = (data && data[0]) ? data[0].order_number : orderData.order_number;
+        localOrders.push(orderData);
+        localStorage.setItem('local_orders', JSON.stringify(localOrders));
+
+        const orderNumber = orderData.order_number;
         const successDiv = document.getElementById('requestSuccess');
         if (successDiv) {
             successDiv.classList.remove('hidden');
@@ -1295,7 +1269,7 @@ async function submitRequest(e) {
         }
         e.target.reset();
         showToast('✅ Service request submitted!', 'success');
-        if (user) setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
     } catch (err) {
         showToast('❌ Failed to submit: ' + err.message, 'error');
     }
@@ -1303,66 +1277,36 @@ async function submitRequest(e) {
 
 // ─── 6. CREATE INSTANT ORDER (FROM WEB CALC) ───
 async function createOrder() {
-    if (!supabase) {
-        showToast('⚠️ Supabase connection is offline.', 'error');
-        return;
-    }
-    const brandId = document.getElementById('brandSelect').value;
-    const deviceId = document.getElementById('modelSelect').value;
-    const repairTypeId = document.getElementById('repairTypeSelect').value;
+    const brandSelect = document.getElementById('brandSelect');
+    const modelSelect = document.getElementById('modelSelect');
+    const repairSelect = document.getElementById('repairTypeSelect');
     const qualitySelectElement = document.getElementById('tierInput') || document.getElementById('qualitySelect');
+    
+    const brand = brandSelect ? brandSelect.value : '';
+    const model = modelSelect ? modelSelect.value : '';
+    const repairId = repairSelect ? repairSelect.value : '';
     const quality = qualitySelectElement ? qualitySelectElement.value : 'standard';
-    const offerClaimed = document.getElementById('offerToggle').checked;
-    if (!brandId || !deviceId || !repairTypeId) {
+
+    if (!brand || !model || !repairId) {
         showToast('⚠️ Please select brand, model, and repair type first.', 'error');
         return;
     }
-    const session = await supabase.auth.getSession();
-    const user = session.data?.session?.user || null;
-    if (!user) {
-        showToast('🔑 Please sign in or create an account to book your doorstep repair.', 'error');
-        setTimeout(() => { window.location.href = 'login.html'; }, 1500);
-        return;
-    }
 
-    const parts = allParts.filter(p => String(p.device_id) === String(deviceId) && String(p.repair_type_id) === String(repairTypeId));
-    const qualityMultiplier = quality === 'premium' ? 1.0 : 0.7;
-    const partsTotal = parts.reduce((sum, p) => sum + (p.price * qualityMultiplier), 0);
-    const discountedParts = partsTotal * 0.9;
-    let serviceFee = discountedParts * 0.15;
-    if (offerClaimed) serviceFee = serviceFee * 0.5;
-    const total = discountedParts + serviceFee + 250;
+    // Map repairId (rt1, rt2...) to repair type label name
+    const rtObj = allRepairTypes.find(rt => rt.id === repairId);
+    const repairName = rtObj ? rtObj.name : repairId;
 
-    const orderData = {
-        order_number: 'RM-BOOK-' + Date.now().toString(36).toUpperCase(),
-        user_id: user.id,
-        customer_name: user.user_metadata?.full_name || 'Web Member',
-        customer_phone: user.user_metadata?.phone || '9999999999',
-        customer_email: user.email,
-        device_id: deviceId,
-        repair_type_id: repairTypeId,
-        parts_quality: quality,
-        parts_total: discountedParts,
-        service_fee: serviceFee,
-        diagnosis_charge: 250,
-        total_price: total,
-        discount_applied: offerClaimed ? 0.5 : 0,
-        status: 'Pending',
-        notes: 'Instantly booked via online estimator breakdown'
-    };
+    const params = new URLSearchParams({
+        brand: brand,
+        model: model,
+        repair: repairName,
+        grade: quality
+    });
 
-    try {
-        const { data, error } = await supabase.from('orders').insert([orderData]).select();
-        if (error) throw error;
-        const coordinatorId = await getCoordinatorId();
-        if (coordinatorId && data[0]) {
-            await supabase.from('orders').update({ assigned_to: coordinatorId }).eq('id', data[0].id);
-        }
-        showToast('🎉 Order created successfully! Track via dashboard.', 'success');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 1500);
-    } catch (err) {
-        showToast('❌ Order booking failed: ' + err.message, 'error');
-    }
+    showToast('🚀 Transferring options to Doorstep Pickup scheduler...', 'success');
+    setTimeout(() => {
+        window.location.href = `request.html?${params.toString()}`;
+    }, 800);
 }
 
 window.allTechnicians = [];
@@ -2422,28 +2366,19 @@ async function loadDashboard() {
     }
 
     let orders = [];
-    if (supabase) {
-        try {
-            let query = supabase.from('orders').select('*');
-            if (isAdmin || isCoordinator) {
-                // Coordinators and Admins load all orders for comprehensive control console
-            } else if (isTechnician) {
-                query = query.eq('technician_id', currentUser.id);
-            } else if (isRepairMaster) {
-                query = query.eq('repairmaster_id', currentUser.id);
-            } else {
-                query = query.eq('user_id', currentUser.id);
-            }
-            const { data, error } = await query.order('created_at', { ascending: false });
-            if (error) throw error;
-            orders = data || [];
-        } catch (err) {
-            console.warn("Using offline mock orders:", err);
-            orders = [
-                { id: 'm1', order_number: 'RM-MOCK-123', customer_name: 'Akash Chaware', customer_phone: '9876543210', device_other: 'Vivo V30 Pro', repair_other: 'Screen Replacement', total_price: 6300, status: 'Pending', created_at: new Date().toISOString() }
-            ];
-        }
+    try {
+        orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+    } catch (e) {
+        console.error("Failed to parse local_orders from localStorage:", e);
     }
+    if (orders.length === 0) {
+        orders = [
+            { id: 'm1', order_number: 'RM-REQ-VIVOV30', customer_name: 'Akash Chaware', customer_phone: '9876543210', customer_email: 'akash@example.com', device_other: 'Vivo V30 Pro', repair_other: 'Screen Replacement', parts_quality: 'Premium', total_price: 6300, status: 'Pending', created_at: new Date().toISOString() },
+            { id: 'm2', order_number: 'RM-REQ-IPHONE14', customer_name: 'Sneha Patil', customer_phone: '9123456789', customer_email: 'sneha@example.com', device_other: 'iPhone 14', repair_other: 'Battery Replacement', parts_quality: 'Standard', total_price: 3200, status: 'Completed', created_at: new Date(Date.now() - 86400000).toISOString() }
+        ];
+        localStorage.setItem('local_orders', JSON.stringify(orders));
+    }
+    orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     // Update stats counters
     const metricContainer = document.getElementById('metric-cards-container');
@@ -3989,6 +3924,7 @@ function showRequestEstimate() {
     } else {
         const allParts = window.RECORDS || [];
         const quality = qualitySelect?.value || 'standard';
+        const multiplier = (quality === 'premium') ? 1.5 : 1.0;
         
         let matches = allParts.filter(p => 
             p.brand === brand && 
@@ -3997,22 +3933,14 @@ function showRequestEstimate() {
         );
         
         if (matches.length > 0) {
-            const targetTier = quality === 'premium' ? 'Premium Grade' : 'Standard Grade';
-            let match = matches.find(p => p.tier === targetTier);
-            if (!match) {
-                match = matches[0];
-            }
-            
-            partsPrice = parseFloat(match.price) || 0;
+            // Find a standard grade row to act as our base parts price
+            let match = matches.find(p => p.tier.toLowerCase().includes('standard')) || matches[0];
+            partsPrice = (parseFloat(match.price) || 0) * multiplier;
             laborPrice = parseFloat(match.labor) || 0;
-            
-            if (match.tier !== targetTier) {
-                const qualityMultiplier = quality === 'premium' ? 1.4 : 0.7;
-                partsPrice = partsPrice * qualityMultiplier;
-            }
         } else {
-            partsPrice = 500;
-            laborPrice = 150;
+            // Default fallbacks for manual inputs
+            partsPrice = 1000 * multiplier;
+            laborPrice = 250;
         }
 
         discountedParts = partsPrice * 0.9;
