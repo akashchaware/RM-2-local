@@ -3936,7 +3936,6 @@ function showRequestEstimate() {
     } else {
         const allParts = window.RECORDS || [];
         const quality = qualitySelect?.value || 'standard';
-        const multiplier = (quality === 'premium') ? 1.5 : 1.0;
         
         let matches = allParts.filter(p => 
             p.brand === brand && 
@@ -3945,12 +3944,18 @@ function showRequestEstimate() {
         );
         
         if (matches.length > 0) {
-            // Find a standard grade row to act as our base parts price
-            let match = matches.find(p => p.tier.toLowerCase().includes('standard')) || matches[0];
-            partsPrice = (parseFloat(match.price) || 0) * multiplier;
+            const targetTierPrefix = quality.charAt(0).toUpperCase() + quality.slice(1);
+            let match = matches.find(p => p.tier.startsWith(targetTierPrefix)) || 
+                        matches.find(p => p.tier.toLowerCase().includes(quality)) ||
+                        matches.find(p => p.tier.toLowerCase().includes('standard')) || 
+                        matches[0];
+            partsPrice = parseFloat(match.price) || 0;
             laborPrice = parseFloat(match.labor) || 0;
         } else {
             // Default fallbacks for manual inputs
+            let multiplier = 1.0;
+            if (quality === 'premium') multiplier = 1.5;
+            if (quality === 'compatible') multiplier = 0.7;
             partsPrice = 1000 * multiplier;
             laborPrice = 250;
         }
@@ -4281,7 +4286,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (document.getElementById('brandSelect')) {
         populateBrands();
     }
-    if (document.getElementById('reqBrand')) {
+    if (document.getElementById('deviceBrand') || document.getElementById('reqBrand')) {
         populateRequestBrands();
     }
     
