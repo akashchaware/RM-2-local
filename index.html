@@ -1065,8 +1065,15 @@
         setInterval(cycleBgSlides, 5000);
 
         // Estimation Calculator Default Select Override Configuration
-     // ─── Text‑based Dropdown & Calculator Logic ───
+   // ─── Text‑based Dropdown & Calculator Logic (with fallback) ───
 let isInitialLoad = true;
+
+// Hardcoded fallback brands in case Supabase fails
+const FALLBACK_BRANDS = [
+    'Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo',
+    'Realme', 'Google', 'Nothing', 'Infinix', 'Tecno',
+    'Motorola', 'Lava', 'Micromax', 'Nokia'
+];
 
 async function populateBrands() {
     const select = document.getElementById('brandSelect');
@@ -1086,6 +1093,12 @@ async function populateBrands() {
         data.forEach(item => {
             if (item.brand) brandSet.add(item.brand.trim());
         });
+
+        // If Supabase returns nothing, use fallback
+        if (brandSet.size === 0) {
+            FALLBACK_BRANDS.forEach(b => brandSet.add(b));
+        }
+
         const uniqueBrands = [...brandSet].sort();
 
         select.innerHTML = '<option value="">— Select Brand —</option>';
@@ -1102,7 +1115,15 @@ async function populateBrands() {
         }
     } catch (err) {
         console.error('Error fetching brands:', err);
-        select.innerHTML = '<option value="">— Error Loading —</option>';
+        // Fallback to hardcoded list
+        select.innerHTML = '<option value="">— Select Brand —</option>';
+        FALLBACK_BRANDS.forEach(brand => {
+            const opt = document.createElement('option');
+            opt.value = brand;
+            opt.textContent = brand;
+            if (isInitialLoad && brand === 'Apple') opt.selected = true;
+            select.appendChild(opt);
+        });
     }
 
     await updateModels();
