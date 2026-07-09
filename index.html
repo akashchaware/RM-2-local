@@ -1040,433 +1040,426 @@
     <script src="main.js"></script>
 
     <!-- Custom Override Logic & Mobile Drawer Sync -->
-    <script>
-        // Background Slideshow Cycling Engine
-        let currentBgSlide = 1;
-        const totalBgSlides = 5;
-        function cycleBgSlides() {
-            for (let i = 1; i <= totalBgSlides; i++) {
-                const el = document.getElementById('bg-slide-' + i);
-                if (el) {
-                    if (i === currentBgSlide) {
-                        el.classList.remove('opacity-0');
-                        el.classList.add('opacity-100');
-                    } else {
-                        el.classList.remove('opacity-100');
-                        el.classList.add('opacity-0');
-                    }
+<script>
+    // Background Slideshow Cycling Engine
+    let currentBgSlide = 1;
+    const totalBgSlides = 5;
+    function cycleBgSlides() {
+        for (let i = 1; i <= totalBgSlides; i++) {
+            const el = document.getElementById('bg-slide-' + i);
+            if (el) {
+                if (i === currentBgSlide) {
+                    el.classList.remove('opacity-0');
+                    el.classList.add('opacity-100');
+                } else {
+                    el.classList.remove('opacity-100');
+                    el.classList.add('opacity-0');
                 }
             }
-            currentBgSlide = (currentBgSlide % totalBgSlides) + 1;
         }
+        currentBgSlide = (currentBgSlide % totalBgSlides) + 1;
+    }
 
-        // Initialize background slideshow
-        cycleBgSlides();
-        setInterval(cycleBgSlides, 5000);
+    // Initialize background slideshow
+    cycleBgSlides();
+    setInterval(cycleBgSlides, 5000);
 
-        // Estimation Calculator Default Select Override Configuration
-   // ─── Text‑based Dropdown & Calculator Logic (with fallback) ───
-let isInitialLoad = true;
+    // ─── TEXT‑BASED CALCULATOR (NO IDS) ───
+    let isInitialLoad = true;
 
-// Hardcoded fallback brands in case Supabase fails
-const FALLBACK_BRANDS = [
-    'Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo',
-    'Realme', 'Google', 'Nothing', 'Infinix', 'Tecno',
-    'Motorola', 'Lava', 'Micromax', 'Nokia'
-];
+    // Hardcoded fallback brands (in case Supabase fails)
+    const FALLBACK_BRANDS = [
+        'Apple', 'Samsung', 'OnePlus', 'Xiaomi', 'Vivo', 'Oppo',
+        'Realme', 'Google', 'Nothing', 'Infinix', 'Tecno',
+        'Motorola', 'Lava', 'Micromax', 'Nokia'
+    ];
 
-async function populateBrands() {
-    const select = document.getElementById('brandSelect');
-    if (!select) return;
+    async function populateBrands() {
+        const select = document.getElementById('brandSelect');
+        if (!select) return;
 
-    select.innerHTML = '<option value="">Loading brands...</option>';
+        select.innerHTML = '<option value="">Loading brands...</option>';
 
-    try {
-        const { data, error } = await supabase
-            .from('parts_pricing')
-            .select('brand', { distinct: true })
-            .order('brand');
+        try {
+            const { data, error } = await supabase
+                .from('parts_pricing')
+                .select('brand', { distinct: true })
+                .order('brand');
 
-        if (error) throw error;
+            if (error) throw error;
 
-        const brandSet = new Set();
-        data.forEach(item => {
-            if (item.brand) brandSet.add(item.brand.trim());
-        });
+            const brandSet = new Set();
+            data.forEach(item => {
+                if (item.brand) brandSet.add(item.brand.trim());
+            });
 
-        // If Supabase returns nothing, use fallback
-        if (brandSet.size === 0) {
-            FALLBACK_BRANDS.forEach(b => brandSet.add(b));
-        }
+            // If Supabase returns nothing, use fallback
+            if (brandSet.size === 0) {
+                FALLBACK_BRANDS.forEach(b => brandSet.add(b));
+            }
 
-        const uniqueBrands = [...brandSet].sort();
+            const uniqueBrands = [...brandSet].sort();
 
-        select.innerHTML = '<option value="">— Select Brand —</option>';
-        if (uniqueBrands.length > 0) {
-            uniqueBrands.forEach(brand => {
+            select.innerHTML = '<option value="">— Select Brand —</option>';
+            if (uniqueBrands.length > 0) {
+                uniqueBrands.forEach(brand => {
+                    const opt = document.createElement('option');
+                    opt.value = brand;
+                    opt.textContent = brand;
+                    if (isInitialLoad && brand === 'Apple') opt.selected = true;
+                    select.appendChild(opt);
+                });
+            } else {
+                select.innerHTML = '<option value="">No brands available</option>';
+            }
+        } catch (err) {
+            console.error('Error fetching brands:', err);
+            // Fallback to hardcoded list
+            select.innerHTML = '<option value="">— Select Brand —</option>';
+            FALLBACK_BRANDS.forEach(brand => {
                 const opt = document.createElement('option');
                 opt.value = brand;
                 opt.textContent = brand;
                 if (isInitialLoad && brand === 'Apple') opt.selected = true;
                 select.appendChild(opt);
             });
-        } else {
-            select.innerHTML = '<option value="">No brands available</option>';
         }
-    } catch (err) {
-        console.error('Error fetching brands:', err);
-        // Fallback to hardcoded list
-        select.innerHTML = '<option value="">— Select Brand —</option>';
-        FALLBACK_BRANDS.forEach(brand => {
-            const opt = document.createElement('option');
-            opt.value = brand;
-            opt.textContent = brand;
-            if (isInitialLoad && brand === 'Apple') opt.selected = true;
-            select.appendChild(opt);
-        });
+
+        await updateModels();
     }
 
-    await updateModels();
-}
+    async function updateModels() {
+        const brandSelect = document.getElementById('brandSelect');
+        const modelSelect = document.getElementById('modelSelect');
+        if (!modelSelect) return;
 
-async function updateModels() {
-    const brandSelect = document.getElementById('brandSelect');
-    const modelSelect = document.getElementById('modelSelect');
-    if (!modelSelect) return;
+        const brand = brandSelect?.value || '';
+        modelSelect.innerHTML = '<option value="">Loading models...</option>';
 
-    const brand = brandSelect?.value || '';
-    modelSelect.innerHTML = '<option value="">Loading models...</option>';
+        if (!brand) {
+            modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+            return;
+        }
 
-    if (!brand) {
-        modelSelect.innerHTML = '<option value="">— Select Model —</option>';
-        return;
-    }
+        try {
+            const { data, error } = await supabase
+                .from('parts_pricing')
+                .select('model', { distinct: true })
+                .eq('brand', brand)
+                .order('model');
 
-    try {
-        const { data, error } = await supabase
-            .from('parts_pricing')
-            .select('model', { distinct: true })
-            .eq('brand', brand)
-            .order('model');
+            if (error) throw error;
 
-        if (error) throw error;
+            const modelSet = new Set();
+            data.forEach(item => { if (item.model) modelSet.add(item.model.trim()); });
+            const uniqueModels = [...modelSet].sort();
 
-        const modelSet = new Set();
-        data.forEach(item => { if (item.model) modelSet.add(item.model.trim()); });
-        const uniqueModels = [...modelSet].sort();
-
-        modelSelect.innerHTML = '<option value="">— Select Model —</option>';
-        if (uniqueModels.length > 0) {
-            uniqueModels.forEach(model => {
-                const opt = document.createElement('option');
-                opt.value = model;
-                opt.textContent = model;
-                if (isInitialLoad && model.includes('iPhone 13')) opt.selected = true;
-                modelSelect.appendChild(opt);
-            });
-            if (isInitialLoad && modelSelect.options.length > 1) {
-                if (!modelSelect.options[1].selected) modelSelect.options[1].selected = true;
-                isInitialLoad = false;
+            modelSelect.innerHTML = '<option value="">— Select Model —</option>';
+            if (uniqueModels.length > 0) {
+                uniqueModels.forEach(model => {
+                    const opt = document.createElement('option');
+                    opt.value = model;
+                    opt.textContent = model;
+                    if (isInitialLoad && model.includes('iPhone 13')) opt.selected = true;
+                    modelSelect.appendChild(opt);
+                });
+                if (isInitialLoad && modelSelect.options.length > 1) {
+                    if (!modelSelect.options[1].selected) modelSelect.options[1].selected = true;
+                    isInitialLoad = false;
+                }
+            } else {
+                modelSelect.innerHTML = '<option value="">No models available</option>';
             }
-        } else {
-            modelSelect.innerHTML = '<option value="">No models available</option>';
+        } catch (err) {
+            console.error('Error fetching models:', err);
+            modelSelect.innerHTML = '<option value="">Error loading models</option>';
         }
-    } catch (err) {
-        console.error('Error fetching models:', err);
-        modelSelect.innerHTML = '<option value="">Error loading models</option>';
-    }
 
-    if (typeof updateRepairTypes === 'function') {
-        updateRepairTypes();
-    }
-}
-
-async function updateRepairTypes() {
-    const brandSelect = document.getElementById('brandSelect');
-    const modelSelect = document.getElementById('modelSelect');
-    const repairSelect = document.getElementById('repairTypeSelect');
-    if (!repairSelect) return;
-
-    const brand = brandSelect?.value || '';
-    const model = modelSelect?.value || '';
-
-    repairSelect.innerHTML = '<option value="">Loading repair types...</option>';
-
-    try {
-        let query = supabase.from('parts_pricing').select('issue_type', { distinct: true });
-        if (brand) query = query.eq('brand', brand);
-        if (model) query = query.eq('model', model);
-        const { data, error } = await query.order('issue_type');
-
-        if (error) throw error;
-
-        const typeSet = new Set();
-        data.forEach(item => { if (item.issue_type) typeSet.add(item.issue_type.trim()); });
-        const uniqueTypes = [...typeSet].sort();
-
-        repairSelect.innerHTML = '<option value="">— Select Repair —</option>';
-        if (uniqueTypes.length > 0) {
-            uniqueTypes.forEach(type => {
-                const opt = document.createElement('option');
-                opt.value = type;
-                opt.textContent = type;
-                repairSelect.appendChild(opt);
-            });
-        } else {
-            repairSelect.innerHTML = '<option value="">No repair types available</option>';
+        if (typeof updateRepairTypes === 'function') {
+            updateRepairTypes();
         }
-    } catch (err) {
-        console.error('Error fetching repair types:', err);
-        repairSelect.innerHTML = '<option value="">Error loading repair types</option>';
     }
-}
 
-async function calculateEstimate() {
-    const brand = document.getElementById('brandSelect')?.value || '';
-    const model = document.getElementById('modelSelect')?.value || '';
-    const issueType = document.getElementById('repairTypeSelect')?.value || '';
-    const tier = document.getElementById('tierInput')?.value || 'Standard (HQ)';
-    const surveyContainer = document.getElementById('partsSurveyContainer');
+    async function updateRepairTypes() {
+        const brandSelect = document.getElementById('brandSelect');
+        const modelSelect = document.getElementById('modelSelect');
+        const repairSelect = document.getElementById('repairTypeSelect');
+        if (!repairSelect) return;
 
-    if (!brand || !model || !issueType) {
-        if (surveyContainer) {
+        const brand = brandSelect?.value || '';
+        const model = modelSelect?.value || '';
+
+        repairSelect.innerHTML = '<option value="">Loading repair types...</option>';
+
+        try {
+            let query = supabase.from('parts_pricing').select('issue_type', { distinct: true });
+            if (brand) query = query.eq('brand', brand);
+            if (model) query = query.eq('model', model);
+            const { data, error } = await query.order('issue_type');
+
+            if (error) throw error;
+
+            const typeSet = new Set();
+            data.forEach(item => { if (item.issue_type) typeSet.add(item.issue_type.trim()); });
+            const uniqueTypes = [...typeSet].sort();
+
+            repairSelect.innerHTML = '<option value="">— Select Repair —</option>';
+            if (uniqueTypes.length > 0) {
+                uniqueTypes.forEach(type => {
+                    const opt = document.createElement('option');
+                    opt.value = type;
+                    opt.textContent = type;
+                    repairSelect.appendChild(opt);
+                });
+            } else {
+                repairSelect.innerHTML = '<option value="">No repair types available</option>';
+            }
+        } catch (err) {
+            console.error('Error fetching repair types:', err);
+            repairSelect.innerHTML = '<option value="">Error loading repair types</option>';
+        }
+    }
+
+    async function calculateEstimate() {
+        const brand = document.getElementById('brandSelect')?.value || '';
+        const model = document.getElementById('modelSelect')?.value || '';
+        const issueType = document.getElementById('repairTypeSelect')?.value || '';
+        const tier = document.getElementById('tierInput')?.value || 'Standard (HQ)';
+        const surveyContainer = document.getElementById('partsSurveyContainer');
+
+        if (!brand || !model || !issueType) {
+            if (surveyContainer) {
+                surveyContainer.innerHTML = `
+                    <div class="text-center text-white/40 py-4 text-xs font-medium">
+                        <i class="fa-solid fa-circle-info mr-2"></i> Select all options to see the estimate.
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('parts_pricing')
+                .select('part_name, price, labor, warranty, turnaround, source_hub')
+                .eq('brand', brand)
+                .eq('model', model)
+                .eq('issue_type', issueType)
+                .eq('tier', tier);
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const row = data[0];
+                const price = parseFloat(row.price) || 0;
+                const labor = parseFloat(row.labor) || Math.round(price * 0.20);
+                const total = price + labor;
+
+                let metaHtml = '';
+                if (row.warranty && row.warranty !== 'N/A') {
+                    metaHtml += `<div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">🛡️ Warranty:</span>
+                                    <span class="text-white font-semibold">${row.warranty}</span>
+                                </div>`;
+                }
+                if (row.turnaround && row.turnaround !== 'N/A') {
+                    metaHtml += `<div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">⚡ Turnaround:</span>
+                                    <span class="text-white font-semibold">${row.turnaround}</span>
+                                </div>`;
+                }
+                if (row.source_hub && row.source_hub !== 'N/A') {
+                    metaHtml += `<div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">📍 Source Hub:</span>
+                                    <span class="text-white font-semibold">${row.source_hub}</span>
+                                </div>`;
+                }
+
+                surveyContainer.innerHTML = `
+                    <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2 text-left">
+                        <p class="text-xs font-bold text-teal-400 mb-2.5 uppercase tracking-wider">Part & Service Details</p>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Part Name</span>
+                            <span class="text-white font-bold">${row.part_name || 'N/A'}</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Part Price</span>
+                            <span class="text-white font-bold">₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Labor</span>
+                            <span class="text-white font-bold">₹${labor.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                        ${metaHtml}
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Total Estimate</span>
+                            <span class="text-white font-bold text-base">₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('partsTotalDisplay').textContent = '₹' + price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                document.getElementById('serviceFeeDisplay').textContent = '₹' + labor.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                document.getElementById('diagnosisChargeDisplay').textContent = '₹0.00';
+                document.getElementById('totalPriceDisplay').textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            } else {
+                surveyContainer.innerHTML = `
+                    <div class="bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs p-4 rounded-xl text-center">
+                        <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> No pricing available for this combination.
+                    </div>
+                `;
+            }
+        } catch (err) {
+            console.error('Error calculating estimate:', err);
             surveyContainer.innerHTML = `
-                <div class="text-center text-white/40 py-4 text-xs font-medium">
-                    <i class="fa-solid fa-circle-info mr-2"></i> Select all options to see the estimate.
-                </div>
+                <div class="text-center text-red-400 text-xs p-2">Error loading estimate. Please try again.</div>
             `;
         }
-        return;
     }
 
-    try {
-        const { data, error } = await supabase
-            .from('parts_pricing')
-            .select('part_name, price, labor, warranty, turnaround, source_hub')
-            .eq('brand', brand)
-            .eq('model', model)
-            .eq('issue_type', issueType)
-            .eq('tier', tier);
+    // ─── Expose to global scope ───
+    window.populateBrands = populateBrands;
+    window.updateModels = updateModels;
+    window.updateRepairTypes = updateRepairTypes;
+    window.calculateEstimate = calculateEstimate;
 
-        if (error) throw error;
+    // ─── On page load, populate brands ───
+    document.addEventListener('DOMContentLoaded', function() {
+        populateBrands();
+    });
 
-        if (data && data.length > 0) {
-            const row = data[0];
-            const price = parseFloat(row.price) || 0;
-            const labor = parseFloat(row.labor) || Math.round(price * 0.20);
-            const total = price + labor;
-
-            let metaHtml = '';
-            if (row.warranty && row.warranty !== 'N/A') {
-                metaHtml += `<div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
-                                <span class="text-slate-400">🛡️ Warranty:</span>
-                                <span class="text-white font-semibold">${row.warranty}</span>
-                            </div>`;
-            }
-            if (row.turnaround && row.turnaround !== 'N/A') {
-                metaHtml += `<div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
-                                <span class="text-slate-400">⚡ Turnaround:</span>
-                                <span class="text-white font-semibold">${row.turnaround}</span>
-                            </div>`;
-            }
-            if (row.source_hub && row.source_hub !== 'N/A') {
-                metaHtml += `<div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
-                                <span class="text-slate-400">📍 Source Hub:</span>
-                                <span class="text-white font-semibold">${row.source_hub}</span>
-                            </div>`;
-            }
-
-            surveyContainer.innerHTML = `
-                <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2 text-left">
-                    <p class="text-xs font-bold text-teal-400 mb-2.5 uppercase tracking-wider">Part & Service Details</p>
-                    <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
-                        <span class="text-slate-400">Part Name</span>
-                        <span class="text-white font-bold">${row.part_name || 'N/A'}</span>
-                    </div>
-                    <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
-                        <span class="text-slate-400">Part Price</span>
-                        <span class="text-white font-bold">₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
-                        <span class="text-slate-400">Labor</span>
-                        <span class="text-white font-bold">₹${labor.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                    ${metaHtml}
-                    <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
-                        <span class="text-slate-400">Total Estimate</span>
-                        <span class="text-white font-bold text-base">₹${total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                    </div>
-                </div>
-            `;
-
-            document.getElementById('partsTotalDisplay').textContent = '₹' + price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-            document.getElementById('serviceFeeDisplay').textContent = '₹' + labor.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-            document.getElementById('diagnosisChargeDisplay').textContent = '₹0.00';
-            document.getElementById('totalPriceDisplay').textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-        } else {
-            surveyContainer.innerHTML = `
-                <div class="bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs p-4 rounded-xl text-center">
-                    <i class="fa-solid fa-triangle-exclamation mr-1.5"></i> No pricing available for this combination.
-                </div>
-            `;
+    // ─── Custom Mobile Slide‑out Navigation Drawer ───
+    async function toggleMobileMenu() {
+        let mobileDrawer = document.getElementById('mobileNavDrawer');
+        if (!mobileDrawer) {
+            mobileDrawer = document.createElement('div');
+            mobileDrawer.id = 'mobileNavDrawer';
+            mobileDrawer.className = 'fixed inset-0 z-50 hidden';
+            document.body.appendChild(mobileDrawer);
         }
-    } catch (err) {
-        console.error('Error calculating estimate:', err);
-        surveyContainer.innerHTML = `
-            <div class="text-center text-red-400 text-xs p-2">Error loading estimate. Please try again.</div>
-        `;
-    }
-}
 
-// ─── Expose to global scope ───
-window.populateBrands = populateBrands;
-window.updateModels = updateModels;
-window.updateRepairTypes = updateRepairTypes;
-window.calculateEstimate = calculateEstimate;
-
-// ─── On page load, populate brands ───
-document.addEventListener('DOMContentLoaded', function() {
-    populateBrands();
-});
-        // Custom Mobile Slide-out Navigation Drawer
-        async function toggleMobileMenu() {
-            let mobileDrawer = document.getElementById('mobileNavDrawer');
-            if (!mobileDrawer) {
-                mobileDrawer = document.createElement('div');
-                mobileDrawer.id = 'mobileNavDrawer';
-                mobileDrawer.className = 'fixed inset-0 z-50 hidden';
-                document.body.appendChild(mobileDrawer);
+        let user = null;
+        try {
+            if (window.supabase) {
+                const { data } = await supabase.auth.getUser();
+                if (data && data.user) {
+                    user = data.user;
+                }
             }
+        } catch (e) {
+            console.warn("Could not retrieve user state:", e);
+        }
 
-            let user = null;
+        let authBlockHtml = '';
+        if (user) {
+            const username = user.user_metadata?.full_name || user.email.split('@')[0];
+            const email = user.email;
+            const initials = username.substring(0, 2).toUpperCase();
+
+            let roles = [];
             try {
-                if (window.supabase) {
-                    const { data } = await supabase.auth.getUser();
-                    if (data && data.user) {
-                        user = data.user;
-                    }
-                }
+                roles = await getAllUserRoles(user.id);
             } catch (e) {
-                console.warn("Could not retrieve user state:", e);
+                console.warn(e);
             }
+            const activeRole = localStorage.getItem('activeRole') || roles[0] || 'customer';
 
-            let authBlockHtml = '';
-            if (user) {
-                const username = user.user_metadata?.full_name || user.email.split('@')[0];
-                const email = user.email;
-                const initials = username.substring(0, 2).toUpperCase();
-
-                // Load roles dynamically
-                let roles = [];
-                try {
-                    roles = await getAllUserRoles(user.id);
-                } catch (e) {
-                    console.warn(e);
-                }
-                const activeRole = localStorage.getItem('activeRole') || roles[0] || 'customer';
-
-                let roleSwitcherHtml = '';
-                if (roles.length > 1) {
-                    roleSwitcherHtml = `
-                        <div class="w-full mb-3">
-                            <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5 text-center">Active Role Switcher</label>
-                            <select onchange="changeActiveRole(this.value)" class="w-full bg-slate-900 border border-slate-700 text-teal-400 text-xs font-black rounded-xl py-2.5 px-3 outline-none focus:border-teal-400 text-center uppercase cursor-pointer">
-                                ${roles.map(r => `<option value="${r}" ${r === activeRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
-                            </select>
-                        </div>
-                    `;
-                }
-
-                authBlockHtml = `
-                    <div class="space-y-4">
-                        <div class="flex items-center gap-3.5 p-4 rounded-2xl bg-slate-900 border border-slate-800">
-                            <div class="w-11 h-11 rounded-full bg-teal-500/10 border-2 border-teal-500/35 text-teal-400 font-extrabold text-sm flex items-center justify-center shrink-0 shadow-lg shadow-teal-500/5">
-                                ${initials}
-                            </div>
-                            <div class="min-w-0">
-                                <p class="text-xs font-black text-white truncate">${username}</p>
-                                <p class="text-[10px] text-slate-400 truncate">${email}</p>
-                            </div>
-                        </div>
-                        ${roleSwitcherHtml}
-                        <div class="grid grid-cols-2 gap-2.5">
-                            <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="bg-slate-900 border border-slate-850 hover:bg-slate-800 text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-                                <i class="fa-regular fa-user text-[#0f8b8d]"></i> Profile
-                            </button>
-                            <button onclick="logoutUser(); toggleMobileMenu();" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
-                                <i class="fa-solid fa-power-off"></i> Logout
-                            </button>
-                        </div>
-                    </div>
-                `;
-            } else {
-                authBlockHtml = `
-                    <div class="flex flex-col gap-2.5">
-                        <a href="login.html" class="w-full bg-[#0f8b8d] hover:bg-[#0c6e70] text-white py-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-md transition-all" onclick="toggleMobileMenu()">
-                            <i class="fa-solid fa-right-to-bracket"></i> Sign In
-                        </a>
-                        <a href="signup.html" class="w-full bg-slate-900 border border-slate-800 text-gray-300 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-850 transition-all" onclick="toggleMobileMenu()">
-                            <i class="fa-solid fa-user-plus"></i> Sign Up
-                        </a>
+            let roleSwitcherHtml = '';
+            if (roles.length > 1) {
+                roleSwitcherHtml = `
+                    <div class="w-full mb-3">
+                        <label class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1.5 text-center">Active Role Switcher</label>
+                        <select onchange="changeActiveRole(this.value)" class="w-full bg-slate-900 border border-slate-700 text-teal-400 text-xs font-black rounded-xl py-2.5 px-3 outline-none focus:border-teal-400 text-center uppercase cursor-pointer">
+                            ${roles.map(r => `<option value="${r}" ${r === activeRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
+                        </select>
                     </div>
                 `;
             }
 
-            mobileDrawer.innerHTML = `
-                <!-- Backdrop -->
-                <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300" onclick="toggleMobileMenu()"></div>
-                <!-- Drawer Body -->
-                <div class="fixed inset-y-0 right-0 w-80 bg-slate-950 border-l border-slate-900 shadow-2xl p-6 flex flex-col justify-between z-10 transition-transform duration-300 transform translate-x-full" id="mobileDrawerBody">
-                    <div class="space-y-6">
-                        <!-- Drawer Header -->
-                        <div class="flex items-center justify-between border-b border-white/5 pb-4">
-                            <div class="flex items-center gap-2">
-                                <span class="text-xs font-black text-[#14b8a6] uppercase tracking-wider font-display">Navigation Menu</span>
-                            </div>
-                            <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white text-lg transition">✕</button>
+            authBlockHtml = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3.5 p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                        <div class="w-11 h-11 rounded-full bg-teal-500/10 border-2 border-teal-500/35 text-teal-400 font-extrabold text-sm flex items-center justify-center shrink-0 shadow-lg shadow-teal-500/5">
+                            ${initials}
                         </div>
-
-                        <!-- Navigation Links -->
-                        <nav class="flex flex-col gap-3 text-sm font-medium">
-                            <a href="index.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-[#0f8b8d] p-3 rounded-xl hover:bg-white/5 transition" id="mLink-index">
-                                <i class="fa-solid fa-house text-[#14b8a6]"></i> Home
-                            </a>
-                            <a href="request.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-[#0f8b8d] p-3 rounded-xl hover:bg-white/5 transition" id="mLink-request">
-                                <i class="fa-solid fa-screwdriver-wrench text-[#14b8a6]"></i> Repair Request
-                            </a>
-                            <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-[#0f8b8d] p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
-                                <i class="fa-solid fa-chart-line text-[#14b8a6]"></i> Dashboard
-                            </a>
-                            <a href="marketplace.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-[#0f8b8d] p-3 rounded-xl hover:bg-white/5 transition" id="mLink-marketplace">
-                                <i class="fa-solid fa-store text-[#14b8a6]"></i> Certified Store
-                            </a>
-                        </nav>
+                        <div class="min-w-0">
+                            <p class="text-xs font-black text-white truncate">${username}</p>
+                            <p class="text-[10px] text-slate-400 truncate">${email}</p>
+                        </div>
                     </div>
-
-                    <!-- Footer (Auth / User Actions) -->
-                    <div class="border-t border-white/5 pt-4">
-                        ${authBlockHtml}
+                    ${roleSwitcherHtml}
+                    <div class="grid grid-cols-2 gap-2.5">
+                        <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="bg-slate-900 border border-slate-850 hover:bg-slate-800 text-white py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
+                            <i class="fa-regular fa-user text-[#0f8b8d]"></i> Profile
+                        </button>
+                        <button onclick="logoutUser(); toggleMobileMenu();" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all">
+                            <i class="fa-solid fa-power-off"></i> Logout
+                        </button>
                     </div>
                 </div>
             `;
-
-            // Trigger animation
-            if (mobileDrawer.classList.contains('hidden')) {
-                mobileDrawer.classList.remove('hidden');
-                setTimeout(() => {
-                    const body = document.getElementById('mobileDrawerBody');
-                    if (body) body.classList.remove('translate-x-full');
-                }, 50);
-            } else {
-                const body = document.getElementById('mobileDrawerBody');
-                if (body) body.classList.add('translate-x-full');
-                setTimeout(() => {
-                    mobileDrawer.classList.add('hidden');
-                }, 300);
-            }
+        } else {
+            authBlockHtml = `
+                <div class="flex flex-col gap-2.5">
+                    <a href="login.html" class="w-full bg-[#0f8b8d] hover:bg-[#0c6e70] text-white py-3 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-md transition-all" onclick="toggleMobileMenu()">
+                        <i class="fa-solid fa-right-to-bracket"></i> Sign In
+                    </a>
+                    <a href="signup.html" class="w-full bg-slate-900 border border-slate-800 text-gray-300 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 hover:bg-slate-850 transition-all" onclick="toggleMobileMenu()">
+                        <i class="fa-solid fa-user-plus"></i> Sign Up
+                    </a>
+                </div>
+            `;
         }
-        window.toggleMobileMenu = toggleMobileMenu;
-    </script>
+
+        mobileDrawer.innerHTML = `
+            <!-- Backdrop -->
+            <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300" onclick="toggleMobileMenu()"></div>
+            <!-- Drawer Body -->
+            <div class="fixed inset-y-0 right-0 w-80 bg-slate-950 border-l border-slate-900 shadow-2xl p-6 flex flex-col justify-between z-10 transition-transform duration-300 transform translate-x-full" id="mobileDrawerBody">
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-black text-[#14b8a6] uppercase tracking-wider font-display">Navigation Menu</span>
+                        </div>
+                        <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white text-lg transition">✕</button>
+                    </div>
+                    <nav class="flex flex-col gap-3 text-sm font-medium">
+                        <a href="index.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-[#0f8b8d] p-3 rounded-xl hover:bg-white/5 transition" id="mLink-index">
+                            <i class="fa-solid fa-house text-[#14b8a6]"></i> Home
+                        </a>
+                        <a href="request.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-[#0f8b8d] p-3 rounded-xl hover:bg-white/5 transition" id="mLink-request">
+                            <i class="fa-solid fa-screwdriver-wrench text-[#14b8a6]"></i> Repair Request
+                        </a>
+                        <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-[#0f8b8d] p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
+                            <i class="fa-solid fa-chart-line text-[#14b8a6]"></i> Dashboard
+                        </a>
+                        <a href="marketplace.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-[#0f8b8d] p-3 rounded-xl hover:bg-white/5 transition" id="mLink-marketplace">
+                            <i class="fa-solid fa-store text-[#14b8a6]"></i> Certified Store
+                        </a>
+                    </nav>
+                </div>
+                <div class="border-t border-white/5 pt-4">
+                    ${authBlockHtml}
+                </div>
+            </div>
+        `;
+
+        if (mobileDrawer.classList.contains('hidden')) {
+            mobileDrawer.classList.remove('hidden');
+            setTimeout(() => {
+                const body = document.getElementById('mobileDrawerBody');
+                if (body) body.classList.remove('translate-x-full');
+            }, 50);
+        } else {
+            const body = document.getElementById('mobileDrawerBody');
+            if (body) body.classList.add('translate-x-full');
+            setTimeout(() => {
+                mobileDrawer.classList.add('hidden');
+            }, 300);
+        }
+    }
+    window.toggleMobileMenu = toggleMobileMenu;
+</script>
 
 </body>
 </html>
