@@ -161,7 +161,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                 if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
                     actions += `
                         <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
-                        <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
+                        <button onclick="('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
                     `;
                 }
             }
@@ -2087,7 +2087,12 @@ async function assignSelfAsTechnician(orderId) {
 }
 
 async function assignSelfAsRepairMaster(orderId) {
-    if (!currentUser || !supabase) return showToast('Authentication required.', 'error');
+    if (!currentUser || !currentUser.id) {
+        showToast('You must be logged in to take this action.', 'error');
+        return;
+    }
+    if (!supabase) return showToast('Supabase offline', 'error');
+
     try {
         const { error } = await supabase
             .from('orders')
@@ -2100,7 +2105,6 @@ async function assignSelfAsRepairMaster(orderId) {
         showToast('Error: ' + err.message, 'error');
     }
 }
-
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
