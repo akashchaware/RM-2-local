@@ -1065,7 +1065,7 @@
         setInterval(cycleBgSlides, 5000);
 
         // Estimation Calculator Default Select Override Configuration
-      // ─── Text‑based Dropdown & Calculator Logic ───
+     // ─── Text‑based Dropdown & Calculator Logic ───
 let isInitialLoad = true;
 
 async function populateBrands() {
@@ -1082,7 +1082,6 @@ async function populateBrands() {
 
         if (error) throw error;
 
-        // Deduplicate in case of trailing spaces
         const brandSet = new Set();
         data.forEach(item => {
             if (item.brand) brandSet.add(item.brand.trim());
@@ -1279,7 +1278,6 @@ async function calculateEstimate() {
                 </div>
             `;
 
-            // Update bottom totals
             document.getElementById('partsTotalDisplay').textContent = '₹' + price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
             document.getElementById('serviceFeeDisplay').textContent = '₹' + labor.toLocaleString('en-IN', { minimumFractionDigits: 2 });
             document.getElementById('diagnosisChargeDisplay').textContent = '₹0.00';
