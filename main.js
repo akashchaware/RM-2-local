@@ -1219,15 +1219,41 @@ async function submitRequest(e) {
         const session = await supabase.auth.getSession();
         const user = session.data?.session?.user || null;
 
-        let partsTotal = 0;
-        if (modelId && repairTypeId) {
-            const parts = allParts.filter(p => String(p.device_id) === String(modelId) && String(p.repair_type_id) === String(repairTypeId));
-            const qualityMultiplier = partsQuality === 'premium' ? 1.0 : 0.7;
-            partsTotal = parts.reduce((sum, p) => sum + (p.price * qualityMultiplier), 0);
+        let partsTotalVal = 0;
+        let serviceFeeVal = 150.00;
+        let totalEstimateVal = 400.00;
+        let diagnosisVal = 250.00;
+
+        if (window._reqEstimate) {
+            partsTotalVal = window._reqEstimate.partsTotal || 0;
+            serviceFeeVal = window._reqEstimate.serviceFee || 0;
+            diagnosisVal = window._reqEstimate.diagnosisCharge || 250.00;
+            totalEstimateVal = window._reqEstimate.total || 0;
+        } else {
+            let partsTotal = 0;
+            if (modelSelect && repairSelect) {
+                const brandVal = brandSelect.value;
+                const modelVal = modelSelect.value;
+                const issueVal = repairSelect.value;
+                const isDead = (issueVal.toLowerCase().includes('dead phone') || issueVal === 'deadphone');
+                const isOth = (issueVal.toLowerCase().includes('other') || issueVal === 'other');
+                if (!isDead && !isOth) {
+                    const matches = (window.RECORDS || []).filter(p => p.brand === brandVal && p.model === modelVal && p.issue_type === issueVal);
+                    if (matches.length > 0) {
+                        const targetTier = partsQuality === 'premium' ? 'Premium Grade' : 'Standard Grade';
+                        let match = matches.find(p => p.tier === targetTier) || matches[0];
+                        let partsPrice = parseFloat(match.price) || 0;
+                        if (match.tier !== targetTier) {
+                            partsPrice = partsPrice * (partsQuality === 'premium' ? 1.4 : 0.7);
+                        }
+                        partsTotal = partsPrice;
+                    }
+                }
+            }
+            partsTotalVal = partsTotal * 0.9;
+            serviceFeeVal = partsTotalVal > 0 ? (partsTotalVal * 0.15) : 150.00;
+            totalEstimateVal = partsTotalVal + serviceFeeVal + 250.00;
         }
-        const discountedParts = partsTotal * 0.9;
-        const serviceFee = discountedParts > 0 ? (discountedParts * 0.15) : 100.00;
-        const totalEstimate = discountedParts + serviceFee + 250;
 
         const orderData = {
             order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
@@ -1242,10 +1268,10 @@ async function submitRequest(e) {
             photo_url: photoUrl,
             address: addressLine + ', ' + city,
             parts_quality: partsQuality,
-            parts_total: discountedParts,
-            service_fee: serviceFee,
-            diagnosis_charge: 250,
-            total_price: totalEstimate,
+            parts_total: partsTotalVal,
+            service_fee: serviceFeeVal,
+            diagnosis_charge: diagnosisVal,
+            total_price: totalEstimateVal,
             discount_applied: 0,
             status: 'Pending',
             notes: notes || null,
@@ -3674,48 +3700,231 @@ async function logoutUser() {
 }
 
 // ─── 11. REQUEST DROPDOWN HELPERS ───
+function getRepairValueFromParam(repairParam) {
+    if (!repairParam) return '';
+    const cleanParam = repairParam.toLowerCase().replace(/[^a-z0-9]/g, '');
+    
+    if (cleanParam.startsWith('rt')) {
+        const mapping = {
+            "rt1": "Screen",
+            "rt2": "Battery",
+            "rt3": "Charging port",
+            "rt4": "Camera",
+            "rt5": "Speaker/Mic",
+            "rt6": "Buttons/Flex",
+            "rt7": "Motherboard",
+            "rt8": "Water damage",
+            "rt9": "Software",
+            "rt10": "Network / Antenna",
+            "rt11": "Complete Overhaul",
+            "rt12": "deadphone",
+            "rt13": "other"
+        };
+        return mapping[cleanParam] || '';
+    }
+    
+    const options = ["Screen", "Battery", "Charging port", "Camera", "Speaker/Mic", "Buttons/Flex", "Motherboard", "Water damage", "Software", "Network / Antenna", "Complete Overhaul", "deadphone", "other"];
+    for (const opt of options) {
+        if (opt.toLowerCase().replace(/[^a-z0-9]/g, '').includes(cleanParam) || cleanParam.includes(opt.toLowerCase().replace(/[^a-z0-9]/g, ''))) {
+            return opt;
+        }
+    }
+    return '';
+}
+
+function prefillFromURLParams() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const brandParam = urlParams.get('brand');
+    const modelParam = urlParams.get('model');
+    const repairParam = urlParams.get('repair');
+    const gradeParam = urlParams.get('grade');
+
+    console.log("🔍 prefillFromURLParams: brand=", brandParam, "model=", modelParam, "repair=", repairParam, "grade=", gradeParam);
+
+    if (!brandParam) return;
+
+    const brandSelect = document.getElementById('reqBrand');
+    if (!brandSelect) return;
+
+    // 1. Select Brand
+    let matchedBrand = '';
+    for (let opt of brandSelect.options) {
+        if (opt.value.toLowerCase() === brandParam.toLowerCase()) {
+            opt.selected = true;
+            matchedBrand = opt.value;
+            break;
+        }
+    }
+    if (!matchedBrand) {
+        toggleOther('reqBrand');
+        const manualBrandEl = document.getElementById('reqBrandOtherInput');
+        if (manualBrandEl) manualBrandEl.value = brandParam;
+    }
+
+    // 2. Select Model
+    if (matchedBrand) {
+        updateReqModels();
+        const modelSelect = document.getElementById('reqModel');
+        if (modelSelect && modelParam) {
+            let matchedModel = '';
+            for (let opt of modelSelect.options) {
+                if (opt.value.toLowerCase() === modelParam.toLowerCase() || opt.value.toLowerCase().replace(/\s/g, '') === modelParam.toLowerCase().replace(/\s/g, '')) {
+                    opt.selected = true;
+                    matchedModel = opt.value;
+                    break;
+                }
+            }
+            if (!matchedModel) {
+                toggleOther('reqModel');
+                const manualModelEl = document.getElementById('reqModelOtherInput');
+                if (manualModelEl) manualModelEl.value = modelParam;
+            }
+        }
+    } else if (modelParam) {
+        toggleOther('reqModel');
+        const manualModelEl = document.getElementById('reqModelOtherInput');
+        if (manualModelEl) manualModelEl.value = modelParam;
+    }
+
+    // 3. Select Repair
+    updateReqRepairTypes();
+    const repairSelect = document.getElementById('reqRepairType');
+    if (repairSelect && repairParam) {
+        let matchedRepair = '';
+        const mappedValue = getRepairValueFromParam(repairParam);
+        
+        for (let opt of repairSelect.options) {
+            if (opt.value.toLowerCase() === repairParam.toLowerCase() || 
+                opt.value.toLowerCase() === mappedValue.toLowerCase() ||
+                opt.textContent.toLowerCase().includes(repairParam.toLowerCase())) {
+                opt.selected = true;
+                matchedRepair = opt.value;
+                break;
+            }
+        }
+        if (!matchedRepair) {
+            toggleOther('reqRepairType');
+            const manualRepairEl = document.getElementById('reqRepairOtherInput');
+            if (manualRepairEl) manualRepairEl.value = repairParam;
+        }
+    }
+
+    // 4. Select Grade
+    const gradeSelect = document.getElementById('reqPartsQuality');
+    if (gradeSelect && gradeParam) {
+        for (let opt of gradeSelect.options) {
+            if (opt.value.toLowerCase() === gradeParam.toLowerCase()) {
+                opt.selected = true;
+                break;
+            }
+        }
+    }
+
+    // 5. Update Estimate
+    showRequestEstimate();
+}
+
 function populateRequestBrands() {
     const select = document.getElementById('reqBrand');
     if (!select) return;
     select.innerHTML = '<option value="">— Select Brand —</option>';
-    allBrands.forEach(b => {
+    
+    const allParts = window.RECORDS || [];
+    if (allParts.length === 0) {
+        console.warn("⚠️ window.RECORDS is empty.");
+        return;
+    }
+    
+    const uniqueBrands = [...new Set(allParts.map(p => p.brand).filter(Boolean))].sort();
+    uniqueBrands.forEach(b => {
         const opt = document.createElement('option');
-        opt.value = b.id;
-        opt.textContent = b.name;
+        opt.value = b;
+        opt.textContent = b;
         select.appendChild(opt);
     });
+
+    prefillFromURLParams();
 }
 
 function updateReqModels() {
-    const brandId = document.getElementById('reqBrand').value;
+    const brandSelect = document.getElementById('reqBrand');
     const modelSelect = document.getElementById('reqModel');
-    if (!modelSelect) return;
+    if (!brandSelect || !modelSelect) return;
+    
     modelSelect.innerHTML = '<option value="">— Select Model —</option>';
     
-    if (!brandId) return;
-    const devices = allDevices.filter(d => String(d.brand_id) === String(brandId));
-    devices.forEach(d => {
+    const selectedBrand = brandSelect.value;
+    if (!selectedBrand) {
+        updateReqRepairTypes();
+        return;
+    }
+    
+    const allParts = window.RECORDS || [];
+    const brandParts = allParts.filter(p => p.brand === selectedBrand);
+    const uniqueModels = [...new Set(brandParts.map(p => p.model).filter(Boolean))].sort();
+    
+    uniqueModels.forEach(m => {
         const opt = document.createElement('option');
-        opt.value = d.id;
-        opt.textContent = d.name;
+        opt.value = m;
+        opt.textContent = m;
         modelSelect.appendChild(opt);
     });
+    
     updateReqRepairTypes();
 }
 
 function updateReqRepairTypes() {
-    const modelId = document.getElementById('reqModel').value;
+    const brandSelect = document.getElementById('reqBrand');
+    const modelSelect = document.getElementById('reqModel');
     const repairSelect = document.getElementById('reqRepairType');
     if (!repairSelect) return;
+    
     repairSelect.innerHTML = '<option value="">— Select Repair Type —</option>';
     
-    if (!modelId) return;
-    allRepairTypes.forEach(rt => {
+    const selectedBrand = brandSelect?.value || '';
+    const selectedModel = modelSelect?.value || '';
+    
+    const allParts = window.RECORDS || [];
+    let uniqueIssues = [];
+    
+    if (selectedBrand && selectedModel) {
+        const modelParts = allParts.filter(p => p.brand === selectedBrand && p.model === selectedModel);
+        uniqueIssues = [...new Set(modelParts.map(p => p.issue_type).filter(Boolean))].sort();
+    } else {
+        uniqueIssues = [...new Set(allParts.map(p => p.issue_type).filter(Boolean))].sort();
+    }
+    
+    const repairLabels = {
+        "Screen": "📱 Screen Replacement",
+        "Battery": "🔋 Battery Replacement",
+        "Charging port": "🔌 Charging Port Repair",
+        "Camera": "📷 Camera Repair",
+        "Speaker/Mic": "🔊 Speaker / Mic Repair",
+        "Buttons/Flex": "🔘 Button Repair",
+        "Motherboard": "💻 Motherboard Repair",
+        "Water damage": "💧 Water Damage Repair",
+        "Software": "📀 Software / OS Repair",
+        "Network / Antenna": "📶 Network / Antenna Repair",
+        "Complete Overhaul": "⚙️ Complete Overhaul"
+    };
+    
+    uniqueIssues.forEach(issue => {
         const opt = document.createElement('option');
-        opt.value = rt.id;
-        opt.textContent = rt.label || rt.name;
+        opt.value = issue;
+        opt.textContent = repairLabels[issue] || `🛠️ ${issue} Repair`;
         repairSelect.appendChild(opt);
     });
+    
+    const optDead = document.createElement('option');
+    optDead.value = 'deadphone';
+    optDead.textContent = '💀 Dead Phone / No Power';
+    repairSelect.appendChild(optDead);
+    
+    const optOther = document.createElement('option');
+    optOther.value = 'other';
+    optOther.textContent = '❓ Other / Not Sure';
+    repairSelect.appendChild(optOther);
+    
     showRequestEstimate();
 }
 
@@ -3733,74 +3942,112 @@ function showRequestEstimate() {
     const brandSelect = document.getElementById('reqBrand');
     const modelSelect = document.getElementById('reqModel');
     const repairSelect = document.getElementById('reqRepairType');
+    const qualitySelect = document.getElementById('reqPartsQuality');
     const estimateDiv = document.getElementById('requestEstimate');
     if (!brandSelect || !modelSelect || !repairSelect || !estimateDiv) return;
 
-    const brand = brandSelect.options[brandSelect.selectedIndex]?.text || '';
-    const model = modelSelect.options[modelSelect.selectedIndex]?.text || '';
-    const issue = repairSelect.options[repairSelect.selectedIndex]?.text || '';
+    let brand = brandSelect.value;
+    let model = modelSelect.value;
+    let issue = repairSelect.value;
+    
     const isOtherBrand = document.getElementById('reqBrandOther')?.classList.contains('visible');
     const isOtherModel = document.getElementById('reqModelOther')?.classList.contains('visible');
     const isOtherRepair = document.getElementById('reqRepairOther')?.classList.contains('visible');
 
-    if ((!isOtherBrand && !brand) || (!isOtherModel && !model) || (!isOtherRepair && !issue)) {
+    if (isOtherBrand) {
+        brand = document.getElementById('reqBrandOtherInput')?.value.trim() || '';
+    }
+    if (isOtherModel) {
+        model = document.getElementById('reqModelOtherInput')?.value.trim() || '';
+    }
+    if (isOtherRepair) {
+        issue = document.getElementById('reqRepairOtherInput')?.value.trim() || '';
+    }
+
+    if (!brand || !model || !issue) {
         estimateDiv.classList.add('hidden');
         return;
     }
 
-    const allParts = window.RECORDS || [];
-    let partsTotal = 0;
-    let laborTotal = 0;
+    let partsPrice = 0;
+    let laborPrice = 0;
+    let serviceFee = 0;
+    let diagnosisCharge = 250;
+    let total = 0;
+    let discountedParts = 0;
 
-    // --- SPECIAL CASE: DEAD PHONE ---
-    if (issue.toLowerCase().includes('dead phone')) {
-        partsTotal = 0;
-        laborTotal = 0;
+    const isDeadPhone = (issue.toLowerCase().includes('dead phone') || issue === 'deadphone' || issue === 'rt12');
+    const isOther = (issue.toLowerCase().includes('other') || issue === 'other' || issue === 'rt13');
+
+    if (isDeadPhone || isOther) {
+        partsPrice = 0;
+        laborPrice = 0;
+        discountedParts = 0;
+        serviceFee = 150.00;
+        diagnosisCharge = 250.00;
+        total = serviceFee + diagnosisCharge;
     } else {
-        // Find exact match from static data
-        const matches = allParts.filter(p => 
+        const allParts = window.RECORDS || [];
+        const quality = qualitySelect?.value || 'standard';
+        
+        let matches = allParts.filter(p => 
             p.brand === brand && 
             p.model === model && 
             p.issue_type === issue
         );
-
+        
         if (matches.length > 0) {
-            // Use the first match (Standard tier by default)
-            const match = matches[0];
-            partsTotal = parseFloat(match.price) || 0;
-            laborTotal = parseFloat(match.labor) || 0;
-        } else {
-            // Fallback if exact match not found (e.g., "Other" selection)
-            // Just use a generic base price or look up by IDs
-            const modelId = modelSelect.value;
-            const repairTypeId = repairSelect.value;
-            const fallbackParts = allParts.filter(p => 
-                (p.model === model || p.model_id === modelId) && 
-                (p.issue_type === issue || p.repair_type_id === repairTypeId)
-            );
-            if (fallbackParts.length > 0) {
-                const match = fallbackParts[0];
-                partsTotal = parseFloat(match.price) || 0;
-                laborTotal = parseFloat(match.labor) || 0;
+            const targetTier = quality === 'premium' ? 'Premium Grade' : 'Standard Grade';
+            let match = matches.find(p => p.tier === targetTier);
+            if (!match) {
+                match = matches[0];
             }
+            
+            partsPrice = parseFloat(match.price) || 0;
+            laborPrice = parseFloat(match.labor) || 0;
+            
+            if (match.tier !== targetTier) {
+                const qualityMultiplier = quality === 'premium' ? 1.4 : 0.7;
+                partsPrice = partsPrice * qualityMultiplier;
+            }
+        } else {
+            partsPrice = 500;
+            laborPrice = 150;
         }
+
+        discountedParts = partsPrice * 0.9;
+        serviceFee = (discountedParts * 0.15) + laborPrice;
+        diagnosisCharge = 250.00;
+        total = discountedParts + serviceFee + diagnosisCharge;
     }
 
-    // --- CALCULATION LOGIC (Matches Homepage) ---
-    const serviceFee = partsTotal * 0.15; // 15% Service Fee
-    const diagnosisCharge = 250;
-    const total = partsTotal + serviceFee + diagnosisCharge;
+    const reqPartsTotal = document.getElementById('reqPartsTotal');
+    const reqServiceFee = document.getElementById('reqServiceFee');
+    const reqDiagnosis = document.getElementById('reqDiagnosis');
+    const reqTotal = document.getElementById('reqTotal');
 
-    // --- UPDATE UI ---
-    document.getElementById('reqPartsTotal').textContent = '₹' + partsTotal.toFixed(2);
-    document.getElementById('reqServiceFee').textContent = '₹' + serviceFee.toFixed(2);
-    document.getElementById('reqDiagnosis').textContent = '₹' + diagnosisCharge.toFixed(2);
-    document.getElementById('reqTotal').textContent = '₹' + total.toFixed(2);
+    if (reqPartsTotal) reqPartsTotal.textContent = '₹' + discountedParts.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (reqServiceFee) reqServiceFee.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (reqDiagnosis) reqDiagnosis.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+    if (reqTotal) reqTotal.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
 
     estimateDiv.classList.remove('hidden');
 
-    // Store in global for submission
-    window._reqEstimate = { partsTotal, serviceFee, diagnosisCharge, total };
+    const inputs = ['reqBrandOtherInput', 'reqModelOtherInput', 'reqRepairOtherInput'];
+    inputs.forEach(id => {
+        const inputEl = document.getElementById(id);
+        if (inputEl && !inputEl.dataset.hasListener) {
+            inputEl.addEventListener('input', showRequestEstimate);
+            inputEl.dataset.hasListener = 'true';
+        }
+    });
+
+    window._reqEstimate = { 
+        partsTotal: discountedParts, 
+        serviceFee: serviceFee, 
+        diagnosisCharge: diagnosisCharge, 
+        total: total 
+    };
 }
 
 // ─── 12. LOGINS & AUTHS ───
