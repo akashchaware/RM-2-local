@@ -1094,9 +1094,9 @@ async function submitRequest(e) {
         const nameEl = document.getElementById('reqName');
         const phoneEl = document.getElementById('reqPhone');
         const emailEl = document.getElementById('reqEmail');
-        const brandSelect = document.getElementById('reqBrand');
-        const modelSelect = document.getElementById('reqModel');
-        const repairSelect = document.getElementById('reqRepairType');
+        const brandSelect = document.getElementById('deviceBrand') || document.getElementById('reqBrand');
+        const modelSelect = document.getElementById('deviceModel') || document.getElementById('reqModel');
+        const repairSelect = document.getElementById('repairType') || document.getElementById('reqRepairType');
         const addressEl = document.getElementById('reqAddressLine');
         const cityEl = document.getElementById('reqCity');
         const notesEl = document.getElementById('reqNotes');
@@ -1132,18 +1132,18 @@ async function submitRequest(e) {
         let repairOther = null;
 
         if (document.getElementById('reqBrandOther')?.classList.contains('visible')) {
-            deviceOther = document.getElementById('reqBrandOtherInput')?.value.trim();
+            deviceOther = (document.getElementById('manualBrandInput') || document.getElementById('reqBrandOtherInput'))?.value.trim();
             if (!deviceOther) return showToast('Please enter the brand name.', 'error');
             deviceId = null;
         }
         if (document.getElementById('reqModelOther')?.classList.contains('visible')) {
-            const otherModel = document.getElementById('reqModelOtherInput')?.value.trim();
+            const otherModel = (document.getElementById('manualModelInput') || document.getElementById('reqModelOtherInput'))?.value.trim();
             if (!otherModel) return showToast('Please enter the model name.', 'error');
             deviceOther = deviceOther ? deviceOther + ' - ' + otherModel : otherModel;
             modelId = null;
         }
         if (document.getElementById('reqRepairOther')?.classList.contains('visible')) {
-            repairOther = document.getElementById('reqRepairOtherInput')?.value.trim();
+            repairOther = (document.getElementById('manualRepairInput') || document.getElementById('reqRepairOtherInput'))?.value.trim();
             if (!repairOther) return showToast('Please enter the repair type.', 'error');
             repairTypeId = null;
         }
@@ -3678,7 +3678,7 @@ function prefillFromURLParams() {
 
     if (!brandParam) return;
 
-    const brandSelect = document.getElementById('reqBrand');
+    const brandSelect = document.getElementById('deviceBrand') || document.getElementById('reqBrand');
     if (!brandSelect) return;
 
     // 1. Select Brand
@@ -3692,14 +3692,14 @@ function prefillFromURLParams() {
     }
     if (!matchedBrand) {
         toggleOther('reqBrand');
-        const manualBrandEl = document.getElementById('reqBrandOtherInput');
+        const manualBrandEl = document.getElementById('manualBrandInput') || document.getElementById('reqBrandOtherInput');
         if (manualBrandEl) manualBrandEl.value = brandParam;
     }
 
     // 2. Select Model
     if (matchedBrand) {
         updateReqModels();
-        const modelSelect = document.getElementById('reqModel');
+        const modelSelect = document.getElementById('deviceModel') || document.getElementById('reqModel');
         if (modelSelect && modelParam) {
             let matchedModel = '';
             for (let opt of modelSelect.options) {
@@ -3711,19 +3711,19 @@ function prefillFromURLParams() {
             }
             if (!matchedModel) {
                 toggleOther('reqModel');
-                const manualModelEl = document.getElementById('reqModelOtherInput');
+                const manualModelEl = document.getElementById('manualModelInput') || document.getElementById('reqModelOtherInput');
                 if (manualModelEl) manualModelEl.value = modelParam;
             }
         }
     } else if (modelParam) {
         toggleOther('reqModel');
-        const manualModelEl = document.getElementById('reqModelOtherInput');
+        const manualModelEl = document.getElementById('manualModelInput') || document.getElementById('reqModelOtherInput');
         if (manualModelEl) manualModelEl.value = modelParam;
     }
 
     // 3. Select Repair
     updateReqRepairTypes();
-    const repairSelect = document.getElementById('reqRepairType');
+    const repairSelect = document.getElementById('repairType') || document.getElementById('reqRepairType');
     if (repairSelect && repairParam) {
         let matchedRepair = '';
         const mappedValue = getRepairValueFromParam(repairParam);
@@ -3739,7 +3739,7 @@ function prefillFromURLParams() {
         }
         if (!matchedRepair) {
             toggleOther('reqRepairType');
-            const manualRepairEl = document.getElementById('reqRepairOtherInput');
+            const manualRepairEl = document.getElementById('manualRepairInput') || document.getElementById('reqRepairOtherInput');
             if (manualRepairEl) manualRepairEl.value = repairParam;
         }
     }
@@ -3760,7 +3760,7 @@ function prefillFromURLParams() {
 }
 
 function populateRequestBrands() {
-    const select = document.getElementById('reqBrand');
+    const select = document.getElementById('deviceBrand') || document.getElementById('reqBrand');
     if (!select) return;
     select.innerHTML = '<option value="">— Select Brand —</option>';
     
@@ -3782,8 +3782,8 @@ function populateRequestBrands() {
 }
 
 function updateReqModels() {
-    const brandSelect = document.getElementById('reqBrand');
-    const modelSelect = document.getElementById('reqModel');
+    const brandSelect = document.getElementById('deviceBrand') || document.getElementById('reqBrand');
+    const modelSelect = document.getElementById('deviceModel') || document.getElementById('reqModel');
     if (!brandSelect || !modelSelect) return;
     
     modelSelect.innerHTML = '<option value="">— Select Model —</option>';
@@ -3809,9 +3809,9 @@ function updateReqModels() {
 }
 
 function updateReqRepairTypes() {
-    const brandSelect = document.getElementById('reqBrand');
-    const modelSelect = document.getElementById('reqModel');
-    const repairSelect = document.getElementById('reqRepairType');
+    const brandSelect = document.getElementById('deviceBrand') || document.getElementById('reqBrand');
+    const modelSelect = document.getElementById('deviceModel') || document.getElementById('reqModel');
+    const repairSelect = document.getElementById('repairType') || document.getElementById('reqRepairType');
     if (!repairSelect) return;
     
     repairSelect.innerHTML = '<option value="">— Select Repair Type —</option>';
@@ -3864,19 +3864,27 @@ function updateReqRepairTypes() {
 }
 
 function toggleOther(fieldId) {
-    const otherDiv = document.getElementById(fieldId + 'Other') || document.getElementById(fieldId.replace('Type', '') + 'Other');
+    let selectId = fieldId;
+    if (fieldId === 'reqBrand') selectId = 'deviceBrand';
+    if (fieldId === 'reqModel') selectId = 'deviceModel';
+    if (fieldId === 'reqRepairType') selectId = 'repairType';
+
+    const otherDiv = document.getElementById(fieldId + 'Other') || 
+                      document.getElementById(fieldId.replace('Type', '') + 'Other') ||
+                      document.getElementById(selectId + 'Other') ||
+                      document.getElementById(selectId.replace('Type', '') + 'Other');
     if (otherDiv) {
         otherDiv.classList.toggle('visible');
-        const select = document.getElementById(fieldId);
+        const select = document.getElementById(selectId) || document.getElementById(fieldId);
         if (select) select.disabled = otherDiv.classList.contains('visible');
     }
     showRequestEstimate();
 }
 
 function showRequestEstimate() {
-    const brandSelect = document.getElementById('reqBrand');
-    const modelSelect = document.getElementById('reqModel');
-    const repairSelect = document.getElementById('reqRepairType');
+    const brandSelect = document.getElementById('deviceBrand') || document.getElementById('reqBrand');
+    const modelSelect = document.getElementById('deviceModel') || document.getElementById('reqModel');
+    const repairSelect = document.getElementById('repairType') || document.getElementById('reqRepairType');
     const qualitySelect = document.getElementById('reqPartsQuality');
     const estimateDiv = document.getElementById('requestEstimate');
     if (!brandSelect || !modelSelect || !repairSelect || !estimateDiv) return;
@@ -3885,18 +3893,22 @@ function showRequestEstimate() {
     let model = modelSelect.value;
     let issue = repairSelect.value;
     
-    const isOtherBrand = document.getElementById('reqBrandOther')?.classList.contains('visible');
-    const isOtherModel = document.getElementById('reqModelOther')?.classList.contains('visible');
-    const isOtherRepair = document.getElementById('reqRepairOther')?.classList.contains('visible');
+    const manualBrandEl = document.getElementById('manualBrandInput') || document.getElementById('reqBrandOtherInput');
+    const manualModelEl = document.getElementById('manualModelInput') || document.getElementById('reqModelOtherInput');
+    const manualRepairEl = document.getElementById('manualRepairInput') || document.getElementById('reqRepairOtherInput');
+
+    const isOtherBrand = (manualBrandEl && manualBrandEl.value.trim() !== "");
+    const isOtherModel = (manualModelEl && manualModelEl.value.trim() !== "");
+    const isOtherRepair = (manualRepairEl && manualRepairEl.value.trim() !== "");
 
     if (isOtherBrand) {
-        brand = document.getElementById('reqBrandOtherInput')?.value.trim() || '';
+        brand = manualBrandEl.value.trim();
     }
     if (isOtherModel) {
-        model = document.getElementById('reqModelOtherInput')?.value.trim() || '';
+        model = manualModelEl.value.trim();
     }
     if (isOtherRepair) {
-        issue = document.getElementById('reqRepairOtherInput')?.value.trim() || '';
+        issue = manualRepairEl.value.trim();
     }
 
     if (!brand || !model || !issue) {
@@ -3961,7 +3973,7 @@ function showRequestEstimate() {
 
     estimateDiv.classList.remove('hidden');
 
-    const inputs = ['reqBrandOtherInput', 'reqModelOtherInput', 'reqRepairOtherInput'];
+    const inputs = ['reqBrandOtherInput', 'reqModelOtherInput', 'reqRepairOtherInput', 'manualBrandInput', 'manualModelInput', 'manualRepairInput'];
     inputs.forEach(id => {
         const inputEl = document.getElementById(id);
         if (inputEl && !inputEl.dataset.hasListener) {

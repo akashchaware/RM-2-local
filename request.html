@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Request Doorstep Repair – RepairMaster</title>
     <link rel="icon" type="image/jpg" href="repo-image-folder/brand-logo-circular.jpg?v=2" />
+    <link rel="shortcut icon" type="image/jpg" href="repo-image-folder/brand-logo-circular.jpg?v=2" />
+    <link rel="apple-touch-icon" href="repo-image-folder/brand-logo-circular.jpg?v=2" />
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Custom Theme Styling Config -->
@@ -221,11 +223,11 @@
                             <label class="m-0">Device Brand</label>
                             <button type="button" onclick="toggleOther('reqBrand')" class="text-[10px] text-teal hover:underline font-bold">Or enter manual brand</button>
                         </div>
-                        <select id="reqBrand" onchange="updateReqModels()">
+                        <select id="deviceBrand" onchange="updateReqModels()">
                             <option value="">— Select Brand —</option>
                         </select>
                         <div id="reqBrandOther" class="other-input">
-                            <input type="text" id="reqBrandOtherInput" placeholder="Enter other brand name">
+                            <input type="text" id="manualBrandInput" placeholder="Enter other brand name">
                         </div>
                     </div>
 
@@ -234,11 +236,11 @@
                             <label class="m-0">Device Model</label>
                             <button type="button" onclick="toggleOther('reqModel')" class="text-[10px] text-teal hover:underline font-bold">Or enter manual model</button>
                         </div>
-                        <select id="reqModel" onchange="updateReqRepairTypes()">
+                        <select id="deviceModel" onchange="updateReqRepairTypes()">
                             <option value="">— Select Model —</option>
                         </select>
                         <div id="reqModelOther" class="other-input">
-                            <input type="text" id="reqModelOtherInput" placeholder="Enter other model name">
+                            <input type="text" id="manualModelInput" placeholder="Enter other model name">
                         </div>
                     </div>
                 </div>
@@ -248,11 +250,11 @@
                         <label class="m-0">Repair Service Needed</label>
                         <button type="button" onclick="toggleOther('reqRepairType')" class="text-[10px] text-teal hover:underline font-bold">Or enter manual repair type</button>
                     </div>
-                    <select id="reqRepairType" onchange="showRequestEstimate()">
+                    <select id="repairType" onchange="showRequestEstimate()">
                         <option value="">— Select Repair Type —</option>
                     </select>
                     <div id="reqRepairOther" class="other-input">
-                        <input type="text" id="reqRepairOtherInput" placeholder="e.g. Broken back glass panel replacement">
+                        <input type="text" id="manualRepairInput" placeholder="e.g. Broken back glass panel replacement">
                     </div>
                 </div>
 
@@ -378,8 +380,9 @@
     <!-- Toast Container -->
     <div id="toast" class="fixed bottom-20 md:bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500"></div>
 
-    <!-- Supabase Client & Multi-Page script -->
+    <!-- Supabase Client, Parts Data & Multi-Page script -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.min.js"></script>
+    <script src="data/parts-data.js"></script>
     <script src="main.js"></script>
 </body>
 </html>
