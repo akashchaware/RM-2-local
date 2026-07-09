@@ -817,7 +817,9 @@ async function calculateEstimate() {
             const partName = matchingRow.part_name || `${issueTypeLabel} Spare Part`;
             const price = parseFloat(matchingRow.price) || 0;
             const labor = parseFloat(matchingRow.labor) || 0;
-            const total = price + labor;
+            // Calculate service fee as 15% of parts price
+            const serviceFee = price * 0.15;
+            const total = price + labor + serviceFee;
             
             // Extra metadata (customer friendly, skipped if missing)
             const warrantyHtml = (matchingRow.warranty && matchingRow.warranty !== 'N/A' && matchingRow.warranty.trim() !== '') ? `
@@ -868,8 +870,8 @@ async function calculateEstimate() {
             const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
             const totalPriceDisplay = document.getElementById('totalPriceDisplay');
             
-            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + price.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + labor.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + (price + labor).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
             if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹0.00';
             if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
             
