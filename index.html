@@ -1077,7 +1077,7 @@
 
                 const { data, error } = await supabase
                     .from('parts_pricing')
-                    .select('brand')
+                    .select('brand', { distinct: true })
                     .order('brand');
 
                 if (error) throw error;
