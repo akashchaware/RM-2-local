@@ -1065,7 +1065,7 @@
         setInterval(cycleBgSlides, 5000);
 
         // Estimation Calculator Default Select Override Configuration
-       // ─── Dropdown & Calculator Logic (text-based) ───
+      // ─── ID-based Dropdown & Calculator Logic ───
 let isInitialLoad = true;
 
 async function populateBrands() {
@@ -1075,20 +1075,21 @@ async function populateBrands() {
     select.innerHTML = '<option value="">Loading brands...</option>';
 
     try {
+        // Fetch from brands table
         const { data, error } = await supabase
-            .from('parts_pricing')
-            .select('brand', { distinct: true })
-            .order('brand');
+            .from('brands')
+            .select('id, name')
+            .order('name');
 
         if (error) throw error;
 
         select.innerHTML = '<option value="">— Select Brand —</option>';
         if (data && data.length > 0) {
-            data.forEach(item => {
+            data.forEach(brand => {
                 const opt = document.createElement('option');
-                opt.value = item.brand;
-                opt.textContent = item.brand;
-                if (isInitialLoad && item.brand === 'Apple') opt.selected = true;
+                opt.value = brand.id;           // store brand ID
+                opt.textContent = brand.name;
+                if (isInitialLoad && brand.name === 'Apple') opt.selected = true;
                 select.appendChild(opt);
             });
         } else {
@@ -1107,34 +1108,35 @@ async function updateModels() {
     const modelSelect = document.getElementById('modelSelect');
     if (!modelSelect) return;
 
-    const brand = brandSelect?.value || '';
+    const brandId = brandSelect?.value || '';
     modelSelect.innerHTML = '<option value="">Loading models...</option>';
 
-    if (!brand) {
+    if (!brandId) {
         modelSelect.innerHTML = '<option value="">— Select Model —</option>';
         return;
     }
 
     try {
+        // Fetch devices by brand_id
         const { data, error } = await supabase
-            .from('parts_pricing')
-            .select('model', { distinct: true })
-            .eq('brand', brand)
-            .order('model');
+            .from('devices')
+            .select('id, name')
+            .eq('brand_id', brandId)
+            .order('name');
 
         if (error) throw error;
 
         modelSelect.innerHTML = '<option value="">— Select Model —</option>';
         if (data && data.length > 0) {
-            data.forEach(item => {
+            data.forEach(device => {
                 const opt = document.createElement('option');
-                opt.value = item.model;
-                opt.textContent = item.model;
-                if (isInitialLoad && item.model.includes('iPhone 13')) opt.selected = true;
+                opt.value = device.id;          // store device ID
+                opt.textContent = device.name;
+                if (isInitialLoad && device.name.includes('iPhone 13')) opt.selected = true;
                 modelSelect.appendChild(opt);
             });
             if (isInitialLoad && modelSelect.options.length > 1) {
-                // select first if no default
+                // Select first if no default
                 if (!modelSelect.options[1].selected) modelSelect.options[1].selected = true;
                 isInitialLoad = false;
             }
@@ -1153,30 +1155,28 @@ async function updateModels() {
 }
 
 async function updateRepairTypes() {
-    const brandSelect = document.getElementById('brandSelect');
     const modelSelect = document.getElementById('modelSelect');
     const repairSelect = document.getElementById('repairTypeSelect');
     if (!repairSelect) return;
 
-    const brand = brandSelect?.value || '';
-    const model = modelSelect?.value || '';
+    const deviceId = modelSelect?.value || '';
 
     repairSelect.innerHTML = '<option value="">Loading repair types...</option>';
 
-    // If no brand and model, show all repair types (or empty)
-    if (!brand && !model) {
+    // If no device selected, show all repair types (or empty)
+    if (!deviceId) {
         try {
             const { data, error } = await supabase
-                .from('parts_pricing')
-                .select('issue_type', { distinct: true })
-                .order('issue_type');
+                .from('repair_types')
+                .select('id, name')
+                .order('name');
             if (error) throw error;
             repairSelect.innerHTML = '<option value="">— Select Repair —</option>';
             if (data && data.length > 0) {
-                data.forEach(item => {
+                data.forEach(rt => {
                     const opt = document.createElement('option');
-                    opt.value = item.issue_type;
-                    opt.textContent = item.issue_type;
+                    opt.value = rt.id;
+                    opt.textContent = rt.name;
                     repairSelect.appendChild(opt);
                 });
             } else {
@@ -1189,23 +1189,35 @@ async function updateRepairTypes() {
         return;
     }
 
-    // If brand and model selected, fetch repair types for that combination
+    // If device selected, fetch repair types that have pricing for this device
     try {
-        let query = supabase.from('parts_pricing').select('issue_type', { distinct: true });
-        if (brand) query = query.eq('brand', brand);
-        if (model) query = query.eq('model', model);
-        const { data, error } = await query.order('issue_type');
+        const { data, error } = await supabase
+            .from('parts_pricing')
+            .select('repair_type_id', { distinct: true })
+            .eq('device_id', deviceId)
+            .order('repair_type_id');
 
         if (error) throw error;
 
         repairSelect.innerHTML = '<option value="">— Select Repair —</option>';
         if (data && data.length > 0) {
-            data.forEach(item => {
-                const opt = document.createElement('option');
-                opt.value = item.issue_type;
-                opt.textContent = item.issue_type;
-                repairSelect.appendChild(opt);
-            });
+            // Get repair type names
+            const typeIds = data.map(d => d.repair_type_id);
+            const { data: typeNames } = await supabase
+                .from('repair_types')
+                .select('id, name')
+                .in('id', typeIds)
+                .order('name');
+            if (typeNames && typeNames.length > 0) {
+                typeNames.forEach(rt => {
+                    const opt = document.createElement('option');
+                    opt.value = rt.id;
+                    opt.textContent = rt.name;
+                    repairSelect.appendChild(opt);
+                });
+            } else {
+                repairSelect.innerHTML = '<option value="">No repair types available</option>';
+            }
         } else {
             repairSelect.innerHTML = '<option value="">No repair types available</option>';
         }
@@ -1216,13 +1228,21 @@ async function updateRepairTypes() {
 }
 
 async function calculateEstimate() {
-    const brand = document.getElementById('brandSelect')?.value || '';
-    const model = document.getElementById('modelSelect')?.value || '';
-    const issueType = document.getElementById('repairTypeSelect')?.value || '';
-    const tier = document.getElementById('tierInput')?.value || 'Standard (HQ)';
+    const deviceId = document.getElementById('modelSelect')?.value || '';
+    const repairTypeId = document.getElementById('repairTypeSelect')?.value || '';
+    const tierId = document.getElementById('tierInput')?.value || '';
     const surveyContainer = document.getElementById('partsSurveyContainer');
 
-    if (!brand || !model || !issueType) {
+    // tierInput should store tier_id (1,2,3). If not, you may need to adjust.
+    // If your tierInput stores text like 'premium', map to ID.
+    let tierIdValue = tierId;
+    if (['premium', 'standard', 'compatible'].includes(tierId)) {
+        // map text to ID (assuming 1=Premium, 2=Standard, 3=Compatible)
+        const map = { 'premium': 1, 'standard': 2, 'compatible': 3 };
+        tierIdValue = map[tierId] || 2;
+    }
+
+    if (!deviceId || !repairTypeId || !tierIdValue) {
         if (surveyContainer) {
             surveyContainer.innerHTML = `
                 <div class="text-center text-white/40 py-4 text-xs font-medium">
@@ -1237,10 +1257,9 @@ async function calculateEstimate() {
         const { data, error } = await supabase
             .from('parts_pricing')
             .select('part_name, price, labor, warranty, turnaround, source_hub')
-            .eq('brand', brand)
-            .eq('model', model)
-            .eq('issue_type', issueType)
-            .eq('tier', tier);
+            .eq('device_id', deviceId)
+            .eq('repair_type_id', repairTypeId)
+            .eq('tier_id', tierIdValue);
 
         if (error) throw error;
 
@@ -1250,7 +1269,6 @@ async function calculateEstimate() {
             const labor = parseFloat(row.labor) || Math.round(price * 0.20);
             const total = price + labor;
 
-            // Build HTML with available metadata
             let metaHtml = '';
             if (row.warranty && row.warranty !== 'N/A') {
                 metaHtml += `<div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
