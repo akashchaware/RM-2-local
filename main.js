@@ -40,39 +40,35 @@ function showToast(message, type = 'info') {
 
 // ─── 1. DATABASE & CATALOG SYNCHRONIZER ───
 async function loadCatalog() {
-    if (!supabase) {
-        useComprehensiveFallback();
+    // ─── STATIC DATA MODE ───
+    // Catalog is now loaded from the bundled repair-data.js file.
+    // No Supabase call needed for the calculator.
+    if (window.REPAIR_DATA) {
+        allBrands = window.REPAIR_DATA.BRANDS.map((name, i) => ({ id: 'b' + (i + 1), name: name }));
+        // Build devices list from MODELS_BY_BRAND
+        allDevices = [];
+        Object.keys(window.REPAIR_DATA.MODELS_BY_BRAND).forEach(brandName => {
+            const brandId = 'b' + (window.REPAIR_DATA.BRANDS.indexOf(brandName) + 1);
+            window.REPAIR_DATA.MODELS_BY_BRAND[brandName].forEach((modelName, i) => {
+                allDevices.push({ id: brandId + '_m' + (i + 1), brand_id: brandId, name: modelName });
+            });
+        });
+        // Map repair types to the UI-friendly labels
+        allRepairTypes = window.REPAIR_DATA.REPAIR_TYPES.map(rt => ({
+            id: rt.id,
+            name: rt.name,
+            label: rt.label,
+            csvName: rt.csvName   // NEW: original CSV issue_type name, used for pricing lookup
+        }));
+        // Legacy allParts kept for compatibility (other functions still reference it)
+        allParts = [];
+        console.log('✅ Catalog loaded from static repair-data.js:', allBrands.length, 'brands,', allDevices.length, 'models');
         return true;
     }
-    try {
-        const [brandsRes, devicesRes, repairTypesRes, partsRes] = await Promise.all([
-            supabase.from('brands').select('*').order('name'),
-            supabase.from('devices').select('*').order('name'),
-            supabase.from('repair_types').select('*').order('label'),
-            supabase.from('parts').select('*')
-        ]);
-        if (brandsRes.error) throw brandsRes.error;
-        if (devicesRes.error) throw devicesRes.error;
-        if (repairTypesRes.error) throw repairTypesRes.error;
-        if (partsRes.error) throw partsRes.error;
-
-        allBrands = brandsRes.data || [];
-        allDevices = devicesRes.data || [];
-        allRepairTypes = repairTypesRes.data || [];
-        allParts = partsRes.data || [];
-
-        if (allBrands.length === 0) {
-            console.warn('No brands found in Supabase. Loading fallbacks...');
-            useComprehensiveFallback();
-        } else {
-            console.log('✅ Synchronized Catalog with Supabase successfully!');
-        }
-        return true;
-    } catch (err) {
-        console.warn('Supabase fetch error. Loading fallbacks...', err);
-        useComprehensiveFallback();
-        return true;
-    }
+    // Fallback if repair-data.js is missing
+    console.warn('repair-data.js not loaded — using comprehensive fallback.');
+    useComprehensiveFallback();
+    return true;
 }
 
 function useComprehensiveFallback() {
@@ -671,36 +667,24 @@ async function updateModels() {
     if (!brandSelect || !brandSelect.value) return;
 
     const brandName = brandSelect.options[brandSelect.selectedIndex]?.text || '';
-    
+
+    // ─── STATIC DATA MODE ───
+    // Models come straight from the bundled repair-data.js. No Supabase call.
     let devices = [];
-    try {
-        if (!supabase) throw new Error("Supabase client not connected");
-        
-        const { data, error } = await supabase
-            .from('parts_pricing')
-            .select('model', { distinct: true })
-            .eq('brand', brandName)
-            .order('model');
-            
-        if (error) throw error;
-        
-        if (data && data.length > 0) {
-            devices = data.map(item => ({
-                id: item.model,
-                name: item.model
-            }));
-        }
-    } catch (err) {
-        console.warn("Error fetching models from Supabase, using fallback:", err);
+    if (window.REPAIR_DATA && window.REPAIR_DATA.MODELS_BY_BRAND[brandName]) {
+        devices = window.REPAIR_DATA.MODELS_BY_BRAND[brandName].map((modelName, i) => {
+            const brandId = brandSelect.value;
+            // Reuse the same id scheme as loadCatalog so allDevices lookups work
+            const existing = allDevices.find(d => d.brand_id === brandId && d.name === modelName);
+            return { id: existing ? existing.id : (brandId + '_m' + (i + 1)), name: modelName };
+        });
     }
 
+    // Fallback to legacy allDevices if static data is missing
     if (devices.length === 0) {
         const brandId = brandSelect.value;
         const fallbackDevices = allDevices.filter(d => String(d.brand_id) === String(brandId));
-        devices = fallbackDevices.map(d => ({
-            id: d.id,
-            name: d.name
-        }));
+        devices = fallbackDevices.map(d => ({ id: d.id, name: d.name }));
     }
 
     devices.forEach((d, i) => {
@@ -763,91 +747,77 @@ async function calculateEstimate() {
     const issueTypeName = rtObj ? rtObj.name : ''; // e.g. 'screen'
     const issueTypeLabel = rtObj ? rtObj.label.replace(/^[\s\S]*?\s/, '').trim() : ''; // e.g. 'Screen Replacement'
     const selectedQuality = qualitySelect?.value || 'standard';
-    
-    try {
-        if (!supabase) throw new Error("Supabase client not connected");
-        
-        // Fetch all matching rows for the model
-        const { data: rows, error } = await supabase
-            .from('parts_pricing')
-            .select('*')
-            .eq('model', modelName);
-            
-        if (error) throw error;
-        
-        let matchingRow = null;
-        if (rows && rows.length > 0) {
-            // Filter by issue_type matching
-            const issueRows = rows.filter(r => {
-                const dbIssue = (r.issue_type || '').toLowerCase();
-                return dbIssue.includes(issueTypeName.toLowerCase()) || 
-                       dbIssue.includes(issueTypeLabel.toLowerCase()) ||
-                       issueTypeLabel.toLowerCase().includes(dbIssue) ||
-                       dbIssue.replace(/[^a-z0-9]/g, '').includes(issueTypeName.toLowerCase());
-            });
-            
-            if (issueRows.length > 0) {
-                // Try to find the exact tier
-                matchingRow = issueRows.find(r => (r.tier || '').toLowerCase() === selectedQuality.toLowerCase()) || 
-                              issueRows.find(r => (r.tier || '').toLowerCase() === 'standard') || 
-                              issueRows[0];
-            }
-        }
-        
-        if (matchingRow) {
-            const partName = matchingRow.part_name || `${issueTypeLabel} Spare Part`;
-            const price = parseFloat(matchingRow.price) || 0;
-            const labor = parseFloat(matchingRow.labor) || 0;
-            
-            // Extra metadata
-            const warranty = matchingRow.warranty ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">🛡️ Warranty:</span><span class="text-white font-semibold">${matchingRow.warranty}</span></div>` : '';
-            const turnaround = matchingRow.turnaround ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">⚡ Turnaround:</span><span class="text-white font-semibold">${matchingRow.turnaround}</span></div>` : '';
-            const tierBadge = matchingRow.tier ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">💎 Tier Grade:</span><span class="text-white font-semibold">${matchingRow.tier}</span></div>` : '';
-            
-            const serviceFee = (price + labor) * 0.10; // 10% service fee
-            const diagnosisCharge = 250.0;
-            const total = price + labor + serviceFee + diagnosisCharge;
-            
-            if (surveyContainer) {
-                surveyContainer.innerHTML = `
-                    <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 space-y-2 text-left">
-                        <p class="text-xs font-bold text-teal mb-2 uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-layer-group"></i> Part & Service Breakdown</p>
-                        <div class="flex justify-between text-xs py-1">
-                            <span class="text-gray-400">Spare: ${partName}</span>
-                            <span class="text-white font-bold">₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        <div class="flex justify-between text-xs py-1">
-                            <span class="text-gray-400">Labor / Installation:</span>
-                            <span class="text-white font-bold">₹${labor.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
-                        </div>
-                        ${tierBadge}
-                        ${warranty}
-                        ${turnaround}
+    // The CSV issue_type name (e.g. "Screen", "Charging port") — used for static lookup
+    const csvIssueName = rtObj ? (rtObj.csvName || '') : '';
+
+    // ─── STATIC DATA MODE ───
+    // Replace the Supabase parts_pricing query with a direct lookup in REPAIR_DATA.
+    let matchingRow = null;
+    if (window.REPAIR_DATA && csvIssueName) {
+        // Map UI tier values (e.g. 'premium' / 'standard' / 'compatible') to CSV tier names
+        const tierMap = {
+            'premium':    'Premium (OEM)',
+            'standard':   'Standard (HQ)',
+            'compatible': 'Compatible (Budget)',
+            'economy':    'Compatible (Budget)'
+        };
+        const preferredTier = tierMap[selectedQuality.toLowerCase()] || null;
+        matchingRow = window.REPAIR_DATA.getEstimate(cleanBrand, modelName, csvIssueName, preferredTier);
+    }
+
+    // If static data didn't find a row, fall through to legacy catalog logic
+    if (matchingRow) {
+        const partName = matchingRow.partName || matchingRow.part_name || `${issueTypeLabel} Spare Part`;
+        const price = parseFloat(matchingRow.price) || 0;
+        const labor = parseFloat(matchingRow.labor) || 0;
+
+        // Extra metadata
+        const warranty = matchingRow.warranty ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">🛡️ Warranty:</span><span class="text-white font-semibold">${matchingRow.warranty}</span></div>` : '';
+        const turnaround = matchingRow.turnaround ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">⚡ Turnaround:</span><span class="text-white font-semibold">${matchingRow.turnaround}</span></div>` : '';
+        const tierBadge = matchingRow.tier ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">💎 Tier Grade:</span><span class="text-white font-semibold">${matchingRow.tier}</span></div>` : '';
+        const hubBadge = matchingRow.sourceHub ? `<div class="flex justify-between text-xs py-1"><span class="text-gray-400">📍 Source Hub:</span><span class="text-white font-semibold">${matchingRow.sourceHub}</span></div>` : '';
+
+        const serviceFee = (price + labor) * 0.10; // 10% service fee
+        const diagnosisCharge = 250.0;
+        const total = price + labor + serviceFee + diagnosisCharge;
+
+        if (surveyContainer) {
+            surveyContainer.innerHTML = `
+                <div class="bg-navyBG/30 border border-grayBorder rounded-xl p-4 space-y-2 text-left">
+                    <p class="text-xs font-bold text-teal mb-2 uppercase tracking-wider flex items-center gap-1"><i class="fa-solid fa-layer-group"></i> Part & Service Breakdown</p>
+                    <div class="flex justify-between text-xs py-1">
+                        <span class="text-gray-400">Spare: ${partName}</span>
+                        <span class="text-white font-bold">₹${price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
                     </div>
-                `;
-            }
-            
-            const partsTotalDisplay = document.getElementById('partsTotalDisplay');
-            const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
-            const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
-            const totalPriceDisplay = document.getElementById('totalPriceDisplay');
-            
-            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + (price + labor).toLocaleString('en-IN', { minimumFractionDigits: 2 });
-            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
-            
-            const btn = document.getElementById('bookServiceBtn');
-            if (btn) {
-                btn.className = 'flex-1 text-center btn-teal font-extrabold py-3.5 rounded-xl shadow-md hover:scale-[1.02] transition-all';
-                btn.innerHTML = '<i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service';
-            }
-        } else {
-            // No custom pricing, fall back to standard catalog logic gracefully
-            runCatalogFallbackCalculation();
+                    <div class="flex justify-between text-xs py-1">
+                        <span class="text-gray-400">Labor / Installation:</span>
+                        <span class="text-white font-bold">₹${labor.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                    </div>
+                    ${tierBadge}
+                    ${warranty}
+                    ${turnaround}
+                    ${hubBadge}
+                </div>
+            `;
         }
-    } catch (err) {
-        console.warn("Supabase parts_pricing fetch failed, using catalog fallback:", err);
+
+        const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+        const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+        const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+        const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+
+        if (partsTotalDisplay) partsTotalDisplay.textContent = '₹' + (price + labor).toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+        if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+
+        const btn = document.getElementById('bookServiceBtn');
+        if (btn) {
+            btn.className = 'flex-1 text-center btn-teal font-extrabold py-3.5 rounded-xl shadow-md hover:scale-[1.02] transition-all';
+            btn.innerHTML = '<i class="fa-regular fa-calendar-check mr-2"></i> Book Doorstep Service';
+        }
+    } else {
+        // No pricing row found in static data — fall back to catalog logic
         runCatalogFallbackCalculation();
     }
 }
