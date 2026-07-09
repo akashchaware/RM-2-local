@@ -1465,7 +1465,7 @@ async function submitAssignRoles(orderId) {
         return;
     }
 
-    await assignOrderRoles(orderId, techId, masterId);
+    await (orderId, techId, masterId);
 }
 function showAssignDeliveryForm(orderId) {
     const techs = window.allTechnicians || [];
@@ -2036,6 +2036,14 @@ async function submitFinalizedQuotation(orderId) {
 // ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
 async function assignOrderRoles(orderId, technicianId, repairmasterId) {
     if (!supabase) return;
+
+    // Validate UUIDs
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(technicianId) || !uuidRegex.test(repairmasterId)) {
+        showToast('Invalid staff UUID(s). Please select valid staff.', 'error');
+        return;
+    }
+
     try {
         const { error } = await supabase
             .from('orders')
