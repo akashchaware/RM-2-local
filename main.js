@@ -2067,7 +2067,12 @@ async function assignDeliveryTechnician(orderId, techId) {
 }
 
 async function assignSelfAsTechnician(orderId) {
-    if (!currentUser || !supabase) return showToast('Authentication required.', 'error');
+    if (!currentUser || !currentUser.id) {
+        showToast('You must be logged in to take this action.', 'error');
+        return;
+    }
+    if (!supabase) return showToast('Supabase offline', 'error');
+
     try {
         const { error } = await supabase
             .from('orders')
