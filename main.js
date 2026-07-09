@@ -2059,18 +2059,25 @@ async function assignOrderRoles(orderId, technicianId, repairmasterId) {
 
 async function assignDeliveryTechnician(orderId, techId) {
     if (!techId || !supabase) return;
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(techId)) {
+        showToast('Invalid technician ID format.', 'error');
+        return;
+    }
+
+    const handoverOtp = Math.floor(100000 + Math.random() * 900000).toString();
     try {
-        const handoverOtp = Math.floor(1000 + Math.random() * 9000).toString(); // generate delivery OTP automatically
         const { error } = await supabase.from('orders').update({
             technician_id: techId,
             pickup_otp: handoverOtp,
             status: 'Ready-For-Delivery'
         }).eq('id', orderId);
         if (error) throw error;
-        showToast('🚚 Delivery Technician assigned successfully & Delivery OTP generated!', 'success');
+        showToast(`🚚 Delivery OTP: ${handoverOtp} (Share with customer)`, 'success');
         loadDashboard();
     } catch (err) {
-        showToast('Assignment failed: ' + err.message, 'error');
+        showToast('Delivery assignment failed: ' + err.message, 'error');
     }
 }
 
