@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <!-- RepairMaster Application Entry Point -->
     <title>RepairMaster – Premium Doorstep & Lab Repairs</title>
-    <link rel="icon" type="image/png" href="img_maintenance_mode_active.png.png" />
+    <link rel="icon" type="image/jpg" href="repo-image-folder/brand-logo-circular.jpg" />
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Custom Theme Styling Config -->
@@ -89,7 +89,7 @@
             background: rgba(15, 139, 141, 0.08);
         }
         .rm-logo {
-            background-image: url('img_maintenance_mode_active.png.png');
+            background-image: url('repo-image-folder/brand-logo-circular.jpg');
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
@@ -185,11 +185,11 @@
     <!-- Background Slideshow -->
     <div class="fixed inset-0 z-[-1] overflow-hidden bg-[#0A0F1D]">
         <!-- Slides -->
-        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-1" style="background-image: url('images/slide1.jpg');"></div>
-        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-2" style="background-image: url('images/slide2.jpg');"></div>
-        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-3" style="background-image: url('images/slide3.jpg');"></div>
-        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-4" style="background-image: url('images/slide4.jpg');"></div>
-        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-5" style="background-image: url('images/slide5.jpg');"></div>
+        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-1" style="background-image: url('repo-image-folder/Slideshow_homepage_1.jpg');"></div>
+        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-2" style="background-image: url('repo-image-folder/Slideshow_homepage_2.jpg');"></div>
+        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-3" style="background-image: url('repo-image-folder/Slideshow_homepage_3.jpg');"></div>
+        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-4" style="background-image: url('repo-image-folder/Slideshow_homepage_4.jpg');"></div>
+        <div class="absolute inset-0 transition-opacity duration-1000 bg-cover bg-center opacity-0 filter brightness-[0.25]" id="bg-slide-5" style="background-image: url('repo-image-folder/Slideshow_homepage_5.jpg');"></div>
         <!-- Dark overlay to ensure text is perfectly readable -->
         <div class="absolute inset-0 bg-gradient-to-b from-[#0A0F1D]/80 via-[#0A0F1D]/70 to-[#0A0F1D]/90 z-0"></div>
     </div>
@@ -204,7 +204,7 @@
                 
                 <!-- Logo Icon -->
                 <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-12 w-12 md:h-[64px] md:w-[64px] shadow-[0_0_20px_rgba(20,184,166,0.25)] shrink-0 transition-transform duration-300 hover:scale-105">
-                    <img src="img_maintenance_mode_active.png.png" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
+                    <img src="repo-image-folder/brand-logo-circular.jpg" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
                 </div>
                 
                 <!-- Vertical Divider -->
@@ -289,7 +289,7 @@
                         
                         <!-- Hero Brand Logo - Prominent & Perfect Placement -->
                         <div class="flex flex-col items-center lg:items-start gap-3">
-                            <img src="img_maintenance_mode_active.png.png" alt="RepairMaster Brand Logo" class="w-32 h-32 md:w-40 md:h-40 object-contain shadow-2xl rounded-3xl border-2 border-[#0f8b8d]/30 p-2.5 bg-slate-900/60" />
+                            <img src="repo-image-folder/brand-logo-circular.jpg" alt="RepairMaster Brand Logo" class="w-32 h-32 md:w-40 md:h-40 object-contain shadow-2xl rounded-3xl border-2 border-[#0f8b8d]/30 p-2.5 bg-slate-900/60" />
                             <span class="text-xs md:text-sm font-black text-[#0f8b8d] tracking-widest uppercase mt-1">Direct To Consumer</span>
                         </div>
 
@@ -1224,7 +1224,98 @@
                     matchingRow = modelParts.find(p => p.issue_type === targetIssueType);
                 }
                 
-                if (matchingRow) {
+                const isDeadPhone = (issueTypeName === 'deadphone' || rtId === 'rt12' || (rtObj && rtObj.name === 'deadphone'));
+                const isOther = (issueTypeName === 'other' || rtId === 'rt13' || (rtObj && rtObj.name === 'other'));
+
+                if (isDeadPhone) {
+                    const price = 0;
+                    const labor = 0;
+                    const serviceFee = 150.00;
+                    const diagnosisCharge = 250.00;
+                    const total = serviceFee + diagnosisCharge;
+                    
+                    if (surveyContainer) {
+                        surveyContainer.innerHTML = `
+                            <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2 text-left">
+                                <p class="text-xs font-bold text-teal-400 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fa-solid fa-layer-group"></i> Dead Phone Diagnostics
+                                </p>
+                                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">Component: No parts required initially</span>
+                                    <span class="text-white font-bold">₹0.00</span>
+                                </div>
+                                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">Diagnosis Fee:</span>
+                                    <span class="text-white font-bold">₹250.00</span>
+                                </div>
+                                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">Service / Labor Fee:</span>
+                                    <span class="text-white font-bold">₹150.00</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+                    const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+                    const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+                    const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+                    
+                    if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
+                    if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    
+                    const btn = document.getElementById('bookServiceBtn');
+                    if (btn) {
+                        btn.className = 'mt-6 w-full btn-primary h-12 text-sm font-bold rounded-xl flex items-center justify-center gap-2';
+                        btn.innerHTML = '<i class="fa-regular fa-calendar-check"></i> Book Doorstep Service';
+                    }
+                } else if (isOther) {
+                    const price = 0;
+                    const labor = 0;
+                    const serviceFee = 100.00;
+                    const diagnosisCharge = 250.00;
+                    const total = serviceFee + diagnosisCharge;
+                    
+                    if (surveyContainer) {
+                        surveyContainer.innerHTML = `
+                            <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2 text-left">
+                                <p class="text-xs font-bold text-teal-400 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                                    <i class="fa-solid fa-layer-group"></i> Custom Diagnostics
+                                </p>
+                                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">Component: Diagnostic assessment required</span>
+                                    <span class="text-white font-bold">₹0.00</span>
+                                </div>
+                                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">Diagnosis Fee:</span>
+                                    <span class="text-white font-bold">₹250.00</span>
+                                </div>
+                                <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                                    <span class="text-slate-400">Service / Labor Fee:</span>
+                                    <span class="text-white font-bold">₹100.00</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+                    const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+                    const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+                    const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+                    
+                    if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
+                    if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+                    
+                    const btn = document.getElementById('bookServiceBtn');
+                    if (btn) {
+                        btn.className = 'mt-6 w-full btn-primary h-12 text-sm font-bold rounded-xl flex items-center justify-center gap-2';
+                        btn.innerHTML = '<i class="fa-regular fa-calendar-check"></i> Book Doorstep Service';
+                    }
+                } else if (matchingRow) {
                     console.log("🔍 calculateEstimate: found matching row:", matchingRow);
                     const partName = matchingRow.part_name || `${issueTypeLabel} Spare Part`;
                     const price = parseFloat(matchingRow.price) || 0;

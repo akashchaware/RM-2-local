@@ -110,7 +110,9 @@ function useComprehensiveFallback() {
         { id: 'rt8', name: 'waterdamage', label: '💧 Water Damage Repair' },
         { id: 'rt9', name: 'software', label: '📀 Software / OS Repair' },
         { id: 'rt10', name: 'network', label: '📶 Network / Antenna Repair' },
-        { id: 'rt11', name: 'completeoverhaul', label: '⚙️ Complete Overhaul' }
+        { id: 'rt11', name: 'completeoverhaul', label: '⚙️ Complete Overhaul' },
+        { id: 'rt12', name: 'deadphone', label: '💀 Dead Phone / No Power' },
+        { id: 'rt13', name: 'other', label: '❓ Other / Not Sure' }
     ];
     allParts = [
         { device_id: 'd3', repair_type_id: 'rt1', name: 'AMOLED Screen Panel Assembly', price: 6300 },
@@ -812,7 +814,98 @@ async function calculateEstimate() {
             matchingRow = modelParts.find(p => p.issue_type === targetIssueType);
         }
         
-        if (matchingRow) {
+        const isDeadPhone = (issueTypeName === 'deadphone' || rtId === 'rt12' || (rtObj && rtObj.name === 'deadphone'));
+        const isOther = (issueTypeName === 'other' || rtId === 'rt13' || (rtObj && rtObj.name === 'other'));
+
+        if (isDeadPhone) {
+            const price = 0;
+            const labor = 0;
+            const serviceFee = 150.00;
+            const diagnosisCharge = 250.00;
+            const total = serviceFee + diagnosisCharge;
+            
+            if (surveyContainer) {
+                surveyContainer.innerHTML = `
+                    <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2 text-left">
+                        <p class="text-xs font-bold text-teal-400 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-layer-group"></i> Dead Phone Diagnostics
+                        </p>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Component: No parts required initially</span>
+                            <span class="text-white font-bold">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Diagnosis Fee:</span>
+                            <span class="text-white font-bold">₹250.00</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Service / Labor Fee:</span>
+                            <span class="text-white font-bold">₹150.00</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+            const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+            const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+            const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+            
+            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
+            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            
+            const btn = document.getElementById('bookServiceBtn');
+            if (btn) {
+                btn.className = 'mt-6 w-full btn-primary h-12 text-sm font-bold rounded-xl flex items-center justify-center gap-2';
+                btn.innerHTML = '<i class="fa-regular fa-calendar-check"></i> Book Doorstep Service';
+            }
+        } else if (isOther) {
+            const price = 0;
+            const labor = 0;
+            const serviceFee = 100.00;
+            const diagnosisCharge = 250.00;
+            const total = serviceFee + diagnosisCharge;
+            
+            if (surveyContainer) {
+                surveyContainer.innerHTML = `
+                    <div class="bg-slate-900/40 border border-slate-800 rounded-xl p-4 space-y-2 text-left">
+                        <p class="text-xs font-bold text-teal-400 mb-2.5 uppercase tracking-wider flex items-center gap-1.5">
+                            <i class="fa-solid fa-layer-group"></i> Custom Diagnostics
+                        </p>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Component: Diagnostic assessment required</span>
+                            <span class="text-white font-bold">₹0.00</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Diagnosis Fee:</span>
+                            <span class="text-white font-bold">₹250.00</span>
+                        </div>
+                        <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
+                            <span class="text-slate-400">Service / Labor Fee:</span>
+                            <span class="text-white font-bold">₹100.00</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            const partsTotalDisplay = document.getElementById('partsTotalDisplay');
+            const serviceFeeDisplay = document.getElementById('serviceFeeDisplay');
+            const diagnosisChargeDisplay = document.getElementById('diagnosisChargeDisplay');
+            const totalPriceDisplay = document.getElementById('totalPriceDisplay');
+            
+            if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
+            if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹' + serviceFee.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹' + diagnosisCharge.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹' + total.toLocaleString('en-IN', { minimumFractionDigits: 2 });
+            
+            const btn = document.getElementById('bookServiceBtn');
+            if (btn) {
+                btn.className = 'mt-6 w-full btn-primary h-12 text-sm font-bold rounded-xl flex items-center justify-center gap-2';
+                btn.innerHTML = '<i class="fa-regular fa-calendar-check"></i> Book Doorstep Service';
+            }
+        } else if (matchingRow) {
             console.log("🔍 calculateEstimate: found matching row:", matchingRow);
             const partName = matchingRow.part_name || `${issueTypeLabel} Spare Part`;
             const price = parseFloat(matchingRow.price) || 0;
@@ -3643,49 +3736,71 @@ function showRequestEstimate() {
     const estimateDiv = document.getElementById('requestEstimate');
     if (!brandSelect || !modelSelect || !repairSelect || !estimateDiv) return;
 
-    const brandId = brandSelect.value;
-    const modelId = modelSelect.value;
-    const repairTypeId = repairSelect.value;
+    const brand = brandSelect.options[brandSelect.selectedIndex]?.text || '';
+    const model = modelSelect.options[modelSelect.selectedIndex]?.text || '';
+    const issue = repairSelect.options[repairSelect.selectedIndex]?.text || '';
     const isOtherBrand = document.getElementById('reqBrandOther')?.classList.contains('visible');
     const isOtherModel = document.getElementById('reqModelOther')?.classList.contains('visible');
     const isOtherRepair = document.getElementById('reqRepairOther')?.classList.contains('visible');
 
-    if (!isOtherBrand && !brandId) {
-        estimateDiv.classList.add('hidden');
-        return;
-    }
-    if (!isOtherModel && !modelId) {
-        estimateDiv.classList.add('hidden');
-        return;
-    }
-    if (!isOtherRepair && !repairTypeId) {
+    if ((!isOtherBrand && !brand) || (!isOtherModel && !model) || (!isOtherRepair && !issue)) {
         estimateDiv.classList.add('hidden');
         return;
     }
 
-    let totalPartsPrice = 0;
-    let partsFound = false;
-    if (!isOtherBrand && !isOtherModel && !isOtherRepair && brandId && modelId && repairTypeId) {
-        const parts = allParts.filter(p => String(p.device_id) === String(modelId) && String(p.repair_type_id) === String(repairTypeId));
-        if (parts && parts.length > 0) {
-            partsFound = true;
-            const qualitySelect = document.getElementById('reqPartsQuality');
-            const quality = qualitySelect ? qualitySelect.value : 'standard';
-            const qualityMultiplier = quality === 'premium' ? 1.0 : 0.7;
-            parts.forEach(part => { totalPartsPrice += part.price * qualityMultiplier; });
+    const allParts = window.RECORDS || [];
+    let partsTotal = 0;
+    let laborTotal = 0;
+
+    // --- SPECIAL CASE: DEAD PHONE ---
+    if (issue.toLowerCase().includes('dead phone')) {
+        partsTotal = 0;
+        laborTotal = 0;
+    } else {
+        // Find exact match from static data
+        const matches = allParts.filter(p => 
+            p.brand === brand && 
+            p.model === model && 
+            p.issue_type === issue
+        );
+
+        if (matches.length > 0) {
+            // Use the first match (Standard tier by default)
+            const match = matches[0];
+            partsTotal = parseFloat(match.price) || 0;
+            laborTotal = parseFloat(match.labor) || 0;
+        } else {
+            // Fallback if exact match not found (e.g., "Other" selection)
+            // Just use a generic base price or look up by IDs
+            const modelId = modelSelect.value;
+            const repairTypeId = repairSelect.value;
+            const fallbackParts = allParts.filter(p => 
+                (p.model === model || p.model_id === modelId) && 
+                (p.issue_type === issue || p.repair_type_id === repairTypeId)
+            );
+            if (fallbackParts.length > 0) {
+                const match = fallbackParts[0];
+                partsTotal = parseFloat(match.price) || 0;
+                laborTotal = parseFloat(match.labor) || 0;
+            }
         }
     }
-    
-    const discountedParts = totalPartsPrice * 0.9;
-    const serviceFee = discountedParts > 0 ? (discountedParts * 0.15) : 100.00;
-    const diagnosisCharge = 250;
-    const total = discountedParts + serviceFee + diagnosisCharge;
 
-    document.getElementById('reqPartsTotal').textContent = '₹' + discountedParts.toFixed(2) + (discountedParts === 0 ? ' (No parts selected)' : '');
-    document.getElementById('reqServiceFee').textContent = '₹' + serviceFee.toFixed(2) + (discountedParts === 0 ? ' (Minimum service fee)' : '');
+    // --- CALCULATION LOGIC (Matches Homepage) ---
+    const serviceFee = partsTotal * 0.15; // 15% Service Fee
+    const diagnosisCharge = 250;
+    const total = partsTotal + serviceFee + diagnosisCharge;
+
+    // --- UPDATE UI ---
+    document.getElementById('reqPartsTotal').textContent = '₹' + partsTotal.toFixed(2);
+    document.getElementById('reqServiceFee').textContent = '₹' + serviceFee.toFixed(2);
     document.getElementById('reqDiagnosis').textContent = '₹' + diagnosisCharge.toFixed(2);
     document.getElementById('reqTotal').textContent = '₹' + total.toFixed(2);
+
     estimateDiv.classList.remove('hidden');
+
+    // Store in global for submission
+    window._reqEstimate = { partsTotal, serviceFee, diagnosisCharge, total };
 }
 
 // ─── 12. LOGINS & AUTHS ───
