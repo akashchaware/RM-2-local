@@ -1504,14 +1504,20 @@ function showAssignDeliveryForm(orderId) {
 async function submitAssignDelivery(orderId) {
     const techSelect = document.getElementById(`assign-delivery-tech-${orderId}`);
     if (!techSelect) return;
-    
+
     const techId = techSelect.value;
-    
-    if (!techId) {
-        showToast('Please select a Delivery Technician.', 'error');
+
+    if (!techId || techId === 'undefined') {
+        showToast('Please select a valid Delivery Technician.', 'error');
         return;
     }
-    
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(techId)) {
+        showToast('Invalid technician ID format. Please refresh and try again.', 'error');
+        return;
+    }
+
     await assignDeliveryTechnician(orderId, techId);
 }
 
