@@ -1444,9 +1444,18 @@ function showAssignForm(orderId) {
 }
 
 async function submitAssignRoles(orderId) {
+    // ✅ Guard: Ensure orderId is valid
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
+        return;
+    }
+
     const techSelect = document.getElementById(`assign-tech-${orderId}`);
     const masterSelect = document.getElementById(`assign-master-${orderId}`);
-    if (!techSelect || !masterSelect) return;
+    if (!techSelect || !masterSelect) {
+        showToast('Assignment form not found. Please try again.', 'error');
+        return;
+    }
 
     const techId = techSelect.value;
     const masterId = masterSelect.value;
@@ -1462,7 +1471,6 @@ async function submitAssignRoles(orderId) {
         return;
     }
 
-    // ✅ FIX: actually call the assignment function
     await assignOrderRoles(orderId, techId, masterId);
 }
 
