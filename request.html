@@ -286,6 +286,7 @@
                     <div class="flex justify-between"><span>🛠️ Parts (including 10% discount):</span><span id="reqPartsTotal" class="text-teal-400">₹0.00</span></div>
                     <div class="flex justify-between"><span>🔧 Workmanship/Service Fee:</span><span id="reqServiceFee" class="text-amber-400 font-bold">₹0.00</span></div>
                     <div class="flex justify-between"><span>🩺 Secure Lab Diagnosis:</span><span id="reqDiagnosis" class="text-white">₹250.00</span></div>
+                    <div id="socialDiscountBadge" class="hidden text-green-400 text-sm font-bold mt-2"></div>
                     <div class="flex justify-between border-t border-grayBorder/40 pt-2 font-bold text-sm text-teal"><span>💰 Estimated Grand Total:</span><span id="reqTotal">₹250.00</span></div>
                 </div>
 
@@ -313,6 +314,15 @@
                     <label>Upload Device Condition Photo (Optional)</label>
                     <input type="file" id="reqPhoto" accept="image/*" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-teal-500/10 file:text-teal-400 hover:file:bg-teal-500/20">
                 </div>
+                <div class="mt-4">
+    <label class="flex items-start gap-3 text-sm text-gray-300 cursor-pointer">
+        <input type="checkbox" id="socialDiscountCheck" class="mt-1 accent-teal-500 w-4 h-4 rounded">
+        <span>
+            🎉 I have subscribed to the YouTube channel and followed on Instagram!  
+            <span class="text-teal-400 font-bold">(Get 50% off on Service/Convenience Fee)</span>
+        </span>
+    </label>
+</div>
 
                 <button type="submit" class="btn-teal w-full mt-4"><i class="fa-regular fa-paper-plane mr-2"></i> Submit Repair Request</button>
             </form>
