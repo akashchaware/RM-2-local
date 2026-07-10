@@ -5779,25 +5779,31 @@ async function createAlert(orderId, message, type = 'system_alert') {
     }
 }
 
-async function viewOrderDetails(orderId, alertId = null, event =null) {
+async function viewOrderDetails(orderId, alertId = null, event = null) {
     if (event && (event.target.tagName === 'BUTTON' || event.target.closest('button') || event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT')) {
         return;
     }
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    if (!orderId || orderId === 'undefined' || orderId === 'null' || orderId === '') {
+        showToast('Invalid order reference. Please select a valid ticket.', 'error');
+        return;
+    }
+
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
     if (!order) {
         showToast('Order details sync reference not found.', 'error');
         return;
     }
-    // Fetch staff names
+
+    // ✅ Unique variable names to avoid duplicates
     let techNameDisplay = 'Not Assigned';
     let masterNameDisplay = 'Not Assigned';
     if (order.technician_id) {
-    const { data } = await supabase.from('users').select('name').eq('id', order.technician_id).single();
-    if (data) techNameDisplay = data.name;
+        const { data } = await supabase.from('users').select('name').eq('id', order.technician_id).single();
+        if (data) techNameDisplay = data.name;
     }
     if (order.repairmaster_id) {
-    const { data } = await supabase.from('users').select('name').eq('id', order.repairmaster_id).single();
-    if (data) masterNameDisplay = data.name;
+        const { data } = await supabase.from('users').select('name').eq('id', order.repairmaster_id).single();
+        if (data) masterNameDisplay = data.name;
     }
 
     // Resolve staff names from cache instead of showing raw UUIDs
