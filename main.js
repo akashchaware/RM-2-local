@@ -6314,3 +6314,241 @@ function renderCoordinatorOpsDesk() {
     `;
 }
 window.renderCoordinatorOpsDesk = renderCoordinatorOpsDesk;
+
+// ─── GLOBAL WINDOW HELPER ATTACHMENTS FOR DASHBOARD ───
+
+// Quotation Inline State Updates
+window.updateQuotationPartName = function(orderId, index, value) {
+    if (!window.editingQuotationParts[orderId] || !window.editingQuotationParts[orderId][index]) return;
+    const isOriginal = window.editingQuotationParts[orderId][index].name.startsWith('[Original]') || window.editingQuotationParts[orderId][index].name.startsWith('[Old]');
+    const prefix = isOriginal ? '[Original] ' : '[Additional] ';
+    window.editingQuotationParts[orderId][index].name = prefix + value.replace(/^\[Original\]\s*/, '').replace(/^\[Old\]\s*/, '').replace(/^\[Additional\]\s*/, '').replace(/^\[New\]\s*/, '');
+};
+
+window.updateQuotationPartPrice = function(orderId, index, value) {
+    if (!window.editingQuotationParts[orderId] || !window.editingQuotationParts[orderId][index]) return;
+    window.editingQuotationParts[orderId][index].price = parseFloat(value) || 0;
+    if (typeof renderQuotationFormInlineEditable === 'function') renderQuotationFormInlineEditable(orderId);
+};
+
+window.toggleQuotationPartType = function(orderId, index, makeOriginal) {
+    if (!window.editingQuotationParts[orderId] || !window.editingQuotationParts[orderId][index]) return;
+    const cleanName = window.editingQuotationParts[orderId][index].name.replace(/^\[Original\]\s*/, '').replace(/^\[Old\]\s*/, '').replace(/^\[Additional\]\s*/, '').replace(/^\[New\]\s*/, '');
+    window.editingQuotationParts[orderId][index].name = makeOriginal ? `[Original] ${cleanName}` : `[Additional] ${cleanName}`;
+    if (typeof renderQuotationFormInlineEditable === 'function') renderQuotationFormInlineEditable(orderId);
+};
+
+window.removeQuotationPartEditable = function(orderId, index) {
+    if (!window.editingQuotationParts[orderId]) return;
+    window.editingQuotationParts[orderId].splice(index, 1);
+    if (typeof renderQuotationFormInlineEditable === 'function') renderQuotationFormInlineEditable(orderId);
+};
+
+window.addNewQuotationPartPromptEditable = function(orderId, isOriginal) {
+    if (!window.editingQuotationParts[orderId]) window.editingQuotationParts[orderId] = [];
+    const prefix = isOriginal ? '[Original]' : '[Additional]';
+    window.editingQuotationParts[orderId].push({
+        name: `${prefix} New Component`,
+        price: 0
+    });
+    if (typeof renderQuotationFormInlineEditable === 'function') renderQuotationFormInlineEditable(orderId);
+};
+
+window.updateQuotationDiagnosisChargeEditable = function(orderId, value) {
+    window.editingQuotationDiagnosisCharge[orderId] = parseFloat(value) || 0;
+    if (typeof renderQuotationFormInlineEditable === 'function') renderQuotationFormInlineEditable(orderId);
+};
+
+window.updateQuotationServiceFeeEditable = function(orderId, value) {
+    window.editingQuotationServiceFee[orderId] = parseFloat(value) || 0;
+    if (typeof renderQuotationFormInlineEditable === 'function') renderQuotationFormInlineEditable(orderId);
+};
+
+// Pipeline Database Dispatchers
+window.submitFinalizedQuotation = async function(orderId) {
+    if (!supabase) {
+        showToast('⚠️ Supabase offline. Cannot update data.', 'error');
+        return;
+    }
+    const partsList = window.editingQuotationParts[orderId] || [];
+    const serviceFee = window.editingQuotationServiceFee[orderId] || 0;
+    const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 0;
+
+    const partsSum = partsList.reduce((sum, p) => sum + p.price, 0);
+    const totalPrice = serviceFee + diagnosisCharge + partsSum;
+    const serializedParts = JSON.stringify(partsList);
+
+    try {
+        const { error } = await supabase
+            .from('orders')
+            .update({
+                custom_quote_parts: serializedParts,
+                parts_total: partsSum,
+                service_fee: serviceFee,
+                diagnosis_charge: diagnosisCharge,
+                total_price: totalPrice,
+                grand_total: totalPrice,
+                status: 'Quotation-Sent'
+            })
+            .eq('id', orderId);
+
+        if (error) throw error;
+        if (typeof createAlert === 'function') {
+            await createAlert(orderId, `New quote published: ₹${totalPrice.toLocaleString('en-IN')}. Action needed from client.`, 'quotation_sent');
+        }
+        showToast('✅ Invoice breakdown published to client dashboard!', 'success');
+        closeAllDashboardModals();
+        if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (err) {
+        showToast('❌ Invoice dispatch failed: ' + err.message, 'error');
+    }
+};
+
+// Logistics Handover Functions
+window.initiatePickup = async function(orderId) {
+    if (!supabase) return showToast('Supabase infrastructure offline.', 'error');
+    try {
+        const mockOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: 'Pickup-Pending', pickup_otp: mockOtp })
+            .eq('id', orderId);
+        if (error) throw error;
+        showToast('🚀 Pickup job initiated. Code generated for customer verification.', 'success');
+        if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (err) {
+        showToast('Field transit initiation failed: ' + err.message, 'error');
+    }
+};
+
+window.verifyPickup = async function(orderId, enteredOtp) {
+    if (!supabase) return showToast('Database connection missing.', 'error');
+    if (!enteredOtp) return showToast('Please enter the 6-digit client handover code.', 'error');
+    try {
+        const { data, error } = await supabase.from('orders').select('pickup_otp').eq('id', orderId).single();
+        if (error || !data) throw new Error('Reference record data missing.');
+        
+        if (data.pickup_otp !== enteredOtp.trim()) {
+            return showToast('❌ Invalid verification code. Cross-check client screen.', 'error');
+        }
+        
+        const { error: updErr } = await supabase
+            .from('orders')
+            .update({ status: 'With-RepairMaster', pickup_otp: 'VERIFIED' })
+            .eq('id', orderId);
+        if (updErr) throw updErr;
+        
+        showToast('🔒 Handover verified! Logistics transit updated to Lab Bench.', 'success');
+        if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (err) {
+        showToast('Verification failed: ' + err.message, 'error');
+    }
+};
+
+window.completeRepair = async function(orderId) {
+    if (!supabase) return showToast('Database unreachable.', 'error');
+    try {
+        const { error } = await supabase
+            .from('orders')
+            .update({ status: 'Ready-For-Delivery', pickup_otp: Math.floor(100000 + Math.random() * 900000).toString() })
+            .eq('id', orderId);
+        if (error) throw error;
+        showToast('⚙️ Engineering complete! Ticket passed to delivery logistics.', 'success');
+        if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (err) {
+        showToast('Ticket finalization failed: ' + err.message, 'error');
+    }
+};
+
+window.closeTicket = async function(orderId, enteredOtp) {
+    if (!supabase) return showToast('Network connection down.', 'error');
+    if (!enteredOtp) return showToast('Please capture delivery handover OTP.', 'error');
+    try {
+        const { data, error } = await supabase.from('orders').select('pickup_otp').eq('id', orderId).single();
+        if (error || !data) throw new Error('Reference record missing.');
+        
+        if (data.pickup_otp !== enteredOtp.trim()) {
+            return showToast('❌ Invalid token. Verify handset functionality with client.', 'error');
+        }
+        
+        const { error: updErr } = await supabase
+            .from('orders')
+            .update({ status: 'Completed', payment_status: 'Paid', pickup_otp: 'VERIFIED' })
+            .eq('id', orderId);
+        if (updErr) throw updErr;
+        
+        showToast('🏁 Device successfully delivered and ticket closed! Excellent work.', 'success');
+        if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (err) {
+        showToast('Logistics closure exception: ' + err.message, 'error');
+    }
+};
+
+// Client Acceptance/Rejection
+window.confirmQuotation = async function(orderId) {
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('orders').update({ status: 'Confirmed' }).eq('id', orderId);
+        if (error) throw error;
+        showToast('🙌 Estimate accepted! Bench engineers are initiating repairs.', 'success');
+        if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (err) {
+        showToast('Submission error: ' + err.message, 'error');
+    }
+};
+
+window.rejectQuotation = async function(orderId) {
+    if (!supabase) return;
+    try {
+        const { error } = await supabase.from('orders').update({ status: 'Rejected' }).eq('id', orderId);
+        if (error) throw error;
+        showToast('🛑 Estimate declined. Return routing checklist generated.', 'info');
+        if (typeof loadDashboard === 'function') loadDashboard();
+    } catch (err) {
+        showToast('Submission error: ' + err.message, 'error');
+    }
+};
+
+// Modal System Handlers
+window.activeModals = {};
+window.createDashboardModal = function(modalId, contentHtml, maxWidthClass = 'max-w-lg') {
+    const existing = document.getElementById(modalId);
+    if (existing) existing.remove();
+
+    const modalDiv = document.createElement('div');
+    modalDiv.id = modalId;
+    modalDiv.className = "fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm dynamic-modal";
+    modalDiv.innerHTML = `
+        <div class="bg-slate-950 border border-slate-850 rounded-xl shadow-2xl w-full ${maxWidthClass} overflow-hidden transform transition-all scale-100">
+            ${contentHtml}
+        </div>
+    `;
+    document.body.appendChild(modalDiv);
+    window.activeModals[modalId] = modalDiv;
+};
+
+window.closeAllDashboardModals = function() {
+    const modals = document.querySelectorAll('.dynamic-modal');
+    modals.forEach(m => m.remove());
+    window.activeModals = {};
+};
+
+// Initialization Lifecycle Router
+document.addEventListener('DOMContentLoaded', async () => {
+    if (typeof loadCatalog === 'function') await loadCatalog();
+    if (document.getElementById('brandSelect')) {
+        if (typeof populateBrands === 'function') populateBrands();
+        document.getElementById('brandSelect').addEventListener('change', updateModels);
+        document.getElementById('modelSelect').addEventListener('change', updateRepairTypes);
+        document.getElementById('repairTypeSelect').addEventListener('change', updatePartsSurvey);
+        const qualitySelect = document.getElementById('tierInput') || document.getElementById('qualitySelect');
+        if (qualitySelect) qualitySelect.addEventListener('change', calculateEstimate);
+    }
+    if (document.getElementById('offersContainer') && typeof fetchOffers === 'function') {
+        fetchOffers();
+    }
+    const reqForm = document.getElementById('repairRequestForm') || document.getElementById('requestForm');
+    if (reqForm && typeof submitRequest === 'function') {
+        reqForm.addEventListener('submit', submitRequest);
+    }
+});
