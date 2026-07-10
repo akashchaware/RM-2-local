@@ -53,7 +53,7 @@ fun LandingView(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -61,15 +61,54 @@ fun LandingView(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.weight(1f)
             ) {
-                Image(
-                    painter = painterResource(id = R.drawable.img_hero_banner_1782690134468),
-                    contentDescription = "RepairMaster Brand Banner",
+                Box(
                     modifier = Modifier
-                        .height(56.dp)
-                        .fillMaxWidth(1.0f),
-                    contentScale = ContentScale.Fit,
-                    alignment = Alignment.CenterStart
-                )
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(NavySurface)
+                        .border(1.dp, TealPrimary.copy(alpha = 0.4f), RoundedCornerShape(10.dp))
+                        .padding(2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Image(
+                        painter = painterResource(id = R.drawable.img_brand_logo_circular_1782765220741),
+                        contentDescription = "RepairMaster Logo",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+                Spacer(modifier = Modifier.width(10.dp))
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "Repair",
+                            color = Color.White,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            lineHeight = 17.sp
+                        )
+                        Text(
+                            text = "Master",
+                            color = TealPrimary,
+                            fontSize = 15.sp,
+                            fontWeight = FontWeight.Black,
+                            lineHeight = 17.sp
+                        )
+                    }
+                    Text(
+                        text = "Direct To Consumer",
+                        color = Color.White.copy(alpha = 0.8f),
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        lineHeight = 11.sp
+                    )
+                    Text(
+                        text = "powered by cm2us.com",
+                        color = GrayText,
+                        fontSize = 7.5.sp,
+                        lineHeight = 9.sp
+                    )
+                }
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -128,57 +167,57 @@ fun LandingView(
                         colors = listOf(NavyDark, NavyBackground)
                     )
                 )
-                .padding(horizontal = 20.dp, vertical = 24.dp)
+                .padding(horizontal = 16.dp, vertical = 14.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Surface(
                     color = TealPrimary.copy(alpha = 0.1f),
                     shape = RoundedCornerShape(20.dp),
-                    border = BorderStroke(1.dp, TealPrimary.copy(alpha = 0.4f))
+                    border = BorderStroke(1.dp, TealPrimary.copy(alpha = 0.35f))
                 ) {
                     Text(
                         text = "⚡ Certified Doorstep Repairs & Refurbished Devices",
                         color = TealPrimary,
-                        fontSize = 11.sp,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
                     )
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 Text(
                     text = "Professional Phone Repair,\nDelivered To Your Door",
                     color = Color.White,
-                    fontSize = 28.sp,
+                    fontSize = 24.sp,
                     fontWeight = FontWeight.Black,
-                    lineHeight = 34.sp,
+                    lineHeight = 30.sp,
                     textAlign = TextAlign.Center
                 )
 
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
                     text = "Book certified repairs online, approve granular spare-parts quotes, and buy/sell verified refurbished hardware inside a secure escrow environment.",
-                    color = GrayText,
-                    fontSize = 13.sp,
-                    lineHeight = 18.sp,
+                    color = Color.White.copy(alpha = 0.65f),
+                    fontSize = 11.5.sp,
+                    lineHeight = 16.sp,
                     textAlign = TextAlign.Center,
                     modifier = Modifier.padding(horizontal = 12.dp)
                 )
 
-                Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Premium Dynamic Service Slideshow (Indian Context)
                 var currentSlide by remember { mutableStateOf(0) }
                 val slides = remember {
                     listOf(
                         SlideData(
-                            imageRes = R.drawable.img_hero_banner_1782690134468,
-                            badge = "LIVE TRACKING",
-                            badgeColor = AmberAccent,
-                            title = "Real-Time Tracking & Live Map Status",
-                            description = "Monitor your collection, laboratory diagnosis, and handback stage with Nagpur's dynamic dispatch radar."
+                            imageRes = R.drawable.img_indian_service_scooter_1782739563064,
+                            badge = "REPAIR DISPATCH",
+                            badgeColor = Color(0xFF818CF8),
+                            title = "Swift Doorstep Return & 6-Month Warranty",
+                            description = "Repaired smartphones are dispatched back to your doorstep. Test camera, sound, and screen before sharing."
                         ),
                         SlideData(
                             imageRes = R.drawable.img_maintenance_mode_1782766826537,
@@ -202,11 +241,11 @@ fun LandingView(
                             description = "Devices are inspected in high-tech Nagpur laboratories with precise replacement parts breakdown & live digital approvals."
                         ),
                         SlideData(
-                            imageRes = R.drawable.img_indian_service_scooter_1782739563064,
-                            badge = "SECURE DISPATCH",
-                            badgeColor = Color(0xFF818CF8),
-                            title = "Swift Doorstep Return & 6-Month Warranty",
-                            description = "Repaired smartphones are dispatched back to your doorstep. Test camera, sound, and screen before sharing the final delivery code."
+                            imageRes = R.drawable.img_indian_service_lab_1782739540576,
+                            badge = "LIVE TRACKING",
+                            badgeColor = AmberAccent,
+                            title = "Real-Time Tracking & Live Map Status",
+                            description = "Monitor your collection, laboratory diagnosis, and handback stage with Nagpur's dynamic dispatch radar."
                         )
                     )
                 }
@@ -220,9 +259,9 @@ fun LandingView(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(200.dp)
+                        .height(185.dp)
                         .padding(horizontal = 4.dp),
-                    shape = RoundedCornerShape(16.dp),
+                    shape = RoundedCornerShape(14.dp),
                     border = BorderStroke(1.dp, GrayBorder),
                     elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
                 ) {
@@ -468,10 +507,10 @@ fun LandingView(
                             Card(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(vertical = 8.dp),
-                                shape = RoundedCornerShape(16.dp),
+                                    .padding(vertical = 6.dp),
+                                shape = RoundedCornerShape(14.dp),
                                 colors = CardDefaults.cardColors(containerColor = NavySurface),
-                                border = BorderStroke(1.5.dp, TealPrimary.copy(alpha = 0.5f))
+                                border = BorderStroke(1.2.dp, TealPrimary.copy(alpha = 0.45f))
                             ) {
                                 Column(
                                     modifier = Modifier.fillMaxWidth()
@@ -487,7 +526,7 @@ fun LandingView(
                                     Box(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .height(180.dp)
+                                            .height(140.dp)
                                     ) {
                                         Image(
                                             painter = painterResource(id = imgId),
@@ -512,14 +551,14 @@ fun LandingView(
                                             shape = RoundedCornerShape(4.dp),
                                             modifier = Modifier
                                                 .align(Alignment.TopStart)
-                                                .padding(12.dp)
+                                                .padding(10.dp)
                                         ) {
                                             Text(
                                                 text = "🔥 HOT DEAL",
                                                 color = Color.Black,
-                                                fontSize = 9.sp,
+                                                fontSize = 8.sp,
                                                 fontWeight = FontWeight.Bold,
-                                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                                             )
                                         }
                                     }
@@ -527,7 +566,7 @@ fun LandingView(
                                     Column(
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(16.dp)
+                                            .padding(12.dp)
                                     ) {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -537,35 +576,35 @@ fun LandingView(
                                             Text(
                                                 text = promo.title,
                                                 color = Color.White,
-                                                fontSize = 18.sp,
+                                                fontSize = 15.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 modifier = Modifier.weight(1f)
                                             )
-                                            Spacer(modifier = Modifier.width(8.dp))
+                                            Spacer(modifier = Modifier.width(6.dp))
                                             Surface(
                                                 color = TealPrimary,
-                                                shape = RoundedCornerShape(6.dp)
+                                                shape = RoundedCornerShape(5.dp)
                                             ) {
                                                 Text(
                                                     text = "₹${promo.offerPrice.toInt()}",
                                                     color = Color.Black,
-                                                    fontSize = 14.sp,
+                                                    fontSize = 12.sp,
                                                     fontWeight = FontWeight.Bold,
-                                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                                                 )
                                             }
                                         }
 
-                                        Spacer(modifier = Modifier.height(8.dp))
+                                        Spacer(modifier = Modifier.height(6.dp))
 
                                         Text(
                                             text = promo.description,
-                                            color = GrayText,
-                                            fontSize = 12.5.sp,
-                                            lineHeight = 17.sp
+                                            color = Color.White.copy(alpha = 0.7f),
+                                            fontSize = 11.5.sp,
+                                            lineHeight = 15.sp
                                         )
 
-                                        Spacer(modifier = Modifier.height(12.dp))
+                                        Spacer(modifier = Modifier.height(10.dp))
 
                                         Button(
                                             onClick = {
@@ -587,14 +626,14 @@ fun LandingView(
                                                     imageVector = Icons.Filled.Build,
                                                     contentDescription = null,
                                                     tint = Color.Black,
-                                                    modifier = Modifier.size(16.dp)
+                                                    modifier = Modifier.size(14.dp)
                                                 )
-                                                Spacer(modifier = Modifier.width(8.dp))
+                                                Spacer(modifier = Modifier.width(6.dp))
                                                 Text(
                                                     text = "Claim Offer & Book Diagnosis",
                                                     color = Color.Black,
                                                     fontWeight = FontWeight.Bold,
-                                                    fontSize = 12.sp
+                                                    fontSize = 11.5.sp
                                                 )
                                             }
                                         }
@@ -605,7 +644,7 @@ fun LandingView(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 // Interactive Estimator Price Calculator Widget (Synced with Web logic & Supabase)
                 Card(

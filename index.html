@@ -202,26 +202,26 @@
     <header class="fixed top-0 left-0 right-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-slate-900 py-3 md:py-4 shadow-lg">
         <div class="container-custom flex items-center justify-between gap-4">
             <!-- Brand Logo & Identity -->
-            <div class="flex items-center gap-3 cursor-pointer select-none" onclick="window.location.href='index.html'">
+            <div class="flex items-center gap-2 md:gap-3 cursor-pointer select-none" onclick="window.location.href='index.html'">
                 
                 <!-- Logo Icon -->
-                <div class="relative flex items-center justify-center p-[2px] rounded-[15px] border border-teal/70 bg-[#0A0F1D] h-12 w-12 md:h-[64px] md:w-[64px] shadow-[0_0_20px_rgba(20,184,166,0.25)] shrink-0 transition-transform duration-300 hover:scale-105">
-                    <img src="brand-logo-circular.jpg" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[13px]" />
+                <div class="relative flex items-center justify-center p-[2px] rounded-xl border border-teal/70 bg-[#0A0F1D] h-10 w-10 md:h-12 md:w-12 shadow-[0_0_15px_rgba(20,184,166,0.2)] shrink-0 transition-transform duration-300 hover:scale-105">
+                    <img src="brand-logo-circular.jpg" alt="RepairMaster Logo" class="h-full w-full object-cover rounded-[10px]" />
                 </div>
                 
                 <!-- Vertical Divider -->
-                <div class="h-8 md:h-[54px] w-[1.5px] bg-teal/60 shrink-0"></div>
+                <div class="h-6 md:h-8 w-[1px] bg-teal/50 shrink-0"></div>
                 
                 <!-- Branding Text Block -->
-                <div class="flex flex-col justify-center relative pr-4 md:pr-8">
-                    <div class="font-display text-sm sm:text-base md:text-lg font-bold tracking-tight leading-none text-white">
+                <div class="flex flex-col justify-center relative pr-2 md:pr-4">
+                    <div class="font-display text-xs sm:text-sm md:text-base font-black tracking-tight leading-none text-white">
                         Repair<span class="text-teal">Master</span>
                     </div>
-                    <div class="w-full h-[1px] bg-teal/40 my-0.5 md:my-1"></div>
-                    <div class="text-[7px] sm:text-[8px] md:text-[10px] font-normal text-gray-400 leading-none tracking-normal">
+                    <div class="w-full h-[1px] bg-teal/30 my-0.5 md:my-1"></div>
+                    <div class="text-[7px] sm:text-[8px] md:text-[9px] font-bold text-gray-300 leading-none tracking-normal uppercase">
                         Direct To Consumer
                     </div>
-                    <div class="text-[6px] sm:text-[7px] md:text-[8px] text-white/50 italic mt-0.5 leading-none">
+                    <div class="text-[5.5px] sm:text-[6.5px] md:text-[7.5px] text-white/45 italic mt-0.5 leading-none">
                         powered by <span class="text-teal font-medium not-italic">cm2us.com</span>
                     </div>
                 </div>
@@ -284,75 +284,140 @@
         <!-- ────────────────────────────────────────────────── -->
         <div id="tab-content-estimate" class="tab-section transition-all duration-300">
             
-            <!-- Hero Section -->
-            <section class="py-12 md:py-20 bg-transparent">
-                <div class="container-custom grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
-                    <div class="lg:col-span-7 space-y-8 text-center lg:text-left flex flex-col items-center lg:items-start">
-                        
-                        <!-- Hero Brand Logo - Prominent & Perfect Placement -->
-                        <div class="flex flex-col items-center lg:items-start gap-3">
-                            <img src="brand-logo-circular.jpg" alt="RepairMaster Brand Logo" class="w-32 h-32 md:w-40 md:h-40 object-contain shadow-2xl rounded-3xl border-2 border-[#0f8b8d]/30 p-2.5 bg-slate-900/60" />
-                            <span class="text-xs md:text-sm font-black text-[#0f8b8d] tracking-widest uppercase mt-1">Direct To Consumer</span>
-                        </div>
-
-                        <div class="space-y-4">
-                            <h1 class="text-3xl sm:text-4xl md:text-5xl lg:text-5xl font-black text-white leading-tight font-display">
-                                Fix Your Devices.<br class="hidden sm:inline" />
-                                <span class="text-[#0f8b8d] bg-gradient-to-r from-[#0f8b8d] to-[#14b8a6] bg-clip-text text-transparent">Hassle-Free.</span>
-                            </h1>
-                            <p class="text-base sm:text-lg text-slate-300 leading-relaxed max-w-xl mx-auto lg:mx-0">
-                                Doorstep pickup, expert laboratory repair, and quick delivery in Wardha. Genuine spare parts, certified technicians, and full data privacy.
-                            </p>
-                        </div>
-
-                        <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start pt-2 w-full sm:w-auto">
-                            <button onclick="navigateToTab('estimate', 'calculator-section')" class="btn-primary h-12 text-sm font-bold px-8 shadow-md w-full sm:w-auto">
-                                <i class="fa-solid fa-calculator mr-2"></i> Get an Estimate
-                            </button>
-                            <a href="signup.html" class="btn-outline h-12 text-sm font-bold px-8 w-full sm:w-auto">
-                                <i class="fa-solid fa-user-plus mr-2"></i> Sign Up
-                            </a>
+            <!-- Hero Section & Slideshow (Visual Polish & Matching Hierarchy) -->
+            <section class="py-10 md:py-16 bg-transparent">
+                <div class="container-custom max-w-4xl text-center">
+                    
+                    <!-- Top Dynamic Pill Badge -->
+                    <div class="flex justify-center mb-5">
+                        <div class="inline-flex items-center gap-1.5 bg-[#0f8b8d]/10 border border-[#0f8b8d]/25 rounded-full px-3.5 py-1.5 text-[10.5px] sm:text-xs font-semibold text-[#14b8a6] tracking-wide shadow-sm">
+                            <span class="text-amber-400">⚡</span> Certified Doorstep Repairs &amp; Refurbished Devices
                         </div>
                     </div>
-                    
-                    <!-- SVG Decorative Smartphone Vector Graphics (No external dependencies) -->
-                    <div class="lg:col-span-5 hidden lg:flex justify-center">
-                        <div class="relative w-80 h-[480px] bg-slate-900 rounded-[40px] p-3.5 shadow-2xl border-4 border-slate-800">
-                            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 w-32 h-6 bg-slate-900 rounded-b-2xl z-10"></div>
-                            <div class="relative w-full h-full bg-[#1e293b] rounded-[28px] overflow-hidden flex flex-col justify-between p-6">
-                                <div class="space-y-4">
-                                    <div class="flex items-center justify-between text-white/55 text-xs">
-                                        <span>RM Diagnostics v2.0</span>
-                                        <i class="fa-solid fa-wifi"></i>
-                                    </div>
-                                    <div class="bg-slate-950/40 p-4 rounded-xl border border-white/5 space-y-2">
-                                        <div class="flex justify-between text-[11px] text-[#14b8a6]">
-                                            <span>Hardware Test</span>
-                                            <span>PASS</span>
-                                        </div>
-                                        <div class="h-1.5 w-full bg-[#0a0f1d] rounded-full overflow-hidden">
-                                            <div class="h-full bg-gradient-to-r from-[#0f8b8d] to-[#14b8a6] w-full"></div>
-                                        </div>
-                                    </div>
-                                    <div class="bg-slate-950/40 p-4 rounded-xl border border-white/5 space-y-2">
-                                        <div class="flex justify-between text-[11px] text-amber-400">
-                                            <span>Maintenance Mode</span>
-                                            <span>ENABLED</span>
-                                        </div>
-                                        <div class="h-1.5 w-full bg-[#0a0f1d] rounded-full overflow-hidden">
-                                            <div class="h-full bg-amber-400 w-3/4"></div>
-                                        </div>
-                                    </div>
+
+                    <!-- Main Title (Hierarchy of Letter Title/Heading) -->
+                    <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-4.5xl font-black text-white leading-tight tracking-tight text-center font-display mb-4 px-2">
+                        Professional Phone Repair,<br class="hidden sm:inline" />
+                        Delivered To Your Door
+                    </h1>
+
+                    <!-- Subtitle / Brand Description -->
+                    <p class="text-xs sm:text-sm text-slate-400 leading-relaxed text-center max-w-2xl mx-auto mb-8 px-4 font-medium">
+                        Book certified repairs online, approve granular spare-parts quotes, and buy/sell verified refurbished hardware inside a secure escrow environment.
+                    </p>
+
+                    <!-- Interactive Slide Carousel Card -->
+                    <div class="relative max-w-2xl mx-auto rounded-2xl overflow-hidden border border-slate-800 bg-slate-900/60 shadow-2xl h-[200px] sm:h-[240px] md:h-[280px] group mb-10">
+                        <!-- Slides Container -->
+                        <div class="relative w-full h-full">
+                            <!-- Slide 1 -->
+                            <div class="home-carousel-slide absolute inset-0 transition-opacity duration-700 opacity-100 ease-in-out bg-cover bg-center" style="background-image: url('img_indian_service_scooter_1782739563064.jpg');">
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent"></div>
+                                <!-- Badge -->
+                                <span class="absolute top-4 left-4 bg-indigo-500/90 text-white text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider shadow-md">
+                                    REPAIR DISPATCH
+                                </span>
+                                <!-- Content Overlay -->
+                                <div class="absolute bottom-4 left-4 right-4 text-left md:bottom-6 md:left-6 md:right-6">
+                                    <h3 class="text-xs sm:text-sm md:text-base font-extrabold text-white mb-1">
+                                        Swift Doorstep Return &amp; 6-Month Warranty
+                                    </h3>
+                                    <p class="text-[9.5px] sm:text-[10.5px] md:text-xs text-slate-300 leading-normal line-clamp-2 max-w-xl font-medium">
+                                        Repaired smartphones are dispatched back to your doorstep. Test camera, sound, and screen before sharing.
+                                    </p>
                                 </div>
-                                <div class="text-center space-y-3">
-                                    <div class="w-16 h-16 rounded-full bg-[#0f8b8d]/20 border border-[#0f8b8d]/30 flex items-center justify-center mx-auto text-[#14b8a6] text-3xl">
-                                        <i class="fa-solid fa-circle-check animate-pulse"></i>
-                                    </div>
-                                    <p class="text-white font-extrabold text-sm">Smart Diagnostics</p>
-                                    <p class="text-white/60 text-xs">Sandbox Mode Is Active &amp; Protected</p>
+                            </div>
+
+                            <!-- Slide 2 -->
+                            <div class="home-carousel-slide absolute inset-0 transition-opacity duration-700 opacity-0 ease-in-out bg-cover bg-center" style="background-image: url('img_maintenance_mode_1782766826537.jpg');">
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent"></div>
+                                <!-- Badge -->
+                                <span class="absolute top-4 left-4 bg-amber-500/95 text-slate-950 text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider shadow-md">
+                                    SECURE LAB
+                                </span>
+                                <!-- Content Overlay -->
+                                <div class="absolute bottom-4 left-4 right-4 text-left md:bottom-6 md:left-6 md:right-6">
+                                    <h3 class="text-xs sm:text-sm md:text-base font-extrabold text-white mb-1">
+                                        Enterprise Data Isolation &amp; Sandbox
+                                    </h3>
+                                    <p class="text-[9.5px] sm:text-[10.5px] md:text-xs text-slate-300 leading-normal line-clamp-2 max-w-xl font-medium">
+                                        Your files remain safe. Absolute security cage isolation with no passcode requirements or private chat leaks.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Slide 3 -->
+                            <div class="home-carousel-slide absolute inset-0 transition-opacity duration-700 opacity-0 ease-in-out bg-cover bg-center" style="background-image: url('img_indian_service_lab_1782739540576.jpg');">
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/45 to-transparent"></div>
+                                <!-- Badge -->
+                                <span class="absolute top-4 left-4 bg-teal-500/90 text-white text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider shadow-md">
+                                    LAB DIAGNOSIS
+                                </span>
+                                <!-- Content Overlay -->
+                                <div class="absolute bottom-4 left-4 right-4 text-left md:bottom-6 md:left-6 md:right-6">
+                                    <h3 class="text-xs sm:text-sm md:text-base font-extrabold text-white mb-1">
+                                        High-Tech Calibration &amp; Micro-soldering
+                                    </h3>
+                                    <p class="text-[9.5px] sm:text-[10.5px] md:text-xs text-slate-300 leading-normal line-clamp-2 max-w-xl font-medium">
+                                        Devices are inspected in high-tech Nagpur laboratories with precise replacement parts breakdown &amp; live digital approvals.
+                                    </p>
                                 </div>
                             </div>
                         </div>
+
+                        <!-- Left & Right Controls -->
+                        <button onclick="prevHomeSlide()" class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-950/60 border border-slate-800 text-white flex items-center justify-center hover:bg-[#0f8b8d] transition duration-300 z-10">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                        </button>
+                        <button onclick="nextHomeSlide()" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-slate-950/60 border border-slate-800 text-white flex items-center justify-center hover:bg-[#0f8b8d] transition duration-300 z-10">
+                            <i class="fa-solid fa-chevron-right text-[10px]"></i>
+                        </button>
+
+                        <!-- Slide Indicators (Bullets) in top right -->
+                        <div class="absolute top-4 right-4 flex gap-1.5 z-10 bg-slate-950/50 p-1.5 rounded-full backdrop-blur-sm border border-white/5">
+                            <span onclick="setHomeSlide(0)" class="home-slide-dot w-1.5 h-1.5 rounded-full bg-white cursor-pointer transition-all duration-300"></span>
+                            <span onclick="setHomeSlide(1)" class="home-slide-dot w-1.5 h-1.5 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
+                            <span onclick="setHomeSlide(2)" class="home-slide-dot w-1.5 h-1.5 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
+                        </div>
+                    </div>
+
+                    <!-- 5. 🔥 Special Promotional Offers Section -->
+                    <div class="max-w-2xl mx-auto border-t border-slate-900/60 pt-6">
+                        <div class="flex items-center justify-between mb-5 px-1">
+                            <h2 class="text-xs sm:text-sm font-black text-white uppercase tracking-wider flex items-center gap-1.5">
+                                <span class="text-lg">🔥</span> Special Promotional Offers
+                            </h2>
+                            <span class="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] md:text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                                LIVE OFFERS
+                            </span>
+                        </div>
+
+                        <!-- 6. HOT DEAL Banner Card -->
+                        <div class="relative rounded-2xl overflow-hidden border border-emerald-500/20 bg-[#070b14] shadow-xl p-0.5 group">
+                            <!-- High-tech circuit background / deal banner image -->
+                            <div class="relative w-full aspect-[21/9] min-h-[140px] sm:min-h-[180px] rounded-[14px] overflow-hidden bg-slate-950 flex flex-col justify-end bg-cover bg-center" style="background-image: url('img_dead_phone_offer_1782763644093.jpg');">
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-transparent"></div>
+                                <!-- Badge -->
+                                <span class="absolute top-3 left-3 bg-amber-500 text-slate-950 text-[8px] sm:text-[9px] font-black px-2.5 py-1 rounded uppercase tracking-wider shadow-md">
+                                    ⚡ HOT DEAL
+                                </span>
+                                
+                                <!-- Floating CTA to Book / Claim Offer directly on click -->
+                                <button onclick="scrollToCalculatorWithOffer()" class="absolute bottom-3 right-3 bg-[#14b8a6] hover:bg-[#0f8b8d] text-slate-950 hover:text-white transition-all duration-300 text-[10px] md:text-xs font-black px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-lg">
+                                    <i class="fa-solid fa-gift"></i> Claim Offer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick CTAs -->
+                    <div class="flex flex-wrap gap-4 justify-center mt-8">
+                        <button onclick="navigateToTab('estimate', 'calculator-section')" class="btn-primary h-11 text-xs font-bold px-6 shadow-md">
+                            <i class="fa-solid fa-calculator mr-1.5"></i> Get an Estimate
+                        </button>
+                        <a href="signup.html" class="btn-outline h-11 text-xs font-bold px-6">
+                            <i class="fa-solid fa-user-plus mr-1.5"></i> Sign Up
+                        </a>
                     </div>
                 </div>
             </section>
@@ -1082,6 +1147,67 @@
         // Initialize background slideshow
         cycleBgSlides();
         setInterval(cycleBgSlides, 5000);
+
+        // Homepage Interactive Slide Carousel Controller
+        let currentHomeSlide = 0;
+        const totalHomeSlides = 3;
+
+        function updateHomeSlides() {
+            const slides = document.querySelectorAll('.home-carousel-slide');
+            const dots = document.querySelectorAll('.home-slide-dot');
+            slides.forEach((slide, idx) => {
+                if (idx === currentHomeSlide) {
+                    slide.classList.remove('opacity-0');
+                    slide.classList.add('opacity-100');
+                    if (dots[idx]) {
+                        dots[idx].classList.remove('bg-white/40');
+                        dots[idx].classList.add('bg-white', 'w-3');
+                    }
+                } else {
+                    slide.classList.remove('opacity-100');
+                    slide.classList.add('opacity-0');
+                    if (dots[idx]) {
+                        dots[idx].classList.remove('bg-white', 'w-3');
+                        dots[idx].classList.add('bg-white/40');
+                    }
+                }
+            });
+        }
+
+        function nextHomeSlide() {
+            currentHomeSlide = (currentHomeSlide + 1) % totalHomeSlides;
+            updateHomeSlides();
+        }
+
+        function prevHomeSlide() {
+            currentHomeSlide = (currentHomeSlide - 1 + totalHomeSlides) % totalHomeSlides;
+            updateHomeSlides();
+        }
+
+        function setHomeSlide(idx) {
+            currentHomeSlide = idx;
+            updateHomeSlides();
+        }
+
+        // Auto play carousel every 4 seconds
+        setInterval(nextHomeSlide, 4000);
+
+        // Claim Offer utility to auto-check voucher & scroll to calculator
+        function scrollToCalculatorWithOffer() {
+            const offerToggle = document.getElementById('offerToggle');
+            if (offerToggle) {
+                offerToggle.checked = true;
+                if (typeof updatePartsSurvey === 'function') {
+                    updatePartsSurvey();
+                } else if (typeof calculateEstimate === 'function') {
+                    calculateEstimate();
+                }
+            }
+            navigateToTab('estimate', 'calculator-section');
+            if (typeof showToast === 'function') {
+                showToast('⚡ Claim Voucher applied: 50% Off Service Fee!', 'success');
+            }
+        }
 
         // Estimation Calculator Default Select Override Configuration
 
