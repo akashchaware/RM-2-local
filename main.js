@@ -1094,6 +1094,7 @@ async function submitRequest(e) {
     }
 
     try {
+        // --- Get form elements ---
         const nameEl = document.getElementById('reqName');
         const phoneEl = document.getElementById('reqPhone');
         const emailEl = document.getElementById('reqEmail');
@@ -1128,6 +1129,7 @@ async function submitRequest(e) {
             return;
         }
 
+        // --- Process manual entries ---
         let deviceId = brandSelect.value;
         let modelId = modelSelect.value;
         let repairTypeId = repairSelect.value;
@@ -1155,6 +1157,7 @@ async function submitRequest(e) {
         if (!modelId && !deviceOther) return showToast('Please select or enter a model.', 'error');
         if (!repairTypeId && !repairOther) return showToast('Please select or enter a repair type.', 'error');
 
+        // --- Upload photo (if any) ---
         const photoFile = document.getElementById('reqPhoto')?.files[0];
         let photoUrl = null;
         if (photoFile) {
@@ -1188,9 +1191,11 @@ async function submitRequest(e) {
             }
         }
 
+        // --- Get current user (if logged in) ---
         const session = await supabase.auth.getSession();
         const user = session.data?.session?.user || null;
 
+        // --- Calculate estimate (you already have this logic) ---
         let partsTotalVal = 0;
         let serviceFeeVal = 150.00;
         let totalEstimateVal = 400.00;
@@ -1202,6 +1207,7 @@ async function submitRequest(e) {
             diagnosisVal = window._reqEstimate.diagnosisCharge || 250.00;
             totalEstimateVal = window._reqEstimate.total || 0;
         } else {
+            // Fallback calculation (similar to your existing code)
             let partsTotal = 0;
             if (modelSelect && repairSelect) {
                 const brandVal = brandSelect.value;
@@ -1227,6 +1233,7 @@ async function submitRequest(e) {
             totalEstimateVal = partsTotalVal + serviceFeeVal + 250.00;
         }
 
+        // --- Build order object ---
         const orderData = {
             order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
             user_id: user?.id || null,
@@ -1250,34 +1257,46 @@ async function submitRequest(e) {
             created_at: new Date().toISOString()
         };
 
-        // Bypassing Supabase and storing locally as requested:
-        console.log("POST captured form data locally:", orderData);
-        let localOrders = [];
-        try {
-            localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-        } catch(e) {
-            console.error(e);
-        }
-        localOrders.push(orderData);
-        localStorage.setItem('local_orders', JSON.stringify(localOrders));
+        // --- Insert into Supabase ---
+        const { data, error } = await supabase
+            .from('orders')
+            .insert([orderData])
+            .select();
 
-        const orderNumber = orderData.order_number;
+        if (error) throw error;
+
+        // --- Optionally assign to a coordinator (if any) ---
+        const coordinatorId = await getCoordinatorId();
+        if (coordinatorId && data && data[0]) {
+            await supabase
+                .from('orders')
+                .update({ assigned_to: coordinatorId })
+                .eq('id', data[0].id);
+        }
+
+        const orderNumber = data && data[0] ? data[0].order_number : orderData.order_number;
+
+        // --- Show success message ---
         const successDiv = document.getElementById('requestSuccess');
         if (successDiv) {
             successDiv.classList.remove('hidden');
             successDiv.innerHTML = `
                 <i class="fa-regular fa-circle-check mr-2"></i>
-                Request submitted successfully! Reference: <strong>#${orderNumber}</strong>. Our service coordinators will assign a technician to Wardha shortly.
+                Request submitted successfully! Reference: <strong>#${orderNumber}</strong>. Our service coordinators will assign a technician shortly.
             `;
         }
         e.target.reset();
         showToast('✅ Service request submitted!', 'success');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+
+        // --- Redirect to dashboard after a short delay ---
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 2000);
+
     } catch (err) {
         showToast('❌ Failed to submit: ' + err.message, 'error');
     }
 }
-
 // ─── 6. CREATE INSTANT ORDER (FROM WEB CALC) ───
 async function createOrder() {
     const brandSelect = document.getElementById('brandSelect');
