@@ -161,7 +161,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                 if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
                     actions += `
                         <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
-                        <button onclick="('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
+                       <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
                     `;
                 }
             }
