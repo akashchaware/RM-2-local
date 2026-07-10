@@ -6552,3 +6552,40 @@ document.addEventListener('DOMContentLoaded', async () => {
         reqForm.addEventListener('submit', submitRequest);
     }
 });
+
+// ─── ACCELERATED ROLE MANAGEMENT DISPATCHER ───
+window.submitAssignRoles = async function(userId) {
+    if (!supabase) {
+        showToast('⚠️ Supabase connection is offline.', 'error');
+        return;
+    }
+
+    const roleSelect = document.getElementById(`roleSelect-${userId}`);
+    if (!roleSelect) {
+        showToast('❌ Configuration target element missing.', 'error');
+        return;
+    }
+
+    const selectedRole = roleSelect.value;
+
+    try {
+        const { error } = await supabase
+            .from('profiles') // Adjust table name to 'users' if your schema uses that instead
+            .update({ role: selectedRole })
+            .eq('id', userId);
+
+        if (error) throw error;
+
+        showToast(`✅ User privileges updated to: ${selectedRole}`, 'success');
+        
+        // Refresh the coordinator dashboard layout to update views
+        if (typeof loadDashboard === 'function') {
+            loadDashboard();
+        } else if (typeof renderCoordinatorOpsDesk === 'function') {
+            // Fallback: reload page if global dashboard pipeline isn't bound
+            window.location.reload();
+        }
+    } catch (err) {
+        showToast('❌ Privilege synchronization failed: ' + err.message, 'error');
+    }
+};
