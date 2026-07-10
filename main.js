@@ -6,7 +6,13 @@
 const SUPABASE_URL = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
 const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-
+// ─── BUSINESS CONFIGURATION ───
+window.BUSINESS_CONFIG = {
+    gstEnabled: false,              // Set to true when you get GST
+    convenienceFeePercent: 15,      // Full 15% fee (without discount)
+    platformFeePercent: 15,         // Full 15% for future GST mode
+    taxPercent: 18                  // GST rate
+};
 // ─── GLOBAL STATE ───
 let allBrands = [];
 let allDevices = [];
