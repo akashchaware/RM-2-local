@@ -357,7 +357,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         }
     }
 
-    let quotationHtml = '';
+   let quotationHtml = '';
     if ((status === 'Quotation-Sent' || o.total_price) && !isTechnician && !isRepairMaster) {
         const partsList = parseCustomQuoteParts(o.custom_quote_parts);
         const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
@@ -510,7 +510,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
 
     // Role-Based Customer Metadata Panel (Access Control - Protect Customer Data)
     let metadataPanel = '';
-    if (!isClient) {
+    if (!isClient && !isRepairMaster) {
         if (isAdmin || isCoordinator) {
             metadataPanel = `
                 <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
@@ -1514,45 +1514,55 @@ async function showAssignForm(orderId) {
 }
 window.showAssignForm = showAssignForm;
 
-async function submitAssignRoles(orderId) {
-    console.log("submitAssignRoles triggered for orderId:", orderId);
+async function assignOrderRoles(orderId, technicianId, repairmasterId) {
+    if (!supabase) return;
+
+    // Validate orderId
     if (!orderId || orderId === 'undefined' || orderId === 'null') {
-        showToast('Error: Invalid order reference.', 'error');
+        showToast('Invalid order ID. Please refresh and try again.', 'error');
         return;
     }
 
-    const techSelect = document.getElementById(`assign-tech-${orderId}`);
-    const masterSelect = document.getElementById(`assign-master-${orderId}`);
-    if (!techSelect || !masterSelect) {
-        showToast('Error: Form elements not found on page.', 'error');
-        return;
-    }
-    
-    const techId = techSelect.value;
-    const masterId = masterSelect.value;
-    console.log("submitAssignRoles: techId =", techId, ", masterId =", masterId);
-    
-    if (!techId || techId === 'undefined' || !masterId || masterId === 'undefined') {
-        showToast('Please select both a Technician and a RepairMaster.', 'error');
-        return;
-    }
-
-    // UUID format regex pattern
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (!uuidRegex.test(orderId)) {
-        showToast('Error: Order ID is not a valid UUID.', 'error');
-        return;
-    }
+    let realOrderId = orderId;
 
-    // In online database mode, we require actual Supabase registered users (UUIDs)
-    if (supabase) {
-        if (!uuidRegex.test(techId) || !uuidRegex.test(masterId)) {
-            showToast('Assignment error: Selected staff must be registered database users with valid credentials in online mode.', 'error');
+    // If orderId is not a UUID, try to fetch the UUID using order_number
+    if (!uuidRegex.test(orderId)) {
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('id')
+                .eq('order_number', orderId)
+                .single();
+            if (error || !data) {
+                showToast('Invalid order reference. Please refresh and try again.', 'error');
+                return;
+            }
+            realOrderId = data.id; // Replace with actual UUID
+        } catch (err) {
+            showToast('Error fetching order: ' + err.message, 'error');
             return;
         }
     }
-    
-    await assignOrderRoles(orderId, techId, masterId);
+
+    // Validate UUIDs for technician and repairmaster
+    if (!uuidRegex.test(technicianId) || !uuidRegex.test(repairmasterId)) {
+        showToast('Invalid staff UUID(s). Please select valid staff.', 'error');
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('orders')
+            .update({ technician_id: technicianId, repairmaster_id: repairmasterId, status: 'Technician Assigned' })
+            .eq('id', realOrderId);
+        if (error) throw error;
+        showToast('Roles assigned & notifications dispatched!', 'success');
+        closeAllDashboardModals();
+        loadDashboard();
+    } catch (err) {
+        showToast('Assignment error: ' + err.message, 'error');
+    }
 }
 window.submitAssignRoles = submitAssignRoles;
 
@@ -5769,7 +5779,7 @@ async function createAlert(orderId, message, type = 'system_alert') {
     }
 }
 
-async function viewOrderDetails(orderId, alertId = null) {
+async function viewOrderDetails(orderId, alertId = null, event =null) {
     if (event && (event.target.tagName === 'BUTTON' || event.target.closest('button') || event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT')) {
         return;
     }
@@ -5777,6 +5787,16 @@ async function viewOrderDetails(orderId, alertId = null) {
     if (!order) {
         showToast('Order details sync reference not found.', 'error');
         return;
+    }
+    // Fetch staff names
+    let techName = 'Not Assigned', masterName = 'Not Assigned';
+    if (order.technician_id) {
+        const { data } = await supabase.from('users').select('name').eq('id', order.technician_id).single();
+        if (data) techName = data.name;
+    }
+    if (order.repairmaster_id) {
+        const { data } = await supabase.from('users').select('name').eq('id', order.repairmaster_id).single();
+        if (data) masterName = data.name;
     }
 
     // Resolve staff names from cache instead of showing raw UUIDs
