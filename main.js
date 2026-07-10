@@ -2116,6 +2116,12 @@ async function assignSelfAsTechnician(orderId) {
 }
 
 async function assignSelfAsRepairMaster(orderId) {
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
+        return;
+    }
+
     if (!currentUser || !currentUser.id) {
         showToast('You must be logged in to take this action.', 'error');
         return;
