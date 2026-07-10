@@ -2451,23 +2451,22 @@ async function loadDashboard() {
 let orders = [];
 if (supabase) {
     try {
-        let query = supabase.from('orders').select('*');
-        // Optionally filter by role if needed
-        // For now, get all orders (admins/coordinators see all)
-        const { data, error } = await query.order('created_at', { ascending: false });
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
         if (error) throw error;
         orders = data || [];
     } catch (err) {
-        console.warn("Error loading orders from Supabase:", err);
+        console.warn("Supabase fetch error:", err);
         orders = [];
     }
 } else {
     console.warn("Supabase not available");
     orders = [];
 }
-
-    orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
+// ✅ No mock orders – use real data or empty list
+    
     // Update stats counters
     const metricContainer = document.getElementById('metric-cards-container');
     if (metricContainer) {
