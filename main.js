@@ -830,7 +830,7 @@ async function calculateEstimate() {
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Diagnosis Fee:</span>
-                            <span class="text-white font-bold">₹window.diagnosisFee || 250</span>
+                            <span class="text-white font-bold">₹${window.diagnosisFee || 250}</span>
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Service / Labor Fee:</span>
@@ -874,7 +874,7 @@ async function calculateEstimate() {
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Diagnosis Fee:</span>
-                            <span class="text-white font-bold">₹window.diagnosisFee || 250</span>
+                            <span class="text-white font-bold">₹${window.diagnosisFee || 250}</span>
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Service / Labor Fee:</span>
@@ -984,8 +984,8 @@ async function calculateEstimate() {
             
             if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
             if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹0.00';
-            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹window.diagnosisFee || 250';
-            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹window.diagnosisFee || 250.00';
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹${window.diagnosisFee || 250}';
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹${window.diagnosisFee || 250}';
         }
     } catch (err) {
         console.error("Local records estimation calculation failed:", err);
@@ -1860,7 +1860,7 @@ function showQuotationForm(orderId, basePrice, customPartsStr) {
     // Store in global window for active editing
     window.editingQuotationParts[orderId] = partsList;
     window.editingQuotationServiceFee[orderId] = order ? (parseFloat(order.service_fee) || 100) : 100;
-    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || window.diagnosisFee || 250)
+    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || window.diagnosisFee || 250) : (window.diagnosisFee || 250);
     
     renderQuotationFormInlineEditable(orderId);
 }
@@ -2633,8 +2633,8 @@ if (supabase) {
 
         const hasActiveFilter = !!(searchQuery || selectedStatus !== 'All' || selectedTechnician !== 'All' || filterStartDate || filterEndDate || (window.customStatFilter && window.customStatFilter !== 'All'));
 
-        function isOrderMatching(o) {if (window.singleOrderFilter && window.singleOrderFilter !== o.id) {
-            
+        function isOrderMatching(o) {
+            if (window.singleOrderFilter && window.singleOrderFilter !== o.id) {
                 return false;
             }
             let matchesSearch = true;
