@@ -4167,6 +4167,7 @@ async function signInWithGoogle() {
 function toggleMobileMenu() {
     let mobileDrawer = document.getElementById('mobileNavDrawer');
     if (!mobileDrawer) {
+        // Create drawer
         mobileDrawer = document.createElement('div');
         mobileDrawer.id = 'mobileNavDrawer';
         mobileDrawer.className = 'fixed inset-0 z-50 hidden';
@@ -4203,19 +4204,39 @@ function toggleMobileMenu() {
 
                 <!-- Footer (Auth / User Actions) -->
                 <div class="border-t border-white/5 pt-4 space-y-3" id="mobileDrawerAuthBlock">
+                    <!-- ✅ Placeholder for mobile user info & role switcher -->
+                    <div id="mobileNavUserInfo"></div>
                 </div>
             </div>
         `;
         document.body.appendChild(mobileDrawer);
     }
 
-    // Always update auth section dynamically based on current user state!
-    const authBlock = document.getElementById('mobileDrawerAuthBlock');
-    if (authBlock) {
+    // ✅ Always re‑render the mobile user info based on currentUser
+    const mNavUserInfo = document.getElementById('mobileNavUserInfo');
+    if (mNavUserInfo) {
         if (currentUser) {
+            // Use the same logic as updateNavForAuth for the mobile version
             const username = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
             const initials = username.substring(0, 2).toUpperCase();
-            authBlock.innerHTML = `
+
+            // Fetch roles (async, but we'll use sync cache or fallback)
+            const roles = JSON.parse(localStorage.getItem('allUserRoles') || '["customer"]');
+            const activeRole = localStorage.getItem('activeRole') || roles[0] || 'customer';
+
+            let mRoleSwitcherHtml = '';
+            if (roles.length > 1) {
+                mRoleSwitcherHtml = `
+                    <div class="w-full mb-2">
+                        <label class="text-[9px] text-gray-400 font-bold uppercase tracking-wider block mb-1 text-center">Active Role Switcher</label>
+                        <select onchange="switchActiveRole(this.value)" class="w-full bg-slate-950 border border-slate-800 text-teal-400 text-xs font-bold rounded-xl py-2 px-3 outline-none focus:border-teal-400 text-center uppercase cursor-pointer">
+                            ${roles.map(r => `<option value="${r}" ${r === activeRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
+                        </select>
+                    </div>
+                `;
+            }
+
+            mNavUserInfo.innerHTML = `
                 <div class="space-y-2">
                     <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800">
                         <div class="w-9 h-9 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-bold text-xs flex items-center justify-center">
@@ -4226,6 +4247,7 @@ function toggleMobileMenu() {
                             <p class="text-[10px] text-teal-400">Registered DTC Member</p>
                         </div>
                     </div>
+                    ${mRoleSwitcherHtml}
                     <div class="grid grid-cols-2 gap-2">
                         <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
                             <i class="fa-regular fa-user"></i> Profile
@@ -4237,7 +4259,8 @@ function toggleMobileMenu() {
                 </div>
             `;
         } else {
-            authBlock.innerHTML = `
+            // Logged out
+            mNavUserInfo.innerHTML = `
                 <div class="flex flex-col gap-2">
                     <a href="login.html" class="w-full bg-teal text-slate-950 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 hover:bg-tealAccent transition" onclick="toggleMobileMenu()">
                         <i class="fa-solid fa-right-to-bracket"></i> Sign In
@@ -4250,7 +4273,7 @@ function toggleMobileMenu() {
         }
     }
 
-    // Always update active navigation highlight!
+    // Update active navigation highlight
     const path = window.location.pathname.toLowerCase();
     let activeId = 'mLink-index';
     if (path.includes('request')) activeId = 'mLink-request';
@@ -4265,11 +4288,11 @@ function toggleMobileMenu() {
         }
     });
 
+    // Toggle visibility
     const isHidden = mobileDrawer.classList.contains('hidden');
     const body = document.getElementById('mobileDrawerBody');
     if (isHidden) {
         mobileDrawer.classList.remove('hidden');
-        // trigger reflow then slide in
         setTimeout(() => {
             if (body) body.classList.remove('translate-x-full');
         }, 10);
@@ -4281,7 +4304,6 @@ function toggleMobileMenu() {
     }
 }
 window.toggleMobileMenu = toggleMobileMenu;
-
 // Carousel controls
 let currentSlide = 0;
 const totalSlides = 5;
