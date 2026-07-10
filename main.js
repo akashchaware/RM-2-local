@@ -29,6 +29,22 @@ async function loadDiagnosisFee() {
         }
     } catch (e) { console.warn('Failed to load diagnosis fee:', e); }
 }
+// ─── Cached parts discount ───
+window.partsDiscountPercent = 10; // default
+
+async function loadPartsDiscount() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'parts_discount_percent')
+            .maybeSingle();
+        if (!error && data) {
+            window.partsDiscountPercent = parseFloat(data.value) || 10;
+        }
+    } catch (e) { console.warn('Failed to load parts discount:', e); }
+}
 // ─── GLOBAL STATE ───
 let allBrands = [];
 let allDevices = [];
@@ -1037,9 +1053,10 @@ function runCatalogFallbackCalculation() {
         }
     }
 
-    let partsTotal = parts.reduce((sum, p) => sum + (p.price * qualityMultiplier), 0);
-    const discountedParts = partsTotal * 0.9; // Standard 10% discount on spares
-    let serviceFee = discountedParts * 0.15; // standard 15% service charge
+   let partsTotal = parts.reduce((sum, p) => sum + (p.price * qualityMultiplier), 0);
+const discountPercent = window.partsDiscountPercent || 10; // ✅ dynamic, defaults to 10%
+const discountedParts = partsTotal * (1 - discountPercent / 100);
+let serviceFee = discountedParts * 0.15; // standard 15% service charge (unchanged)
     if (offerClaimed) {
         serviceFee = serviceFee * 0.5; // Claim 50% discount on service
     }
@@ -2050,35 +2067,50 @@ async function submitFinalizedQuotation(orderId) {
         const serviceFee = window.editingQuotationServiceFee[orderId] || 100;
         const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || window.diagnosisFee || 250;
         
-        // Separate parts into original vs additional to calculate parts_total
+        // Separate original vs additional parts
         const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
         const originalPartsSum = originalParts.reduce((sum, p) => sum + p.price, 0);
-        
         const partsSum = partsList.reduce((sum, p) => sum + p.price, 0);
-        const liveTotal = serviceFee + diagnosisCharge + partsSum;
         
-        // Serialize parts list back
+        // Subtotal (excluding any platform fee or tax)
+        const subtotal = serviceFee + diagnosisCharge + partsSum;
+        
+        // Serialize parts
         const customPartsStr = serializeCustomQuoteParts(partsList);
-        
-        // Calculate tax, platform fee, and grand total for invoice
         const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-        const taxAmount = parseFloat((liveTotal * 0.18).toFixed(2));
-        const platformFee = parseFloat((liveTotal * 0.10).toFixed(2));
-        const grandTotal = parseFloat((liveTotal + taxAmount + platformFee).toFixed(2));
         
+        // ─── Read config ───
+        const config = window.BUSINESS_CONFIG || { gstEnabled: false, platformFeePercent: 10, taxPercent: 18 };
+        let taxAmount = 0;
+        let platformFee = 0;
+        let grandTotal = subtotal;
+        
+        if (config.gstEnabled) {
+            taxAmount = parseFloat((subtotal * (config.taxPercent / 100)).toFixed(2));
+            platformFee = parseFloat((subtotal * (config.platformFeePercent / 100)).toFixed(2));
+            grandTotal = subtotal + taxAmount + platformFee;
+        } else {
+            // No GST mode – grand total equals subtotal; no extra fees.
+            // The service fee already includes any convenience margin.
+            taxAmount = 0;
+            platformFee = 0;
+            grandTotal = subtotal;
+        }
+        
+        // ─── Update order ───
         const { error } = await supabase
             .from('orders')
             .update({
                 diagnosis_charge: diagnosisCharge,
                 service_fee: serviceFee,
                 parts_total: originalPartsSum,
-                total_price: liveTotal,
+                total_price: subtotal,          // The base price before tax/fees
                 custom_quote_parts: customPartsStr,
                 status: 'Quotation-Sent',
                 invoice_number: invoiceNum,
                 tax_amount: taxAmount,
                 platform_fee: platformFee,
-                grand_total: grandTotal
+                grand_total: grandTotal         // Final amount customer pays
             })
             .eq('id', orderId);
             
@@ -4429,6 +4461,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     // 2. Hydrate database parts catalogs and offers
     await loadCatalog();
     await loadDiagnosisFee();
+    await loadPartsDiscount();
 
     if (document.getElementById('brandSelect')) {
         populateBrands();
