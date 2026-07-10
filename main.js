@@ -5789,7 +5789,8 @@ async function viewOrderDetails(orderId, alertId = null, event =null) {
         return;
     }
     // Fetch staff names
-    let techName = 'Not Assigned', masterName = 'Not Assigned';
+    let techNameDisplay = 'Not Assigned';
+    let masterNameDisplay = 'Not Assigned';
     if (order.technician_id) {
         const { data } = await supabase.from('users').select('name').eq('id', order.technician_id).single();
         if (data) techName = data.name;
