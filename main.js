@@ -4910,6 +4910,7 @@ const ROLE_TABS = {
         { id: 'map', label: 'Live Active Map', icon: 'fa-map-location-dot' },
         { id: 'cities', label: 'Cities Coverage', icon: 'fa-city' },
         { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' }
+        { id: 'settings', label: '⚙️ Settings', icon: 'fa-sliders-h' }
     ],
     technician: [
         { id: 'tickets', label: 'Diagnostic Workstation', icon: 'fa-laptop-code' },
@@ -5425,7 +5426,28 @@ function renderDynamicTabContent(tabId) {
                 </div>
             </div>
         `;
-    }
+    } else if (tabId === 'settings') {
+        container.innerHTML = `
+        <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6">
+            <h3 class="text-xl font-bold text-white font-display">⚙️ System Settings</h3>
+            <p class="text-xs text-gray-400">Update global diagnosis fee (applies to new orders)</p>
+            
+            <div class="bg-slate-950 border border-slate-800 rounded-2xl p-6 max-w-md">
+                <label class="block text-xs font-bold text-gray-400 uppercase mb-2">🩺 Diagnosis Fee (₹)</label>
+                <div class="flex gap-3">
+                    <input type="number" id="diagnosisFeeInput" value="${window.diagnosisFee || 250}" 
+                           class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2 text-white focus:border-teal-400 outline-none">
+                    <button onclick="updateDiagnosisFee()" 
+                            class="bg-teal-600 hover:bg-teal-500 text-white font-bold px-6 py-2 rounded-xl transition">
+                        Save
+                    </button>
+                </div>
+                <p class="text-xs text-gray-500 mt-2">This fee will apply to all new repair requests.</p>
+            </div>
+        </div>
+    `;
+    } 
+    
 }
 window.renderDynamicTabContent = renderDynamicTabContent;
 
