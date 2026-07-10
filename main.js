@@ -2447,19 +2447,25 @@ async function loadDashboard() {
         }
     }
 
-    let orders = [];
+   // ─── Load orders from Supabase ───
+let orders = [];
+if (supabase) {
     try {
-        orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-    } catch (e) {
-        console.error("Failed to parse local_orders from localStorage:", e);
+        let query = supabase.from('orders').select('*');
+        // Optionally filter by role if needed
+        // For now, get all orders (admins/coordinators see all)
+        const { data, error } = await query.order('created_at', { ascending: false });
+        if (error) throw error;
+        orders = data || [];
+    } catch (err) {
+        console.warn("Error loading orders from Supabase:", err);
+        orders = [];
     }
-    if (orders.length === 0) {
-        orders = [
-            { id: 'm1', order_number: 'RM-REQ-VIVOV30', customer_name: 'Akash Chaware', customer_phone: '9876543210', customer_email: 'akash@example.com', device_other: 'Vivo V30 Pro', repair_other: 'Screen Replacement', parts_quality: 'Premium', total_price: 6300, status: 'Pending', created_at: new Date().toISOString() },
-            { id: 'm2', order_number: 'RM-REQ-IPHONE14', customer_name: 'Sneha Patil', customer_phone: '9123456789', customer_email: 'sneha@example.com', device_other: 'iPhone 14', repair_other: 'Battery Replacement', parts_quality: 'Standard', total_price: 3200, status: 'Completed', created_at: new Date(Date.now() - 86400000).toISOString() }
-        ];
-        localStorage.setItem('local_orders', JSON.stringify(orders));
-    }
+} else {
+    console.warn("Supabase not available");
+    orders = [];
+}
+
     orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     // Update stats counters
