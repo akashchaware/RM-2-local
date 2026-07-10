@@ -1444,7 +1444,10 @@ function showAssignForm(orderId) {
 }
 
 async function submitAssignRoles(orderId) {
-    // ✅ Guard: Ensure orderId is valid
+    // ✅ Log the orderId for debugging
+    console.log('🔍 submitAssignRoles called with orderId:', orderId);
+
+    // ✅ Guard against undefined orderId
     if (!orderId || orderId === 'undefined' || orderId === 'null') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
@@ -1460,20 +1463,22 @@ async function submitAssignRoles(orderId) {
     const techId = techSelect.value;
     const masterId = masterSelect.value;
 
+    // Reject empty, null, or literal "undefined"
     if (!techId || !masterId || techId === 'undefined' || masterId === 'undefined') {
         showToast('Please select both a valid Technician and RepairMaster.', 'error');
         return;
     }
 
+    // Basic UUID format check
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(techId) || !uuidRegex.test(masterId)) {
         showToast('Invalid staff ID format. Please refresh and try again.', 'error');
         return;
     }
 
+    // ✅ CRITICAL FIX: Actually call the assignment function
     await assignOrderRoles(orderId, techId, masterId);
 }
-
 function showAssignDeliveryForm(orderId) {
     const techs = window.allTechnicians || [];
     
