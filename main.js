@@ -14,7 +14,7 @@ window.BUSINESS_CONFIG = {
     taxPercent: 18                  // GST rate
 };
 // ─── Cached diagnosis fee ───
-let window.diagnosisFee = 250; // default
+window.diagnosisFee = 250; // default
 
 async function loadDiagnosisFee() {
     if (!supabase) return;
