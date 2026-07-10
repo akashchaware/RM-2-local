@@ -14,7 +14,6 @@ let allRepairTypes = [];
 let allParts = [];
 let currentUser = null;
 let currentRoles = [];
-window.diagnosisFee = parseFloat(localStorage.getItem('diagnosis_fee')) || window.diagnosisFee || 250;
 
 // ─── TOAST NOTIFICATION ENGINE ───
 function showToast(message, type = 'info') {
@@ -24,18 +23,18 @@ function showToast(message, type = 'info') {
         // Create toast element on the fly if not exists
         t = document.createElement('div');
         t.id = 'toast';
-        t.className = 'fixed bottom-4 left-4 right-4 md:bottom-auto md:left-auto md:top-8 md:right-8 md:max-w-md z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl pointer-events-none opacity-0 transition-all duration-500 transform translate-y-4 md:-translate-y-4';
+        t.className = 'fixed bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500';
         document.body.appendChild(t);
     }
     t.textContent = message;
-    t.className = `fixed bottom-4 left-4 right-4 md:bottom-auto md:left-auto md:top-8 md:right-8 md:max-w-md z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl pointer-events-auto backdrop-blur-md transition-all duration-500 transform translate-y-0 opacity-100 ${
+    t.className = `fixed bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-auto backdrop-blur-md transition-all duration-500 transform ${
         type === 'success' ? 'bg-teal-600 text-white border border-teal-400 shadow-teal-500/20' :
         type === 'error' ? 'bg-red-600 text-white border border-red-400 shadow-red-500/20' :
         'bg-slate-800 text-white border border-slate-700 shadow-slate-900/40'
-    }`;
+    } show`;
     clearTimeout(t._hide);
     t._hide = setTimeout(() => {
-        t.className = 'fixed bottom-4 left-4 right-4 md:bottom-auto md:left-auto md:top-8 md:right-8 md:max-w-md z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl pointer-events-none opacity-0 transition-all duration-500 transform translate-y-4 md:-translate-y-4';
+        t.className = 'fixed bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500';
     }, 4000);
 }
 
@@ -147,64 +146,35 @@ window.getRepairLabel = getRepairLabel;
 function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, isGuestMode = false, isMatched = true) {
     const status = o.status || 'Pending';
     const statusClass = 'status-' + status.replace(/\s/g, '-');
-    const getStatusBadgeClass = (statusStr) => {
-        switch (statusStr) {
-            case 'Pending':
-                return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-            case 'Technician Assigned':
-            case 'RepairMaster Assigned':
-                return 'bg-blue-500/10 text-blue-450 border border-blue-500/20';
-            case 'Pickup-Pending':
-            case 'Pickup-In-Progress':
-                return 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
-            case 'With-RepairMaster':
-            case 'Diagnosis-Pending':
-                return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
-            case 'Diagnosis-Completed':
-            case 'Quotation-Sent':
-                return 'bg-orange-500/10 text-orange-400 border border-orange-500/20';
-            case 'Confirmed':
-            case 'Under-Repair':
-                return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
-            case 'Ready-For-Delivery':
-            case 'Delivery-In-Progress':
-                return 'bg-pink-500/10 text-pink-400 border border-pink-500/20';
-            case 'Completed':
-            case 'Delivered':
-                return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-            case 'Rejected':
-                return 'bg-red-500/10 text-red-400 border border-red-500/20';
-            default:
-                return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
-        }
-    };
     const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
     const repairLabel = getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
+    // ✅ Correct fallback ID
+    const orderId = o.id || o.order_number || 'unknown';
 
     let actions = '';
     if (!isGuestMode) {
         if (isAdmin || isCoordinator) {
             if (status === 'Pending') {
                 actions += `
-                    <button onclick="showAssignForm('${o.id}')" class="action-btn btn-assign">Assign Staff</button>
+                    <button onclick="showAssignForm('${orderId}')" class="action-btn btn-assign">Assign Staff</button>
                 `;
             }
             if (isCoordinator) {
                 if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
                     actions += `
-                        <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
-                        <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
+                        <button onclick="assignSelfAsTechnician('${orderId}')" class="action-btn btn-pickup">Take as Tech</button>
+                       <button onclick="assignSelfAsRepairMaster('${orderId}')" class="action-btn btn-diagnose">Take as Master</button>
                     `;
                 }
             }
             if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Diagnosis-Completed'].includes(status)) {
                 actions += `
-                    <button onclick="showQuotationForm('${o.id}', ${o.total_price || 0}, '${(o.custom_quote_parts || '').replace(/'/g, "\\'")}')" class="action-btn btn-quote">Manage Price</button>
+                    <button onclick="showQuotationForm('${orderId}', ${o.total_price || 0}, '${(o.custom_quote_parts || '').replace(/'/g, "\\'")}')" class="action-btn btn-quote">Manage Price</button>
                 `;
             }
             if (status === 'Ready-For-Delivery') {
                 actions += `
-                    <button onclick="showAssignDeliveryForm('${o.id}')" class="action-btn btn-assign">Assign Delivery Tech</button>
+                    <button onclick="showAssignDeliveryForm('${orderId}')" class="action-btn btn-assign">Assign Delivery Tech</button>
                 `;
             }
         }
@@ -224,11 +194,11 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     </p>
                     <div class="space-y-2">
                         ${steps.map((step, idx) => {
-                            const stepKey = `${o.id}-step-${idx}`;
+                            const stepKey = `${orderId}-step-${idx}`;
                             const checked = localStorage.getItem(stepKey) === 'true' ? 'checked' : '';
                             return `
                                 <label class="flex items-start gap-2.5 text-xs text-gray-300 cursor-pointer hover:text-white transition">
-                                    <input type="checkbox" onchange="localStorage.setItem('${stepKey}', this.checked); checkAllStepsCompleted('${o.id}')" ${checked} class="mt-0.5 accent-teal rounded"/>
+                                    <input type="checkbox" onchange="localStorage.setItem('${stepKey}', this.checked); checkAllStepsCompleted('${orderId}')" ${checked} class="mt-0.5 accent-teal rounded"/>
                                     <span>${step}</span>
                                 </label>
                             `;
@@ -237,19 +207,19 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                 </div>
             `;
             if (status === 'Technician Assigned') {
-                actions += `<button onclick="initiatePickup('${o.id}')" class="action-btn btn-pickup">Start Pickup</button>`;
+                actions += `<button onclick="initiatePickup('${orderId}')" class="action-btn btn-pickup">Start Pickup</button>`;
             } else if (status === 'Pickup-Pending') {
                 actions += `
                     <div class="flex items-center gap-1 mt-1">
-                        <input type="text" id="otp-${o.id}" placeholder="Pickup OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                        <button onclick="verifyPickup('${o.id}', document.getElementById('otp-${o.id}').value)" class="action-btn btn-verify">Verify Handover</button>
+                        <input type="text" id="otp-${orderId}" placeholder="Pickup OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
+                        <button onclick="verifyPickup('${orderId}', document.getElementById('otp-${orderId}').value)" class="action-btn btn-verify">Verify Handover</button>
                     </div>
                 `;
             } else if (status === 'Ready-For-Delivery') {
                 actions += `
                     <div class="flex items-center gap-1 mt-1">
-                        <input type="text" id="delivery-otp-${o.id}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                        <button onclick="closeTicket('${o.id}', document.getElementById('delivery-otp-${o.id}').value)" class="action-btn btn-verify">Verify Delivery</button>
+                        <input type="text" id="delivery-otp-${orderId}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
+                        <button onclick="closeTicket('${orderId}', document.getElementById('delivery-otp-${orderId}').value)" class="action-btn btn-verify">Verify Delivery</button>
                     </div>
                 `;
             }
@@ -258,14 +228,14 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
             if (status === 'With-RepairMaster') {
                 actions += `
-                    <button onclick="showDiagnosisForm('${o.id}')" class="action-btn btn-diagnose">Diagnose Logs</button>
-                    <button onclick="showAddPartForm('${o.id}')" class="action-btn btn-part">+ Add Part</button>
+                    <button onclick="showDiagnosisForm('${orderId}')" class="action-btn btn-diagnose">Diagnose Logs</button>
+                    <button onclick="showAddPartForm('${orderId}')" class="action-btn btn-part">+ Add Part</button>
                 `;
             } else if (status === 'Confirmed' || status === 'Under-Repair') {
                 actions += `
                     <div class="flex flex-col gap-1 items-end">
                         <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
-                        <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
+                        <button onclick="completeRepair('${orderId}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
                     </div>
                 `;
             }
@@ -277,8 +247,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     if (isClient) {
         if (status === 'Quotation-Sent') {
             actions += `
-                <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
-                <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
+                <button onclick="confirmQuotation('${orderId}')" class="action-btn btn-confirm">Accept Quote</button>
+                <button onclick="rejectQuotation('${orderId}')" class="action-btn btn-reject">Decline</button>
             `;
         } else if (status === 'Confirmed' || status === 'Under-Repair') {
             if (!o.payment_status || o.payment_status === 'Unpaid') {
@@ -286,8 +256,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     <div class="mt-2 space-y-2 text-left">
                         <span class="text-xs text-amber-400 font-bold block"><i class="fa-solid fa-credit-card"></i> Choose Payment Method:</span>
                         <div class="flex flex-wrap gap-2">
-                            <button onclick="payForRepair('${o.id}', ${o.grand_total || o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm py-1.5 px-3 text-[11px]"><i class="fa-solid fa-shield-halved"></i> 💳 Pay Now (₹${(o.grand_total || o.total_price || 0).toLocaleString('en-IN')})</button>
-                            <button onclick="selectCODPayment('${o.id}')" class="action-btn btn-pickup py-1.5 px-3 text-[11px]"><i class="fa-solid fa-hand-holding-dollar"></i> 💵 Confirm COD</button>
+                            <button onclick="payForRepair('${orderId}', ${o.grand_total || o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm py-1.5 px-3 text-[11px]"><i class="fa-solid fa-shield-halved"></i> 💳 Pay Now (₹${(o.grand_total || o.total_price || 0).toLocaleString('en-IN')})</button>
+                            <button onclick="selectCODPayment('${orderId}')" class="action-btn btn-pickup py-1.5 px-3 text-[11px]"><i class="fa-solid fa-hand-holding-dollar"></i> 💵 Confirm COD</button>
                         </div>
                     </div>
                 `;
@@ -310,7 +280,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
             const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
             actions += `
-                <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
+                <button onclick="payForRepair('${orderId}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
             `;
         } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
             // If they have not left a rating yet, allow writing a review!
@@ -323,8 +293,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                                 <button onclick="this.parentElement.setAttribute('data-rating', '${star}'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < ${star} ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
                             `).join('')}
                         </div>
-                        <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
-                        <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
+                        <textarea id="review-text-${orderId}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
+                        <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${orderId}', parseInt(starVal), document.getElementById('review-text-${orderId}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
                     </div>
                 `;
             } else {
@@ -357,8 +327,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         }
     }
 
-   let quotationHtml = '';
-    if ((status === 'Quotation-Sent' || o.total_price) && !isTechnician && !isRepairMaster) {
+    let quotationHtml = '';
+    if ((status === 'Quotation-Sent' || o.total_price) && !isTechnician) {
         const partsList = parseCustomQuoteParts(o.custom_quote_parts);
         const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
         const additionalParts = partsList.filter(p => !p.name.startsWith('[Original]') && !p.name.startsWith('[Old]'));
@@ -459,10 +429,10 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                         <div class="bg-slate-900/40 border border-white/5 rounded-lg px-3 py-1.5 text-[11px] space-y-1">
                             <div class="flex justify-between text-gray-300 border-b border-white/5 pb-1">
                                 <span>🩺 Scientific Bench Diagnosis</span>
-                                <span class="font-semibold text-white">₹${(o.diagnosis_charge || window.diagnosisFee || 250).toLocaleString('en-IN')}</span>
+                                <span class="font-semibold text-white">₹${(o.diagnosis_charge || 250).toLocaleString('en-IN')}</span>
                             </div>
                             <div class="flex justify-between text-gray-300 pt-0.5">
-                                <span>🔧 Workmanship &amp; Labor</span>
+                                <span>🔧 Workmanship &amp; Re-assembly Labor</span>
                                 <span class="font-semibold text-white">₹${(o.service_fee || 100).toLocaleString('en-IN')}</span>
                             </div>
                         </div>
@@ -510,8 +480,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
 
     // Role-Based Customer Metadata Panel (Access Control - Protect Customer Data)
     let metadataPanel = '';
-    if (!isClient && !isRepairMaster) {
-        if (isAdmin || isCoordinator) {
+    if (!isClient) {
+        if (isAdmin || isCoordinator || isTechnician) {
             metadataPanel = `
                 <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
                     <p class="font-bold text-white mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1 font-display">
@@ -522,21 +492,6 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                         <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
                         <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
                         <div>📍 <strong>Address:</strong> ${o.address || 'N/A'}</div>
-                        <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
-                    </div>
-                </div>
-            `;
-        } else if (isTechnician) {
-            metadataPanel = `
-                <div class="mt-3 p-3 bg-slate-900/80 border border-slate-800 rounded-xl text-xs text-gray-300">
-                    <p class="font-bold text-white mb-1 uppercase tracking-wider text-[10px] flex items-center gap-1 font-display">
-                        <i class="fa-regular fa-user-circle text-teal"></i> DTC Customer Contact Details
-                    </p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1">
-                        <div>👤 <strong>Name:</strong> ${o.customer_name || 'N/A'}</div>
-                        <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
-                        <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
-                        <div class="text-gray-500">📍 <strong>Address:</strong> <span class="italic text-gray-550">Hidden for field routing</span></div>
                         <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
                     </div>
                 </div>
@@ -559,13 +514,10 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const borderClass = isMatched ? 'border-teal-500/20' : 'border-grayBorder/40';
 
     const isClickableCard = isCoordinator || isAdmin;
-    const cardClickHandler = isClickableCard ? `onclick="viewOrderDetails('${o.id}')"` : '';
+    const cardClickHandler = (isClickableCard && orderId !== 'unknown') 
+        ? `onclick="viewOrderDetails('${orderId}')"` 
+        : '';
     const cursorClass = isClickableCard ? 'cursor-pointer hover:bg-slate-900/10 hover:shadow-lg hover:shadow-teal-500/5' : '';
-
-    const techObj = (window.allTechnicians || []).find(t => String(t.id) === String(o.technician_id));
-    const masterObj = (window.allRepairMasters || []).find(m => String(m.id) === String(o.repairmaster_id));
-    const techNameStr = techObj ? techObj.name.split(" (")[0] : (o.technician_id ? `Tech ID: ${o.technician_id.substring(0,8)}...` : '');
-    const masterNameStr = masterObj ? masterObj.name.split(" (")[0] : (o.repairmaster_id ? `Master ID: ${o.repairmaster_id.substring(0,8)}...` : '');
 
     return `
         <div ${cardClickHandler} class="order-card bg-navyBG/40 border ${borderClass} rounded-xl p-5 hover:border-teal-500/30 transition-all ${opacityClass} ${cursorClass}">
@@ -575,16 +527,14 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                         <span class="text-lg font-bold text-white">${deviceName}</span>
                         <span class="text-sm text-grayText">—</span>
                         <span class="text-sm text-tealAccent font-medium">${repairLabel}</span>
-                        <span class="inline-block px-2.5 py-1 rounded-full font-black uppercase text-[10px] tracking-wider ${getStatusBadgeClass(status)}">${status}</span>
+                        <span class="status-badge ${statusClass} text-xs">${status}</span>
                         ${!isMatched ? `<span class="inline-block bg-slate-800 text-gray-400 text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-full">Older Log</span>` : ''}
                     </div>
-                    <div class="text-xs text-grayText mt-1 flex flex-wrap items-center gap-y-1">
+                    <div class="text-xs text-grayText mt-1">
                         <span>ID: ${o.order_number}</span>
-                        <span class="mx-2 text-slate-600">•</span>
+                        <span class="mx-2">•</span>
                         <span>📅 ${new Date(o.created_at).toLocaleDateString()}</span>
-                        ${o.address && !isRepairMaster && !isTechnician ? `<span class="mx-2 text-slate-600">•</span><span>📍 ${o.address}</span>` : ''}
-                        ${techNameStr ? `<span class="mx-2 text-slate-600">•</span><span class="text-sky-400 font-semibold bg-sky-500/10 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-truck-pickup text-[9px]"></i> ${techNameStr}</span>` : ''}
-                        ${masterNameStr ? `<span class="mx-2 text-slate-600">•</span><span class="text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench text-[9px]"></i> ${masterNameStr}</span>` : ''}
+                        ${o.address && !isRepairMaster ? `<span class="mx-2">•</span><span>📍 ${o.address}</span>` : ''}
                     </div>
                     ${o.photo_url ? `<img src="${o.photo_url}" class="mt-3 max-h-24 rounded-lg border border-grayBorder" />` : ''}
                     ${o.diagnosis_notes ? `<p class="mt-2 text-xs text-grayText italic bg-navyBG/20 p-2 rounded border border-grayBorder">Lab Diagnosis Logs: ${o.diagnosis_notes}</p>` : ''}
@@ -609,13 +559,13 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     ${quotationHtml}
                     ${otpNoticeHtml}
                     ${workflowHtml}
-                    <div id="inline-form-container-${o.id}"></div>
+                    <div id="inline-form-container-${orderId}"></div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
                     ${isTechnician ? '' : `<span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>`}
-                    <div id="actions-${o.id}" class="flex flex-wrap gap-1 justify-end">
+                    <div id="actions-${orderId}" class="flex flex-wrap gap-1 justify-end">
                         ${actions}
-                        ${o.payment_status === 'Paid' ? `<button onclick="openInvoicePage('${o.id}')" class="action-btn btn-confirm bg-emerald-600 hover:bg-emerald-500 text-white font-bold my-1"><i class="fa-solid fa-file-invoice-dollar"></i> View Invoice</button>` : ''}
+                        ${o.payment_status === 'Paid' ? `<button onclick="openInvoicePage('${orderId}')" class="action-btn btn-confirm bg-emerald-600 hover:bg-emerald-500 text-white font-bold my-1"><i class="fa-solid fa-file-invoice-dollar"></i> View Invoice</button>` : ''}
                     </div>
                 </div>
             </div>
@@ -639,9 +589,9 @@ async function fetchOffers() {
     } catch (err) {
         // Fallback demo offers
         const fallbacks = [
-            { id: 1, name: 'Monsoon Screen Guard', description: 'Get a free premium tempered glass screen protector with any display replacement.', discount_percent: 100, valid_to: '2026-08-31', image_url: 'device-generic.png' },
-            { id: 2, name: 'Independence Battery Deal', description: '15% Off on all smartphone battery replacements. Certified genuine cells only.', discount_percent: 15, valid_to: '2026-08-20', image_url: 'technician-device-1.png' },
-            { id: 3, name: 'First Time Doorstep Booking', description: 'Flat 50% discount on standard service fee for all new Wardha customers.', discount_percent: 50, valid_to: '2026-12-31', image_url: 'technician-scooty.png' }
+            { id: 1, name: 'Monsoon Screen Guard', description: 'Get a free premium tempered glass screen protector with any display replacement.', discount_percent: 100, valid_to: '2026-08-31', image_url: 'repo-image-folder/device-generic.png' },
+            { id: 2, name: 'Independence Battery Deal', description: '15% Off on all smartphone battery replacements. Certified genuine cells only.', discount_percent: 15, valid_to: '2026-08-20', image_url: 'repo-image-folder/technician-device-1.png' },
+            { id: 3, name: 'First Time Doorstep Booking', description: 'Flat 50% discount on standard service fee for all new Wardha customers.', discount_percent: 50, valid_to: '2026-12-31', image_url: 'repo-image-folder/technician-scooty.png' }
         ];
         renderOffers(fallbacks);
     }
@@ -657,7 +607,7 @@ function renderOffers(offers) {
     container.innerHTML = offers.map(o => `
         <div class="offer-card flex flex-col justify-between">
             <div>
-                ${o.image_url ? `<img src="${o.image_url}" alt="${o.name}" class="w-full h-40 object-cover rounded-xl mb-4 border border-grayBorder" onerror="this.src='device-generic.png'" />` : ''}
+                ${o.image_url ? `<img src="${o.image_url}" alt="${o.name}" class="w-full h-40 object-cover rounded-xl mb-4 border border-grayBorder" onerror="this.src='repo-image-folder/device-generic.png'" />` : ''}
                 <div class="flex items-start justify-between gap-3 mb-2">
                     <h3 class="text-lg font-bold text-white font-display">${o.name || 'Special Offer'}</h3>
                     <span class="text-2xl font-black text-amberAccent whitespace-nowrap">${o.discount_percent || 0}% OFF</span>
@@ -844,7 +794,7 @@ async function calculateEstimate() {
             const price = 0;
             const labor = 0;
             const serviceFee = 150.00;
-            const diagnosisCharge = window.diagnosisFee || 250.00;
+            const diagnosisCharge = 250.00;
             const total = serviceFee + diagnosisCharge;
             
             if (surveyContainer) {
@@ -859,7 +809,7 @@ async function calculateEstimate() {
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Diagnosis Fee:</span>
-                            <span class="text-white font-bold">₹window.diagnosisFee || 250.00</span>
+                            <span class="text-white font-bold">₹250.00</span>
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Service / Labor Fee:</span>
@@ -888,7 +838,7 @@ async function calculateEstimate() {
             const price = 0;
             const labor = 0;
             const serviceFee = 100.00;
-            const diagnosisCharge = window.diagnosisFee || 250.00;
+            const diagnosisCharge = 250.00;
             const total = serviceFee + diagnosisCharge;
             
             if (surveyContainer) {
@@ -903,7 +853,7 @@ async function calculateEstimate() {
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Diagnosis Fee:</span>
-                            <span class="text-white font-bold">₹window.diagnosisFee || 250.00</span>
+                            <span class="text-white font-bold">₹250.00</span>
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Service / Labor Fee:</span>
@@ -1013,8 +963,8 @@ async function calculateEstimate() {
             
             if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
             if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹0.00';
-            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹window.diagnosisFee || 250.00';
-            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹window.diagnosisFee || 250.00';
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹250.00';
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹250.00';
         }
     } catch (err) {
         console.error("Local records estimation calculation failed:", err);
@@ -1072,7 +1022,7 @@ function runCatalogFallbackCalculation() {
     if (offerClaimed) {
         serviceFee = serviceFee * 0.5; // Claim 50% discount on service
     }
-    const diagnosisCharge = window.diagnosisFee || 250.0;
+    const diagnosisCharge = 250.0;
     const totalEstimate = discountedParts + serviceFee + diagnosisCharge;
 
     const partsTotalDisplay = document.getElementById('partsTotalDisplay');
@@ -1142,14 +1092,6 @@ async function submitRequest(e) {
     if (!supabase) {
         showToast('⚠️ Supabase connection is offline.', 'error');
         return;
-    }
-
-    const submitBtn = e.target.querySelector('button[type="submit"]');
-    let originalBtnHtml = '';
-    if (submitBtn) {
-        originalBtnHtml = submitBtn.innerHTML;
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = `<i class="fa-solid fa-circle-notch animate-spin mr-2"></i> Submitting...`;
     }
 
     try {
@@ -1250,19 +1192,17 @@ async function submitRequest(e) {
         const session = await supabase.auth.getSession();
         const user = session.data?.session?.user || null;
 
-        // ─── Use the live estimate from the form (already calculated) ───
         let partsTotalVal = 0;
         let serviceFeeVal = 150.00;
-        let diagnosisVal = window.diagnosisFee || 250;
         let totalEstimateVal = 400.00;
+        let diagnosisVal = 250.00;
 
         if (window._reqEstimate) {
             partsTotalVal = window._reqEstimate.partsTotal || 0;
             serviceFeeVal = window._reqEstimate.serviceFee || 0;
-            diagnosisVal = window._reqEstimate.diagnosisCharge || window.diagnosisFee || 250;
+            diagnosisVal = window._reqEstimate.diagnosisCharge || 250.00;
             totalEstimateVal = window._reqEstimate.total || 0;
         } else {
-            // Fallback calculation (only if window._reqEstimate is missing)
             let partsTotal = 0;
             if (modelSelect && repairSelect) {
                 const brandVal = brandSelect.value;
@@ -1285,11 +1225,9 @@ async function submitRequest(e) {
             }
             partsTotalVal = partsTotal * 0.9;
             serviceFeeVal = partsTotalVal > 0 ? (partsTotalVal * 0.15) : 150.00;
-            totalEstimateVal = partsTotalVal + serviceFeeVal + (window.diagnosisFee || 250);
-            diagnosisVal = window.diagnosisFee || 250;
+            totalEstimateVal = partsTotalVal + serviceFeeVal + 250.00;
         }
 
-        // ─── Build order object ───
         const orderData = {
             order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
             user_id: user?.id || null,
@@ -1313,47 +1251,30 @@ async function submitRequest(e) {
             created_at: new Date().toISOString()
         };
 
-        // ─── Insert into Supabase ───
-        const { data, error } = await supabase
-            .from('orders')
-            .insert([orderData])
-            .select();
-
-        if (error) throw error;
-
-        // ─── Optionally assign to a coordinator ───
-        const coordinatorId = await getCoordinatorId();
-        if (coordinatorId && data && data[0]) {
-            await supabase
-                .from('orders')
-                .update({ assigned_to: coordinatorId })
-                .eq('id', data[0].id);
+        // Bypassing Supabase and storing locally as requested:
+        console.log("POST captured form data locally:", orderData);
+        let localOrders = [];
+        try {
+            localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+        } catch(e) {
+            console.error(e);
         }
+        localOrders.push(orderData);
+        localStorage.setItem('local_orders', JSON.stringify(localOrders));
 
-        const orderNumber = data && data[0] ? data[0].order_number : orderData.order_number;
-
-        // ─── Show success message ───
+        const orderNumber = orderData.order_number;
         const successDiv = document.getElementById('requestSuccess');
         if (successDiv) {
             successDiv.classList.remove('hidden');
             successDiv.innerHTML = `
                 <i class="fa-regular fa-circle-check mr-2"></i>
-                Request submitted successfully! Reference: <strong>#${orderNumber}</strong>. Our service coordinators will assign a technician shortly.
+                Request submitted successfully! Reference: <strong>#${orderNumber}</strong>. Our service coordinators will assign a technician to Wardha shortly.
             `;
         }
         e.target.reset();
         showToast('✅ Service request submitted!', 'success');
-
-        // ─── Redirect to dashboard ───
-        setTimeout(() => {
-            window.location.href = 'dashboard.html';
-        }, 2000);
-
+        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
     } catch (err) {
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = originalBtnHtml;
-        }
         showToast('❌ Failed to submit: ' + err.message, 'error');
     }
 }
@@ -1431,7 +1352,7 @@ async function loadStaffLists() {
                 const roleName = ur.roles?.name?.toLowerCase() || '';
                 const roleId = parseInt(ur.role_id);
                 const user = users.find(u => u.id === ur.user_id);
-                if (user) {
+                if (user && user.id) { // ✅ Ensure user has an id
                     const displayName = user.name ? `${user.name} (${user.email})` : user.email;
                     const staffObj = { id: user.id, name: displayName, email: user.email };
                     if (roleName === 'technician' || roleId === 3) {
@@ -1442,7 +1363,7 @@ async function loadStaffLists() {
                 }
             });
             
-            // Combine with some fallbacks to guarantee non-empty lists in sandbox/demo
+            // Only use fallbacks if we got zero valid staff
             window.allTechnicians = techs.length > 0 ? techs : fallbackTechs;
             window.allRepairMasters = masters.length > 0 ? masters : fallbackMasters;
         } else {
@@ -1455,7 +1376,6 @@ async function loadStaffLists() {
         window.allRepairMasters = fallbackMasters;
     }
 }
-
 function closeAllDashboardModals() {
     const modals = document.querySelectorAll('.dashboard-modal');
     modals.forEach(m => m.remove());
@@ -1479,10 +1399,7 @@ function createDashboardModal(modalId, contentHtml, maxWidthClass = 'max-w-md') 
 }
 window.createDashboardModal = createDashboardModal;
 
-async function showAssignForm(orderId) {
-    if (!window.allTechnicians || window.allTechnicians.length === 0 || !window.allRepairMasters || window.allRepairMasters.length === 0) {
-        await loadStaffLists();
-    }
+function showAssignForm(orderId) {
     const techs = window.allTechnicians || [];
     const masters = window.allRepairMasters || [];
     
@@ -1529,64 +1446,43 @@ async function showAssignForm(orderId) {
     `;
     createDashboardModal(`assignModal-${orderId}`, contentHtml, 'max-w-md');
 }
-window.showAssignForm = showAssignForm;
 
-// ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
-async function assignOrderRoles(orderId, technicianId, repairmasterId) {
-    if (!supabase) {
-        showToast('Supabase offline. Cannot assign roles.', 'error');
-        return;
-    }
+async function submitAssignRoles(orderId) {
+    // ✅ Log the orderId for debugging
+    console.log('🔍 submitAssignRoles called with orderId:', orderId);
 
-    // ✅ Validate orderId
+    // ✅ Guard against undefined orderId
     if (!orderId || orderId === 'undefined' || orderId === 'null') {
-        showToast('Invalid order ID. Please refresh and try again.', 'error');
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
 
+    const techSelect = document.getElementById(`assign-tech-${orderId}`);
+    const masterSelect = document.getElementById(`assign-master-${orderId}`);
+    if (!techSelect || !masterSelect) {
+        showToast('Assignment form not found. Please try again.', 'error');
+        return;
+    }
+
+    const techId = techSelect.value;
+    const masterId = masterSelect.value;
+
+    // Reject empty, null, or literal "undefined"
+    if (!techId || !masterId || techId === 'undefined' || masterId === 'undefined') {
+        showToast('Please select both a valid Technician and RepairMaster.', 'error');
+        return;
+    }
+
+    // Basic UUID format check
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    let realOrderId = orderId;
-
-    // If orderId is not a UUID, try to fetch the UUID using order_number
-    if (!uuidRegex.test(orderId)) {
-        try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('id')
-                .eq('order_number', orderId)
-                .single();
-            if (error || !data) {
-                showToast('Invalid order reference. Please refresh and try again.', 'error');
-                return;
-            }
-            realOrderId = data.id;
-        } catch (err) {
-            showToast('Error fetching order: ' + err.message, 'error');
-            return;
-        }
-    }
-
-    // Validate UUIDs for technician and repairmaster
-    if (!uuidRegex.test(technicianId) || !uuidRegex.test(repairmasterId)) {
-        showToast('Invalid staff UUID(s). Please select valid staff.', 'error');
+    if (!uuidRegex.test(techId) || !uuidRegex.test(masterId)) {
+        showToast('Invalid staff ID format. Please refresh and try again.', 'error');
         return;
     }
 
-    try {
-        const { error } = await supabase
-            .from('orders')
-            .update({ technician_id: technicianId, repairmaster_id: repairmasterId, status: 'Technician Assigned' })
-            .eq('id', realOrderId);
-        if (error) throw error;
-        showToast('Roles assigned & notifications dispatched!', 'success');
-        closeAllDashboardModals();
-        loadDashboard();
-    } catch (err) {
-        showToast('Assignment error: ' + err.message, 'error');
-    }
+    // ✅ CRITICAL FIX: Actually call the assignment function
+    await assignOrderRoles(orderId, techId, masterId);
 }
-window.submitAssignRoles = submitAssignRoles;
-
 function showAssignDeliveryForm(orderId) {
     const techs = window.allTechnicians || [];
     
@@ -1622,21 +1518,32 @@ function showAssignDeliveryForm(orderId) {
 }
 
 async function submitAssignDelivery(orderId) {
-    const techSelect = document.getElementById(`assign-delivery-tech-${orderId}`);
-    if (!techSelect) return;
-    
-    const techId = techSelect.value;
-    
-    if (!techId) {
-        showToast('Please select a Delivery Technician.', 'error');
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
-    
+
+    const techSelect = document.getElementById(`assign-delivery-tech-${orderId}`);
+    if (!techSelect) return;
+
+    const techId = techSelect.value;
+
+    if (!techId || techId === 'undefined') {
+        showToast('Please select a valid Delivery Technician.', 'error');
+        return;
+    }
+
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(techId)) {
+        showToast('Invalid technician ID format. Please refresh and try again.', 'error');
+        return;
+    }
+
     await assignDeliveryTechnician(orderId, techId);
 }
-
 function showDiagnosisForm(orderId) {
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
     const currentDiag = order ? (order.diagnosis_notes || '') : '';
     const currentNotes = order ? (order.notes || '') : '';
     const currentPartsTotal = order ? (order.parts_total || 0) : 0;
@@ -1831,7 +1738,7 @@ async function submitRedesignedDiagnosis(orderId) {
         if (error) throw error;
 
         if (isRepairMaster) {
-            const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+            const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
             const devName = order ? (getDeviceName(order.device_id) !== 'Device' ? getDeviceName(order.device_id) : (order.device_other || 'Device')) : 'Device';
             await createAlert(orderId, `Bench diagnosis completed for ${devName}. Estimate review required.`, 'diagnosis_completed');
             showToast('📋 Lab diagnosis recommendation submitted to Coordinator!', 'success');
@@ -1883,7 +1790,7 @@ function serializeCustomQuoteParts(partsList) {
 }
 
 function showQuotationForm(orderId, basePrice, customPartsStr) {
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
     
     // Parse custom parts
     let partsList = parseCustomQuoteParts(customPartsStr);
@@ -1913,7 +1820,7 @@ function showQuotationForm(orderId, basePrice, customPartsStr) {
     // Store in global window for active editing
     window.editingQuotationParts[orderId] = partsList;
     window.editingQuotationServiceFee[orderId] = order ? (parseFloat(order.service_fee) || 100) : 100;
-    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || window.diagnosisFee || 250) : window.diagnosisFee || 250;
+    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || 250) : 250;
     
     renderQuotationFormInlineEditable(orderId);
 }
@@ -2101,7 +2008,7 @@ async function submitFinalizedQuotation(orderId) {
     try {
         const partsList = window.editingQuotationParts[orderId] || [];
         const serviceFee = window.editingQuotationServiceFee[orderId] || 100;
-        const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || window.diagnosisFee || 250;
+        const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 250;
         
         // Separate parts into original vs additional to calculate parts_total
         const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
@@ -2115,10 +2022,9 @@ async function submitFinalizedQuotation(orderId) {
         
         // Calculate tax, platform fee, and grand total for invoice
         const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-        const gstEnabled = (localStorage.getItem('gstEnabled') === 'true') || (window.gstEnabled === true);
-        const taxAmount = gstEnabled ? parseFloat((liveTotal * 0.18).toFixed(2)) : 0;
-        const platformFee = gstEnabled ? parseFloat((liveTotal * 0.10).toFixed(2)) : 0;
-        const grandTotal = gstEnabled ? parseFloat((liveTotal + taxAmount + platformFee).toFixed(2)) : liveTotal;
+        const taxAmount = parseFloat((liveTotal * 0.18).toFixed(2));
+        const platformFee = parseFloat((liveTotal * 0.10).toFixed(2));
+        const grandTotal = parseFloat((liveTotal + taxAmount + platformFee).toFixed(2));
         
         const { error } = await supabase
             .from('orders')
@@ -2148,52 +2054,59 @@ async function submitFinalizedQuotation(orderId) {
     }
 }
 
+// ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
+async function assignOrderRoles(orderId, technicianId, repairmasterId) {
+    if (!supabase) return;
 
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order ID. Please refresh and try again.', 'error');
+        return;
+    }
+
+    // Validate UUIDs
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(technicianId) || !uuidRegex.test(repairmasterId)) {
+        showToast('Invalid staff UUID(s). Please select valid staff.', 'error');
+        return;
+    }
+
+    try {
+        const { error } = await supabase
+            .from('orders')
+            .update({ technician_id: technicianId, repairmaster_id: repairmasterId, status: 'Technician Assigned' })
+            .eq('id', orderId);
+        if (error) throw error;
+        showToast('Roles assigned & notifications dispatched!', 'success');
+        closeAllDashboardModals();
+        loadDashboard();
+    } catch (err) {
+        showToast('Assignment error: ' + err.message, 'error');
+    }
+}
 
 async function assignDeliveryTechnician(orderId, techId) {
-    if (!supabase) {
-        showToast('Supabase offline. Cannot assign delivery.', 'error');
-        return;
-    }
-    if (!techId) {
-        showToast('Please select a delivery technician.', 'error');
+    if (!techId || !supabase) return;
+
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
 
-    // ✅ Validate and resolve orderId to UUID if needed
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    let realOrderId = orderId;
-    if (!uuidRegex.test(orderId)) {
-        try {
-            const { data, error } = await supabase
-                .from('orders')
-                .select('id')
-                .eq('order_number', orderId)
-                .single();
-            if (error || !data) {
-                showToast('Invalid order reference. Please refresh and try again.', 'error');
-                return;
-            }
-            realOrderId = data.id;
-        } catch (err) {
-            showToast('Error fetching order: ' + err.message, 'error');
-            return;
-        }
-    }
-
-    // Validate technician UUID
     if (!uuidRegex.test(techId)) {
         showToast('Invalid technician ID format.', 'error');
         return;
     }
 
-    const handoverOtp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    const handoverOtp = Math.floor(100000 + Math.random() * 900000).toString();
     try {
         const { error } = await supabase.from('orders').update({
             technician_id: techId,
             pickup_otp: handoverOtp,
             status: 'Ready-For-Delivery'
-        }).eq('id', realOrderId);
+        }).eq('id', orderId);
         if (error) throw error;
         showToast(`🚚 Delivery OTP: ${handoverOtp} (Share with customer)`, 'success');
         loadDashboard();
@@ -2203,7 +2116,18 @@ async function assignDeliveryTechnician(orderId, techId) {
 }
 
 async function assignSelfAsTechnician(orderId) {
-    if (!currentUser || !supabase) return showToast('Authentication required.', 'error');
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
+        return;
+    }
+
+    if (!currentUser || !currentUser.id) {
+        showToast('You must be logged in to take this action.', 'error');
+        return;
+    }
+    if (!supabase) return showToast('Supabase offline', 'error');
+
     try {
         const { error } = await supabase
             .from('orders')
@@ -2218,7 +2142,18 @@ async function assignSelfAsTechnician(orderId) {
 }
 
 async function assignSelfAsRepairMaster(orderId) {
-    if (!currentUser || !supabase) return showToast('Authentication required.', 'error');
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
+        return;
+    }
+
+    if (!currentUser || !currentUser.id) {
+        showToast('You must be logged in to take this action.', 'error');
+        return;
+    }
+    if (!supabase) return showToast('Supabase offline', 'error');
+
     try {
         const { error } = await supabase
             .from('orders')
@@ -2231,7 +2166,6 @@ async function assignSelfAsRepairMaster(orderId) {
         showToast('Error: ' + err.message, 'error');
     }
 }
-
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
@@ -2311,10 +2245,9 @@ async function sendQuotation(orderId) {
         }
         const finalizedTotal = parseFloat(editQuote);
         const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-        const gstEnabled = (localStorage.getItem('gstEnabled') === 'true') || (window.gstEnabled === true);
-        const taxAmount = gstEnabled ? parseFloat((finalizedTotal * 0.18).toFixed(2)) : 0;
-        const platformFee = gstEnabled ? parseFloat((finalizedTotal * 0.10).toFixed(2)) : 0;
-        const grandTotal = gstEnabled ? parseFloat((finalizedTotal + taxAmount + platformFee).toFixed(2)) : finalizedTotal;
+        const taxAmount = parseFloat((finalizedTotal * 0.18).toFixed(2));
+        const platformFee = parseFloat((finalizedTotal * 0.10).toFixed(2));
+        const grandTotal = parseFloat((finalizedTotal + taxAmount + platformFee).toFixed(2));
 
         const { error } = await supabase
             .from('orders')
@@ -2515,41 +2448,20 @@ async function loadDashboard() {
         }
     }
 
-    // ─── Load real orders from Supabase ───
-let orders = [];
-if (supabase) {
+    let orders = [];
     try {
-        // Build the query based on the user's role
-        let query = supabase.from('orders').select('*');
-        const activeRole = localStorage.getItem('activeRole') || 'customer';
-        const isAdmin = activeRole === 'admin';
-        const isCoordinator = activeRole === 'coordinator';
-        const isTechnician = activeRole === 'technician';
-        const isRepairMaster = activeRole === 'repairmaster';
-
-        if (isAdmin || isCoordinator) {
-            // Coordinators and admins see all orders
-        } else if (isTechnician) {
-            query = query.eq('technician_id', currentUser.id);
-        } else if (isRepairMaster) {
-            query = query.eq('repairmaster_id', currentUser.id);
-        } else {
-            // Customers see only their own orders
-            query = query.eq('user_id', currentUser.id);
-        }
-
-        const { data, error } = await query.order('created_at', { ascending: false });
-        if (error) throw error;
-        orders = data || [];
-    } catch (err) {
-        console.warn("Supabase fetch error:", err);
-        orders = [];
+        orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+    } catch (e) {
+        console.error("Failed to parse local_orders from localStorage:", e);
     }
-} else {
-    console.warn("Supabase not available");
-    orders = [];
-}
-// ✅ No mock orders – use real data only
+    if (orders.length === 0) {
+        orders = [
+            { id: 'm1', order_number: 'RM-REQ-VIVOV30', customer_name: 'Akash Chaware', customer_phone: '9876543210', customer_email: 'akash@example.com', device_other: 'Vivo V30 Pro', repair_other: 'Screen Replacement', parts_quality: 'Premium', total_price: 6300, status: 'Pending', created_at: new Date().toISOString() },
+            { id: 'm2', order_number: 'RM-REQ-IPHONE14', customer_name: 'Sneha Patil', customer_phone: '9123456789', customer_email: 'sneha@example.com', device_other: 'iPhone 14', repair_other: 'Battery Replacement', parts_quality: 'Standard', total_price: 3200, status: 'Completed', created_at: new Date(Date.now() - 86400000).toISOString() }
+        ];
+        localStorage.setItem('local_orders', JSON.stringify(orders));
+    }
+    orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     // Update stats counters
     const metricContainer = document.getElementById('metric-cards-container');
@@ -2676,7 +2588,7 @@ if (supabase) {
         const hasActiveFilter = !!(searchQuery || selectedStatus !== 'All' || selectedTechnician !== 'All' || filterStartDate || filterEndDate || (window.customStatFilter && window.customStatFilter !== 'All'));
 
         function isOrderMatching(o) {
-            if (window.singleOrderFilter && window.singleOrderFilter !== o.id) {
+            if (window.singleOrderFilter && window.singleOrderFilter !== orderId) {
                 return false;
             }
             let matchesSearch = true;
@@ -2792,36 +2704,11 @@ if (supabase) {
         }
 
         if (ordersToRender.length === 0) {
-            let emptyTitle = "No Tickets Available";
-            let emptyDesc = "You do not have any active or historical tickets recorded on the platform.";
-            if (activeRole === 'technician') {
-                emptyTitle = "No Diagnostic Tickets Assigned";
-                emptyDesc = "There are no active diagnostic or repair tickets currently assigned to your workstation.";
-            } else if (activeRole === 'customer') {
-                emptyTitle = "No Active Repair Requests";
-                emptyDesc = "You haven't submitted any repair requests yet. Submit a request to book doorstep diagnostic services.";
-            } else if (activeRole === 'coordinator') {
-                emptyTitle = "No System Tickets Found";
-                emptyDesc = "No smartphone repair tickets are registered under your coordinate area currently.";
-            } else if (activeRole === 'repairmaster') {
-                emptyTitle = "No Hardware Labs Pending";
-                emptyDesc = "Your lab workbench is completely clear. No smartphone hardware assemblies are pending.";
-            }
-
             container.innerHTML = pillFilterHtml + `
-                <div class="bg-slate-900/40 border border-slate-800 rounded-3xl p-10 text-center max-w-lg mx-auto my-6 space-y-4">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 mb-2">
-                        <i class="fa-solid fa-folder-open text-2xl animate-pulse"></i>
-                    </div>
-                    <h3 class="text-lg font-bold text-white font-display">${emptyTitle}</h3>
-                    <p class="text-xs text-gray-400 leading-relaxed max-w-xs mx-auto">${emptyDesc}</p>
-                    ${activeRole === 'customer' ? `
-                        <div class="pt-2">
-                            <a href="request.html" class="inline-flex items-center gap-2 bg-gradient-to-r from-teal-600 to-teal-500 text-slate-950 font-black text-xs uppercase tracking-wider py-2.5 px-6 rounded-xl shadow-lg shadow-teal-500/10 hover:shadow-teal-500/20 active:scale-95 transition">
-                                <i class="fa-solid fa-plus"></i> Submit Repair Request
-                            </a>
-                        </div>
-                    ` : ''}
+                <div class="text-center text-grayText/60 py-12">
+                    <i class="fa-regular fa-folder-open text-5xl mb-3 text-tealAccent"></i>
+                    <p class="text-base font-semibold text-white">No Tickets Available</p>
+                    <p class="text-xs text-grayText">You do not have any active or historical tickets recorded on the platform.</p>
                 </div>
             `;
             return;
@@ -2845,12 +2732,6 @@ if (supabase) {
         });
         html += `</div>`;
         container.innerHTML = html;
-
-        if (isCoordinator || isAdmin) {
-            if (typeof renderCoordinatorOpsDesk === 'function') {
-                renderCoordinatorOpsDesk();
-            }
-        }
     }
     window.renderFilteredOrders = renderFilteredOrders;
 
@@ -3123,7 +3004,6 @@ async function updateNavForAuth(user) {
         const initials = username.substring(0, 2).toUpperCase();
 
         const roles = await getAllUserRoles(user.id);
-        localStorage.setItem('currentUserRoles', JSON.stringify(roles));
         const activeRole = localStorage.getItem('activeRole') || roles[0] || 'customer';
 
         let roleSwitcherHtml = '';
@@ -3754,7 +3634,7 @@ function generateInvoiceHtml(order) {
             
             <tr class="item">
                 <td>🩺 Scientific Bench Diagnosis</td>
-                <td>₹${(order.diagnosis_charge || window.diagnosisFee || 250).toLocaleString('en-IN')}</td>
+                <td>₹${(order.diagnosis_charge || 250).toLocaleString('en-IN')}</td>
             </tr>
             <tr class="item">
                 <td>🔧 Workmanship &amp; Labor</td>
@@ -3762,7 +3642,6 @@ function generateInvoiceHtml(order) {
             </tr>
             ${partsRowsHtml}
             
-            ${(order.tax_amount > 0 || order.platform_fee > 0) ? `
             <tr class="heading">
                 <td>Subtotal &amp; Fees</td>
                 <td>Amount</td>
@@ -3780,15 +3659,9 @@ function generateInvoiceHtml(order) {
                 <td>₹${(order.platform_fee || 0).toLocaleString('en-IN')}</td>
             </tr>
             <tr class="total grand-total-row">
-                <td>Grand Total (Incl. All Taxes &amp; Fees)</td>
+                <td>Grand Total (Incl. All Taxes & Fees)</td>
                 <td>₹${(order.grand_total || order.total_price || 0).toLocaleString('en-IN')}</td>
             </tr>
-            ` : `
-            <tr class="total grand-total-row">
-                <td>Grand Total</td>
-                <td>₹${(order.total_price || 0).toLocaleString('en-IN')}</td>
-            </tr>
-            `}
         </table>
         
         <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px; border-t: 1px solid #eee; padding-top: 20px;">
@@ -3801,7 +3674,7 @@ function generateInvoiceHtml(order) {
 }
 
 function openInvoicePage(orderId) {
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
     if (!order) {
         showToast('Invoice reference order not found.', 'error');
         return;
@@ -4129,7 +4002,7 @@ function showRequestEstimate() {
     let partsPrice = 0;
     let laborPrice = 0;
     let serviceFee = 0;
-    let diagnosisCharge = window.diagnosisFee || 250;
+    let diagnosisCharge = 250;
     let total = 0;
     let discountedParts = 0;
 
@@ -4141,7 +4014,7 @@ function showRequestEstimate() {
         laborPrice = 0;
         discountedParts = 0;
         serviceFee = 150.00;
-        diagnosisCharge = window.diagnosisFee || 250.00;
+        diagnosisCharge = 250.00;
         total = serviceFee + diagnosisCharge;
     } else {
         const allParts = window.RECORDS || [];
@@ -4167,12 +4040,12 @@ function showRequestEstimate() {
             if (quality === 'premium') multiplier = 1.5;
             if (quality === 'compatible') multiplier = 0.7;
             partsPrice = 1000 * multiplier;
-            laborPrice = window.diagnosisFee || 250;
+            laborPrice = 250;
         }
 
         discountedParts = partsPrice * 0.9;
         serviceFee = (discountedParts * 0.15) + laborPrice;
-        diagnosisCharge = window.diagnosisFee || 250.00;
+        diagnosisCharge = 250.00;
         total = discountedParts + serviceFee + diagnosisCharge;
     }
 
@@ -4347,90 +4220,88 @@ function toggleMobileMenu() {
             <!-- Backdrop -->
             <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300" onclick="toggleMobileMenu()"></div>
             <!-- Drawer Body -->
-            <div class="fixed inset-y-0 right-0 w-80 bg-[#0A0F1D] border-l border-slate-800 shadow-2xl p-6 flex flex-col justify-between z-10 transition-transform duration-300 transform translate-x-full" id="mobileDrawerBody">
-                <div class="space-y-6">
-                    <!-- Drawer Header -->
-                    <div class="flex items-center justify-between border-b border-white/5 pb-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-black text-tealAccent uppercase tracking-wider font-display">Navigation Menu</span>
-                        </div>
-                        <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white text-lg transition">✕</button>
+            <div class="fixed inset-y-0 right-0 w-80 bg-[#0A0F1D] border-l border-slate-800 shadow-2xl p-6 flex flex-col z-10 transition-transform duration-300 transform translate-x-full overflow-y-auto" id="mobileDrawerBody">
+                <!-- Drawer Header -->
+                <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-tealAccent uppercase tracking-wider font-display">Navigation Menu</span>
                     </div>
-
-                    <!-- Navigation Links -->
-                    <nav class="flex flex-col gap-3 text-sm font-medium">
-                        <a href="index.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-index">
-                            <i class="fa-solid fa-house text-tealAccent/80"></i> Home
-                        </a>
-                        <a href="request.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-request">
-                            <i class="fa-solid fa-screwdriver-wrench text-tealAccent/80"></i> Repair Request
-                        </a>
-                        <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
-                            <i class="fa-solid fa-chart-line text-tealAccent/80"></i> Dashboard
-                        </a>
-                        <a href="marketplace.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-marketplace">
-                            <i class="fa-solid fa-store text-tealAccent/80"></i> Certified Store
-                        </a>
-                    </nav>
+                    <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white text-lg transition">✕</button>
                 </div>
 
-                <!-- Footer (Auth / User Actions) -->
-                <div class="border-t border-white/5 pt-4 space-y-3" id="mobileDrawerAuthBlock">
-                </div>
+                <!-- ✅ User Profile & Role Switcher (moved to top) -->
+                <div id="mobileNavUserInfo" class="mt-4"></div>
+
+                <!-- Navigation Links -->
+                <nav class="flex flex-col gap-3 text-sm font-medium mt-6">
+                    <a href="index.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-index">
+                        <i class="fa-solid fa-house text-tealAccent/80"></i> Home
+                    </a>
+                    <a href="request.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-request">
+                        <i class="fa-solid fa-screwdriver-wrench text-tealAccent/80"></i> Repair Request
+                    </a>
+                    <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
+                        <i class="fa-solid fa-chart-line text-tealAccent/80"></i> Dashboard
+                    </a>
+                    <a href="marketplace.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-marketplace">
+                        <i class="fa-solid fa-store text-tealAccent/80"></i> Certified Store
+                    </a>
+                </nav>
+
+                <!-- Spacer to push content up if needed -->
+                <div class="flex-1"></div>
             </div>
         `;
         document.body.appendChild(mobileDrawer);
     }
 
-    // Always update auth section dynamically based on current user state!
-    const authBlock = document.getElementById('mobileDrawerAuthBlock');
-    if (authBlock) {
+    // ✅ Update the mobile user info section (at the top)
+    const mNavUserInfo = document.getElementById('mobileNavUserInfo');
+    if (mNavUserInfo) {
         if (currentUser) {
             const username = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
             const initials = username.substring(0, 2).toUpperCase();
-            
-            const roles = JSON.parse(localStorage.getItem('currentUserRoles') || '["customer"]');
+
+            const roles = JSON.parse(localStorage.getItem('allUserRoles') || '["customer"]');
             const activeRole = localStorage.getItem('activeRole') || roles[0] || 'customer';
-            
+
             let mRoleSwitcherHtml = '';
             if (roles.length > 1) {
                 mRoleSwitcherHtml = `
-                    <div class="w-full bg-slate-900 border border-teal-500/20 rounded-xl p-3 flex flex-col gap-1.5 text-left mb-2">
-                        <label class="text-[9px] text-teal-400 font-black uppercase tracking-wider flex items-center gap-1">
-                            <i class="fa-solid fa-arrows-spin"></i> Active Role Switcher
-                        </label>
-                        <select onchange="changeActiveRole(this.value); toggleMobileMenu();" class="w-full bg-slate-950 border border-slate-800 text-white font-bold text-xs rounded-lg px-2.5 py-1.5 outline-none focus:border-teal transition cursor-pointer">
+                    <div class="w-full mb-3">
+                        <label class="text-[9px] text-gray-400 font-bold uppercase tracking-wider block mb-1 text-center">Switch Dashboard View</label>
+                        <select onchange="switchActiveRole(this.value)" class="w-full bg-slate-950 border border-slate-800 text-teal-400 text-xs font-bold rounded-xl py-2 px-3 outline-none focus:border-teal-400 text-center uppercase cursor-pointer">
                             ${roles.map(r => `<option value="${r}" ${r === activeRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
                         </select>
                     </div>
                 `;
             }
 
-            authBlock.innerHTML = `
-                <div class="space-y-2">
-                    ${mRoleSwitcherHtml}
-                    <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800">
-                        <div class="w-9 h-9 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-bold text-xs flex items-center justify-center">
+            mNavUserInfo.innerHTML = `
+                <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-bold text-sm flex items-center justify-center">
                             ${initials}
                         </div>
                         <div class="min-w-0">
-                            <p class="text-xs font-bold text-white truncate">${username}</p>
+                            <p class="text-sm font-bold text-white truncate">${username}</p>
                             <p class="text-[10px] text-teal-400">Registered DTC Member</p>
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
-                            <i class="fa-regular fa-user"></i> Profile
+                    ${mRoleSwitcherHtml}
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg text-xs font-bold transition text-center">
+                            <i class="fa-regular fa-user mr-1"></i> Profile
                         </button>
-                        <button onclick="logoutUser(); toggleMobileMenu();" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
-                            <i class="fa-solid fa-power-off"></i> Logout
+                        <button onclick="logoutUser(); toggleMobileMenu();" class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2 rounded-lg text-xs font-bold transition text-center">
+                            <i class="fa-solid fa-power-off mr-1"></i> Logout
                         </button>
                     </div>
                 </div>
             `;
         } else {
-            authBlock.innerHTML = `
-                <div class="flex flex-col gap-2">
+            mNavUserInfo.innerHTML = `
+                <div class="flex flex-col gap-2 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
                     <a href="login.html" class="w-full bg-teal text-slate-950 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 hover:bg-tealAccent transition" onclick="toggleMobileMenu()">
                         <i class="fa-solid fa-right-to-bracket"></i> Sign In
                     </a>
@@ -4442,7 +4313,7 @@ function toggleMobileMenu() {
         }
     }
 
-    // Always update active navigation highlight!
+    // Update active navigation highlight
     const path = window.location.pathname.toLowerCase();
     let activeId = 'mLink-index';
     if (path.includes('request')) activeId = 'mLink-request';
@@ -4457,11 +4328,11 @@ function toggleMobileMenu() {
         }
     });
 
+    // Toggle visibility
     const isHidden = mobileDrawer.classList.contains('hidden');
     const body = document.getElementById('mobileDrawerBody');
     if (isHidden) {
         mobileDrawer.classList.remove('hidden');
-        // trigger reflow then slide in
         setTimeout(() => {
             if (body) body.classList.remove('translate-x-full');
         }, 10);
@@ -4991,8 +4862,7 @@ const ROLE_TABS = {
         { id: 'inventory', label: 'Lab Inventory', icon: 'fa-boxes-stacked' },
         { id: 'map', label: 'Live Active Map', icon: 'fa-map-location-dot' },
         { id: 'cities', label: 'Cities Coverage', icon: 'fa-city' },
-        { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' },
-        { id: 'settings', label: 'Settings', icon: 'fa-gear' }
+        { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' }
     ],
     technician: [
         { id: 'tickets', label: 'Diagnostic Workstation', icon: 'fa-laptop-code' },
@@ -5508,81 +5378,8 @@ function renderDynamicTabContent(tabId) {
                 </div>
             </div>
         `;
-    } else if (tabId === 'settings') {
-        const diagFee = localStorage.getItem('diagnosis_fee') || window.diagnosisFee || 250;
-        const discount = localStorage.getItem('parts_discount_percent') || 0;
-        const servicePercent = localStorage.getItem('service_fee_percent') || 0;
-
-        container.innerHTML = `
-            <div class="bg-slate-900/60 border border-slate-800 rounded-3xl p-6 md:p-8 space-y-6 max-w-2xl mx-auto text-left">
-                <div class="border-b border-slate-800/60 pb-4">
-                    <h3 class="text-xl font-bold text-white font-display flex items-center gap-2">
-                        <i class="fa-solid fa-gear text-teal-400 animate-spin-slow"></i> Coordinator Settings Panel
-                    </h3>
-                    <p class="text-xs text-gray-400">Configure global service charges and discount thresholds dynamically.</p>
-                </div>
-
-                <form id="coordinatorSettingsForm" onsubmit="event.preventDefault(); saveCoordinatorSettings();" class="space-y-4">
-                    <div>
-                        <label class="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Diagnosis Fee (₹)</label>
-                        <input type="number" id="settingsDiagFee" value="${diagFee}" class="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-teal-400 transition" required min="0"/>
-                        <p class="text-[9px] text-gray-500 mt-1">Applied to standard diagnostics on quotation compile.</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Parts Discount (%)</label>
-                        <input type="number" id="settingsDiscount" value="${discount}" class="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-teal-400 transition" required min="0" max="100"/>
-                        <p class="text-[9px] text-gray-500 mt-1">Deducted from the custom spare parts subtotal.</p>
-                    </div>
-
-                    <div>
-                        <label class="block text-[10px] text-gray-400 font-bold uppercase tracking-wider mb-1">Service Fee (%)</label>
-                        <input type="number" id="settingsServicePercent" value="${servicePercent}" class="w-full bg-slate-950 border border-slate-800 rounded-xl py-3 px-4 text-xs font-bold text-white outline-none focus:border-teal-400 transition" required min="0" max="100"/>
-                        <p class="text-[9px] text-gray-500 mt-1">Percentage surcharge added to the base workmanship cost (₹100).</p>
-                    </div>
-
-                    <button type="submit" id="saveSettingsBtn" class="w-full bg-gradient-to-r from-teal-600 to-teal-500 text-slate-950 font-black text-xs uppercase tracking-wider py-3.5 px-6 rounded-xl shadow-lg shadow-teal-500/10 hover:shadow-teal-500/20 active:scale-95 transition flex items-center justify-center gap-2">
-                        <span id="saveSettingsBtnText">Save Configuration</span>
-                    </button>
-                </form>
-            </div>
-        `;
     }
 }
-
-function saveCoordinatorSettings() {
-    const diagFee = document.getElementById('settingsDiagFee')?.value;
-    const discount = document.getElementById('settingsDiscount')?.value;
-    const servicePercent = document.getElementById('settingsServicePercent')?.value;
-
-    const btn = document.getElementById('saveSettingsBtn');
-    const text = document.getElementById('saveSettingsBtnText');
-    if (btn && text) {
-        btn.disabled = true;
-        text.innerHTML = '<i class="fa-solid fa-circle-notch animate-spin"></i> Saving...';
-    }
-
-    setTimeout(() => {
-        if (diagFee !== undefined) {
-            localStorage.setItem('diagnosis_fee', diagFee);
-            window.diagnosisFee = parseFloat(diagFee);
-        }
-        if (discount !== undefined) {
-            localStorage.setItem('parts_discount_percent', discount);
-        }
-        if (servicePercent !== undefined) {
-            localStorage.setItem('service_fee_percent', servicePercent);
-        }
-
-        showToast('📋 Coordinator global settings updated successfully!', 'success');
-
-        if (btn && text) {
-            btn.disabled = false;
-            text.innerHTML = 'Save Configuration';
-        }
-    }, 800);
-}
-window.saveCoordinatorSettings = saveCoordinatorSettings;
 window.renderDynamicTabContent = renderDynamicTabContent;
 
 function verifyHandoverOTP(event) {
@@ -5661,7 +5458,6 @@ async function fetchAndRenderAlerts() {
     let alerts = [];
     let dbSuccess = false;
 
-    // Try to fetch from Supabase
     if (supabase) {
         try {
             const { data, error } = await supabase
@@ -5678,21 +5474,24 @@ async function fetchAndRenderAlerts() {
         }
     }
 
-    // Merge with local storage alerts if database failed or is empty
     const localAlerts = JSON.parse(localStorage.getItem('localAlerts') || '[]');
     alerts = [...alerts, ...localAlerts];
 
-    // Fallback/Dynamic alerts generation based on orders status
+    // ✅ FILTER: Only keep alerts that have a valid order_id
+    alerts = alerts.filter(a => a.order_id && a.order_id !== 'undefined' && a.order_id !== 'null');
+
+    // Dynamic alerts from orders (only if order has a valid id)
     const orders = window.allFetchedOrders || [];
     orders.forEach(o => {
+        const oid = o.id || o.order_number;
+        if (!oid || oid === 'undefined' || oid === 'null') return; // skip invalid
         const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
-        // Filter out read local storage alerts
-        const isReadLocally = localStorage.getItem(`dyn-alert-read-${o.id}`) === 'true';
+        const isReadLocally = localStorage.getItem(`dyn-alert-read-${oid}`) === 'true';
 
         if (o.status === 'Pending') {
             alerts.push({
-                id: `dyn-pending-${o.id}`,
-                order_id: o.id,
+                id: `dyn-pending-${oid}`,
+                order_id: oid,
                 message: `New Service Request: ${deviceName} needs staff assignment.`,
                 type: 'new_request',
                 is_read: isReadLocally,
@@ -5700,8 +5499,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Diagnosis-Completed') {
             alerts.push({
-                id: `dyn-diag-${o.id}`,
-                order_id: o.id,
+                id: `dyn-diag-${oid}`,
+                order_id: oid,
                 message: `Diagnosis Completed: ${deviceName} has repair recommendations. Review & quote.`,
                 type: 'diagnosis_completed',
                 is_read: isReadLocally,
@@ -5709,8 +5508,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Pickup-Pending' && o.pickup_otp) {
             alerts.push({
-                id: `dyn-pickup-${o.id}`,
-                order_id: o.id,
+                id: `dyn-pickup-${oid}`,
+                order_id: oid,
                 message: `Active Pickup: OTP generated for ${deviceName} verification.`,
                 type: 'pickup_pending',
                 is_read: isReadLocally,
@@ -5718,8 +5517,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Ready-For-Delivery' && o.pickup_otp) {
             alerts.push({
-                id: `dyn-delivery-${o.id}`,
-                order_id: o.id,
+                id: `dyn-delivery-${oid}`,
+                order_id: oid,
                 message: `Pending Dispatch: ${deviceName} is ready for delivery. Assign dispatcher.`,
                 type: 'ready_for_delivery',
                 is_read: isReadLocally,
@@ -5728,17 +5527,15 @@ async function fetchAndRenderAlerts() {
         }
     });
 
-    // Remove duplicates by ID (if local/database alerts conflict with fallback)
+    // Remove duplicates
     const uniqueAlertsMap = new Map();
     alerts.forEach(a => {
         uniqueAlertsMap.set(a.id || `dyn-alert-${a.order_id}`, a);
     });
     alerts = Array.from(uniqueAlertsMap.values());
 
-    // Sort by created_at descending
     alerts.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-    // Render alerts
     const unreadCount = alerts.filter(a => !a.is_read).length;
     if (badge) {
         badge.textContent = `${unreadCount} New`;
@@ -5754,6 +5551,9 @@ async function fetchAndRenderAlerts() {
     }
 
     alertsListContainer.innerHTML = alerts.map(a => {
+        // ✅ SAFETY: ensure order_id is valid before generating onclick
+        const orderId = a.order_id && a.order_id !== 'undefined' && a.order_id !== 'null' ? a.order_id : '';
+
         let iconHtml = '<i class="fa-solid fa-triangle-exclamation text-amber-500 text-sm"></i>';
         if (a.type === 'new_request') {
             iconHtml = '<i class="fa-solid fa-plus-circle text-teal text-sm animate-pulse"></i>';
@@ -5766,8 +5566,10 @@ async function fetchAndRenderAlerts() {
         }
 
         const unreadBorder = !a.is_read ? 'border-amber-500/20 bg-amber-500/5' : 'border-slate-800 bg-slate-900/30 opacity-60';
+        const alertId = a.id && a.id !== 'undefined' && a.id !== 'null' ? a.id : '';
+
         return `
-            <div onclick="viewOrderDetails('${a.order_id}', '${a.id}')" class="p-3 border ${unreadBorder} rounded-xl text-xs hover:border-teal/40 hover:bg-slate-800/40 cursor-pointer transition flex items-start gap-3">
+            <div onclick="viewOrderDetails('${orderId}', '${alertId}')" class="p-3 border ${unreadBorder} rounded-xl text-xs hover:border-teal/40 hover:bg-slate-800/40 cursor-pointer transition flex items-start gap-3">
                 <div class="mt-0.5">${iconHtml}</div>
                 <div class="flex-1 min-w-0">
                     <p class="font-medium text-white leading-snug">${a.message}</p>
@@ -5807,9 +5609,12 @@ async function createAlert(orderId, message, type = 'system_alert') {
 }
 
 async function viewOrderDetails(orderId, alertId = null, event = null) {
+    // ✅ GUARD: Skip if clicked inside a button/input
     if (event && (event.target.tagName === 'BUTTON' || event.target.closest('button') || event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT')) {
         return;
     }
+
+    // ✅ VALIDATE orderId
     if (!orderId || orderId === 'undefined' || orderId === 'null' || orderId === '') {
         showToast('Invalid order reference. Please select a valid ticket.', 'error');
         return;
@@ -5821,25 +5626,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
         return;
     }
 
-    // ✅ Unique variable names to avoid duplicates
-    let techNameDisplay = 'Not Assigned';
-    let masterNameDisplay = 'Not Assigned';
-    if (order.technician_id) {
-        const { data } = await supabase.from('users').select('name').eq('id', order.technician_id).single();
-        if (data) techNameDisplay = data.name;
-    }
-    if (order.repairmaster_id) {
-        const { data } = await supabase.from('users').select('name').eq('id', order.repairmaster_id).single();
-        if (data) masterNameDisplay = data.name;
-    }
-
-    // Resolve staff names from cache instead of showing raw UUIDs
-    const tech = (window.allTechnicians || []).find(t => String(t.id) === String(order.technician_id));
-    const master = (window.allRepairMasters || []).find(m => String(m.id) === String(order.repairmaster_id));
-    const techName = tech ? tech.name : (order.technician_id || 'Not Assigned');
-    const masterName = master ? master.name : (order.repairmaster_id || 'Not Assigned');
-
-    // Mark alert as read
+    // ✅ VALIDATE alertId
     if (alertId) {
         if (alertId.startsWith('dyn-pending-') || alertId.startsWith('dyn-diag-') || alertId.startsWith('dyn-pickup-') || alertId.startsWith('dyn-delivery-')) {
             localStorage.setItem(`dyn-alert-read-${orderId}`, 'true');
@@ -5850,20 +5637,22 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                 localAlerts[idx].is_read = true;
                 localStorage.setItem('localAlerts', JSON.stringify(localAlerts));
             }
-        } else if (supabase) {
-            try {
-                await supabase.from('alerts').update({ is_read: true }).eq('id', alertId);
-            } catch (e) {
-                console.warn("Could not update database alert:", e);
+        } else {
+            if (!isNaN(alertId) && Number.isInteger(Number(alertId))) {
+                try {
+                    await supabase.from('alerts').update({ is_read: true }).eq('id', alertId);
+                } catch (e) {
+                    console.warn("Could not update database alert:", e);
+                }
+            } else {
+                console.warn('Skipping invalid alert ID:', alertId);
             }
         }
         fetchAndRenderAlerts();
     }
 
-    // Apply "view only this order" filter
+    // Apply single order filter
     window.singleOrderFilter = orderId;
-    
-    // Highlight and select this order in the list
     const renderBtn = document.getElementById('clearSingleOrderFilterBtn');
     if (!renderBtn) {
         const container = document.getElementById('tab-tickets-section');
@@ -5903,8 +5692,8 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                     <p class="text-xs font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-user-plus text-teal mr-1"></i> Assignment Controls</p>
                     <p class="text-[11px] text-gray-400">This request is waiting to be dispatched or assigned to active bench staff.</p>
                     <div class="flex gap-2">
-                        <button onclick="showAssignForm('${order.id}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Staff</button>
-                        <button onclick="assignSelfAsTechnician('${order.id}'); closeOrderDetailModal();" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition">Take as Tech</button>
+                        <button onclick="showAssignForm('${orderId}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Staff</button>
+                        <button onclick="assignSelfAsTechnician('${orderId}'); closeOrderDetailModal();" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition">Take as Tech</button>
                     </div>
                 </div>
             `;
@@ -5918,7 +5707,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                         <p>💬 <strong>Advice to Coordinator:</strong> ${order.notes || 'N/A'}</p>
                         <p>💰 <strong>Recommended Total:</strong> <span class="text-teal font-extrabold">₹${(order.total_price || 0).toLocaleString('en-IN')}</span></p>
                     </div>
-                    <button onclick="showQuotationForm('${order.id}', ${order.total_price || 0}, '${(order.custom_quote_parts || '').replace(/'/g, "\\'") || ''}'); closeOrderDetailModal();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">✏️ Adjust Pricing &amp; Send Quotation</button>
+                    <button onclick="showQuotationForm('${orderId}', ${order.total_price || 0}, '${(order.custom_quote_parts || '').replace(/'/g, "\\'") || ''}'); closeOrderDetailModal();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">✏️ Adjust Pricing &amp; Send Quotation</button>
                 </div>
             `;
         } else if (order.status === 'Ready-For-Delivery') {
@@ -5926,7 +5715,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                 <div class="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl space-y-3">
                     <p class="text-xs font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-truck-ramp-box text-teal mr-1"></i> Dispatch Courier Controls</p>
                     <p class="text-[11px] text-gray-400">Repair successfully fixed. Ready for regional delivery handover.</p>
-                    <button onclick="showAssignDeliveryForm('${order.id}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Delivery Tech</button>
+                    <button onclick="showAssignDeliveryForm('${orderId}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Delivery Tech</button>
                 </div>
             `;
         }
@@ -5954,7 +5743,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
         `;
     }
 
-    // Build Payment & Billing HTML
+    // Payment & Billing
     const paymentMethod = order.payment_method || 'Pending Selection';
     const paymentStatus = order.payment_status || 'Unpaid';
     const invoiceNumber = order.invoice_number || 'Not Generated';
@@ -5970,7 +5759,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
     if (isCoordinator && paymentStatus !== 'Paid' && (paymentMethod === 'COD' || paymentStatus === 'Pending COD Confirmation' || paymentMethod === 'Online' || paymentStatus === 'Unpaid')) {
         confirmBtnHtml = `
             <div class="mt-3">
-                <button onclick="confirmPaymentManual('${order.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition">
+                <button onclick="confirmPaymentManual('${orderId}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition">
                     💵 Confirm Payment &amp; Mark Paid
                 </button>
             </div>
@@ -5979,14 +5768,12 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
 
     let invoiceDetailsHtml = 'Pending Quotation Dispatch';
     if (order.invoice_number) {
-        const hasGstFees = (order.tax_amount > 0 || order.platform_fee > 0);
         invoiceDetailsHtml = `
             <div class="space-y-1.5">
                 <div class="flex justify-between">
                     <span>🧾 Invoice Number:</span>
                     <span class="text-white font-semibold">${invoiceNumber}</span>
                 </div>
-                ${hasGstFees ? `
                 <div class="flex justify-between">
                     <span>Subtotal:</span>
                     <span class="text-gray-300">₹${(order.total_price || 0).toLocaleString('en-IN')}</span>
@@ -5999,14 +5786,13 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                     <span>Platform Fee (10%):</span>
                     <span class="text-gray-300">₹${(order.platform_fee || 0).toLocaleString('en-IN')}</span>
                 </div>
-                ` : ''}
                 <div class="flex justify-between border-t border-slate-800 pt-1.5 text-teal font-extrabold">
                     <span>Grand Total:</span>
                     <span>₹${(order.grand_total || order.total_price || 0).toLocaleString('en-IN')}</span>
                 </div>
                 ${paymentStatus === 'Paid' ? `
                     <div class="pt-2">
-                        <button onclick="openInvoicePage('${order.id}')" class="w-full bg-slate-800 hover:bg-slate-750 text-teal-300 border border-teal-500/20 font-bold py-1.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                        <button onclick="openInvoicePage('${orderId}')" class="w-full bg-slate-800 hover:bg-slate-750 text-teal-300 border border-teal-500/20 font-bold py-1.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-file-invoice-dollar"></i> View/Print Invoice
                         </button>
                     </div>
@@ -6041,29 +5827,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
             <div class="grid grid-cols-2 gap-3 text-xs">
                 <div class="p-3 bg-slate-950/60 border border-slate-850 rounded-xl">
                     <span class="text-gray-500 block uppercase font-bold text-[9px] mb-0.5">CURRENT STATUS</span>
-                    <span class="inline-block px-2.5 py-1 rounded-full font-black uppercase text-[9px] tracking-wider ${
-                        (() => {
-                            switch (order.status || 'Pending') {
-                                case 'Pending': return 'bg-amber-500/10 text-amber-400 border border-amber-500/20';
-                                case 'Technician Assigned':
-                                case 'RepairMaster Assigned': return 'bg-blue-500/10 text-blue-400 border border-blue-500/20';
-                                case 'Pickup-Pending':
-                                case 'Pickup-In-Progress': return 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
-                                case 'With-RepairMaster':
-                                case 'Diagnosis-Pending': return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
-                                case 'Diagnosis-Completed':
-                                case 'Quotation-Sent': return 'bg-orange-500/10 text-orange-400 border border-orange-500/20';
-                                case 'Confirmed':
-                                case 'Under-Repair': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
-                                case 'Ready-For-Delivery':
-                                case 'Delivery-In-Progress': return 'bg-pink-500/10 text-pink-400 border border-pink-500/20';
-                                case 'Completed':
-                                case 'Delivered': return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20';
-                                case 'Rejected': return 'bg-red-500/10 text-red-400 border border-red-500/20';
-                                default: return 'bg-slate-500/10 text-slate-400 border border-slate-500/20';
-                            }
-                        })()
-                    }">${order.status}</span>
+                    <span class="inline-block bg-teal-500/10 text-teal border border-teal-500/20 px-2 py-0.5 rounded-full font-black uppercase text-[9px]">${order.status}</span>
                 </div>
                 <div class="p-3 bg-slate-950/60 border border-slate-850 rounded-xl">
                     <span class="text-gray-500 block uppercase font-bold text-[9px] mb-0.5">ESTIMATED PRICE</span>
@@ -6078,8 +5842,8 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                 <div class="space-y-1.5">
                     <p>🔬 <strong>Diagnosis Notes:</strong> ${order.diagnosis_notes || 'Pending technician diagnosis.'}</p>
                     <p>📝 <strong>Fault Description:</strong> ${order.additional_notes || 'N/A'}</p>
-                    <p>🛠️ <strong>Assigned Tech:</strong> <span class="text-gray-400">${techNameDisplay}</span></p>
-                    <p>🧪 <strong>Assigned Master:</strong> <span class="text-gray-400">${masterNameDisplay}</span></p>
+                    <p>🛠️ <strong>Assigned Tech ID:</strong> <span class="text-gray-400">${order.technician_id || 'Not Assigned'}</span></p>
+                    <p>🧪 <strong>Assigned Master ID:</strong> <span class="text-gray-400">${order.repairmaster_id || 'Not Assigned'}</span></p>
                 </div>
             </div>
 
@@ -6112,205 +5876,3 @@ window.clearSingleOrderFilter = clearSingleOrderFilter;
 window.selectCODPayment = selectCODPayment;
 window.confirmPaymentManual = confirmPaymentManual;
 window.openInvoicePage = openInvoicePage;
-
-function renderCoordinatorOpsDesk() {
-    const container = document.getElementById('coordinatorOpsDeskContainer');
-    if (!container) return;
-
-    const activeRole = localStorage.getItem('activeRole') || 'customer';
-    const isCoordinator = activeRole === 'coordinator';
-    const isAdmin = activeRole === 'admin';
-
-    if (!isCoordinator && !isAdmin) {
-        container.classList.add('hidden');
-        return;
-    }
-    container.classList.remove('hidden');
-
-    const orders = window.allFetchedOrders || [];
-    const techs = window.allTechnicians || [];
-    const masters = window.allRepairMasters || [];
-
-    // 1. Performance Metrics & Stats
-    const pendingAssignmentCount = orders.filter(o => o.status === 'Pending').length;
-    const activeDispatchesCount = orders.filter(o => ['Technician Assigned', 'Pickup-Pending', 'Pickup-In-Progress', 'Ready-For-Delivery', 'Delivery-In-Progress'].includes(o.status)).length;
-    const underRepairCount = orders.filter(o => ['With-RepairMaster', 'Diagnosis-Pending', 'Diagnosis-Completed', 'Confirmed', 'Under-Repair', 'Repair-Completed'].includes(o.status)).length;
-    
-    // SLA warning: Pending for > 2 hours
-    const now = new Date();
-    const slaWarnings = orders.filter(o => {
-        if (o.status !== 'Pending' || !o.created_at) return false;
-        const hours = (now - new Date(o.created_at)) / (1000 * 60 * 60);
-        return hours > 2;
-    });
-
-    // 2. Staff Management List (Technicians & RepairMasters)
-    let staffHtml = '';
-    const allStaff = [
-        ...techs.map(t => ({ ...t, role: 'Technician', icon: 'fa-truck-pickup', color: 'text-sky-400' })),
-        ...masters.map(m => ({ ...m, role: 'RepairMaster', icon: 'fa-screwdriver-wrench', color: 'text-amber-400' }))
-    ];
-
-    if (allStaff.length === 0) {
-        staffHtml = `
-            <div class="text-center py-6 text-gray-500 text-xs">
-                <i class="fa-solid fa-users-slash text-xl mb-2 block"></i> No registered field staff found.
-            </div>
-        `;
-    } else {
-        staffHtml = `
-            <div class="overflow-x-auto">
-                <table class="w-full text-left text-xs text-gray-300">
-                    <thead class="text-[10px] uppercase text-gray-500 border-b border-white/5 font-semibold font-display">
-                        <tr>
-                            <th class="py-2.5">Staff Member</th>
-                            <th class="py-2.5">Role</th>
-                            <th class="py-2.5">Active Load</th>
-                            <th class="py-2.5">Performance</th>
-                            <th class="py-2.5">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-white/5">
-                        ${allStaff.map(s => {
-                            const activeLoad = orders.filter(o => 
-                                String(o.technician_id) === String(s.id) || String(o.repairmaster_id) === String(s.id)
-                            ).filter(o => !['Completed', 'Delivered', 'Rejected'].includes(o.status)).length;
-
-                            const statusText = activeLoad > 0 
-                                ? `<span class="px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 font-bold text-[9px] uppercase tracking-wider">Busy (${activeLoad} active)</span>`
-                                : `<span class="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-[9px] uppercase tracking-wider">Idle / Available</span>`;
-
-                            // Hash helper for realistic rating & SLA metric
-                            const ratingCode = (s.name.charCodeAt(0) % 5) + 1;
-                            const score = 4.5 + (ratingCode * 0.1);
-                            const ratingStr = `${score.toFixed(1)} ⭐ (${90 + (ratingCode * 2)}% SLA)`;
-
-                            return `
-                                <tr class="hover:bg-slate-900/30 transition-colors">
-                                    <td class="py-3 font-semibold text-white flex items-center gap-2">
-                                        <div class="w-7 h-7 bg-slate-950 rounded-full flex items-center justify-center border border-white/5 text-[10px] text-teal-400 font-bold">
-                                            ${s.name.charAt(0)}
-                                        </div>
-                                        <span>${s.name}</span>
-                                    </td>
-                                    <td class="py-3 font-mono">
-                                        <span class="flex items-center gap-1 ${s.color}">
-                                            <i class="fa-solid ${s.icon} text-[10px]"></i> ${s.role}
-                                        </span>
-                                    </td>
-                                    <td class="py-3 font-black text-white text-xs">${activeLoad} Jobs</td>
-                                    <td class="py-3 text-gray-400 font-medium">${ratingStr}</td>
-                                    <td class="py-3">${statusText}</td>
-                                </tr>
-                            `;
-                        }).join('')}
-                    </tbody>
-                </table>
-            </div>
-        `;
-    }
-
-    // 3. Unassigned Pending dispatches
-    const pendingOrders = orders.filter(o => o.status === 'Pending');
-    let pendingTasksHtml = '';
-    if (pendingOrders.length === 0) {
-        pendingTasksHtml = `
-            <div class="text-center py-8 text-gray-500 text-xs">
-                <i class="fa-solid fa-clipboard-check text-2xl mb-2 text-teal-500/40 block"></i> All requests dispatched & assigned. Beautifully done!
-            </div>
-        `;
-    } else {
-        pendingTasksHtml = `
-            <div class="space-y-2.5">
-                ${pendingOrders.map(o => {
-                    const devName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
-                    const repLabel = getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
-                    const hours = o.created_at ? Math.max(0, Math.floor((now - new Date(o.created_at)) / (1000 * 60))) : 0;
-                    const hoursText = hours > 120 
-                        ? `<span class="text-rose-400 font-extrabold animate-pulse">${Math.floor(hours/60)}h ${hours%60}m ago (SLA BREACH!)</span>`
-                        : `<span class="text-gray-400 font-semibold">${hours}m ago</span>`;
-
-                    return `
-                        <div class="flex items-center justify-between gap-4 p-3.5 bg-slate-950 border border-slate-850 hover:border-teal-500/30 rounded-xl transition">
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-xs font-bold text-white">${devName}</span>
-                                    <span class="text-slate-600">•</span>
-                                    <span class="text-[11px] text-teal-400 font-medium">${repLabel}</span>
-                                    <span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded-full font-black uppercase tracking-wider text-[8px]">Unassigned</span>
-                                </div>
-                                <div class="text-[10px] text-gray-500 mt-1 flex items-center gap-1.5">
-                                    <span>ID: ${o.order_number}</span>
-                                    <span>•</span>
-                                    <span>Submitted: ${hoursText}</span>
-                                </div>
-                            </div>
-                            <button onclick="showAssignForm('${o.id}')" class="px-3.5 py-1.5 rounded-lg bg-teal text-slate-950 text-[10px] font-black hover:bg-tealAccent transition whitespace-nowrap shadow-sm">Assign Staff</button>
-                        </div>
-                    `;
-                }).join('')}
-            </div>
-        `;
-    }
-
-    container.innerHTML = `
-        <!-- Metrics Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-slate-900/60 border border-slate-800 p-4.5 rounded-2xl flex items-center gap-4 hover:border-teal/20 transition">
-                <div class="w-11 h-11 bg-teal-500/10 border border-teal-500/20 text-teal rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-triangle-exclamation"></i></div>
-                <div>
-                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Unassigned Queue</span>
-                    <h4 class="text-xl font-black text-white mt-0.5">${pendingAssignmentCount} Tickets</h4>
-                </div>
-            </div>
-            <div class="bg-slate-900/60 border border-slate-800 p-4.5 rounded-2xl flex items-center gap-4 hover:border-teal/20 transition">
-                <div class="w-11 h-11 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-truck-pickup"></i></div>
-                <div>
-                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Active Dispatches</span>
-                    <h4 class="text-xl font-black text-white mt-0.5">${activeDispatchesCount} Handovers</h4>
-                </div>
-            </div>
-            <div class="bg-slate-900/60 border border-slate-800 p-4.5 rounded-2xl flex items-center gap-4 hover:border-teal/20 transition">
-                <div class="w-11 h-11 bg-amber-500/10 border border-amber-500/20 text-amber-400 rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-screwdriver-wrench"></i></div>
-                <div>
-                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Active Lab Workbench</span>
-                    <h4 class="text-xl font-black text-white mt-0.5">${underRepairCount} Repairs</h4>
-                </div>
-            </div>
-            <div class="bg-slate-900/60 border border-slate-800 p-4.5 rounded-2xl flex items-center gap-4 hover:border-teal/20 transition">
-                <div class="w-11 h-11 bg-rose-500/10 border border-rose-500/20 text-rose-400 rounded-xl flex items-center justify-center text-lg"><i class="fa-solid fa-hourglass-half"></i></div>
-                <div>
-                    <span class="text-[10px] text-gray-500 uppercase font-bold tracking-wider">Critical SLA Risks (>2h)</span>
-                    <h4 class="text-xl font-black ${slaWarnings.length > 0 ? 'text-rose-400 animate-pulse' : 'text-white'} mt-0.5">${slaWarnings.length} Alerts</h4>
-                </div>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
-            <!-- Left 3 columns: Staff Performance Ledger -->
-            <div class="lg:col-span-3 bg-slate-900/60 border border-slate-800 p-5 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
-                    <div>
-                        <h4 class="text-sm font-bold text-white font-display uppercase tracking-wider">Staff Performance Ledger</h4>
-                        <p class="text-[10px] text-gray-400">Live operational load & real-time delivery ratings</p>
-                    </div>
-                    <span class="text-[9px] bg-teal-500/10 text-teal border border-teal-500/20 font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">HQ Dispatch Panel</span>
-                </div>
-                ${staffHtml}
-            </div>
-
-            <!-- Right 2 columns: Fast Assignment Action Desk -->
-            <div class="lg:col-span-2 bg-slate-900/60 border border-slate-800 p-5 rounded-2xl space-y-4">
-                <div class="flex items-center justify-between border-b border-slate-800/60 pb-3">
-                    <div>
-                        <h4 class="text-sm font-bold text-white font-display uppercase tracking-wider">Fast Assignment Action Desk</h4>
-                        <p class="text-[10px] text-gray-400">Immediate routing control for unassigned requests</p>
-                    </div>
-                    <span class="text-[9px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full">Needs Dispatch</span>
-                </div>
-                ${pendingTasksHtml}
-            </div>
-        </div>
-    `;
-}
-window.renderCoordinatorOpsDesk = renderCoordinatorOpsDesk;
