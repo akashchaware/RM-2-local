@@ -1561,7 +1561,7 @@ async function submitAssignDelivery(orderId) {
     await assignDeliveryTechnician(orderId, techId);
 }
 function showDiagnosisForm(orderId) {
-    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
     const currentDiag = order ? (order.diagnosis_notes || '') : '';
     const currentNotes = order ? (order.notes || '') : '';
     const currentPartsTotal = order ? (order.parts_total || 0) : 0;
@@ -1756,7 +1756,7 @@ async function submitRedesignedDiagnosis(orderId) {
         if (error) throw error;
 
         if (isRepairMaster) {
-            const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
+            const order = (window.allFetchedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
             const devName = order ? (getDeviceName(order.device_id) !== 'Device' ? getDeviceName(order.device_id) : (order.device_other || 'Device')) : 'Device';
             await createAlert(orderId, `Bench diagnosis completed for ${devName}. Estimate review required.`, 'diagnosis_completed');
             showToast('📋 Lab diagnosis recommendation submitted to Coordinator!', 'success');
@@ -1808,7 +1808,7 @@ function serializeCustomQuoteParts(partsList) {
 }
 
 function showQuotationForm(orderId, basePrice, customPartsStr) {
-    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
     
     // Parse custom parts
     let partsList = parseCustomQuoteParts(customPartsStr);
@@ -3698,7 +3698,7 @@ function generateInvoiceHtml(order) {
 }
 
 function openInvoicePage(orderId) {
-    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
     if (!order) {
         showToast('Invoice reference order not found.', 'error');
         return;
