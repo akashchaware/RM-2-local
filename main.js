@@ -2466,7 +2466,8 @@ if (supabase) {
     orders = [];
 }
 // ✅ No mock orders – use real data or empty list
-    
+    orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
     // Update stats counters
     const metricContainer = document.getElementById('metric-cards-container');
     if (metricContainer) {
