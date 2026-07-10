@@ -13,6 +13,22 @@ window.BUSINESS_CONFIG = {
     platformFeePercent: 15,         // Full 15% for future GST mode
     taxPercent: 18                  // GST rate
 };
+// ─── Cached diagnosis fee ───
+let window.diagnosisFee = 250; // default
+
+async function loadDiagnosisFee() {
+    if (!supabase) return;
+    try {
+        const { data, error } = await supabase
+            .from('app_settings')
+            .select('value')
+            .eq('key', 'diagnosis_fee')
+            .maybeSingle();
+        if (!error && data) {
+            window.diagnosisFee = parseFloat(data.value) || window.diagnosisFee || 250;
+        }
+    } catch (e) { console.warn('Failed to load diagnosis fee:', e); }
+}
 // ─── GLOBAL STATE ───
 let allBrands = [];
 let allDevices = [];
@@ -434,7 +450,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                         <div class="bg-slate-900/40 border border-white/5 rounded-lg px-3 py-1.5 text-[11px] space-y-1">
                             <div class="flex justify-between text-gray-300 border-b border-white/5 pb-1">
                                 <span>🩺 Scientific Bench Diagnosis</span>
-                                <span class="font-semibold text-white">₹${(o.diagnosis_charge || 250).toLocaleString('en-IN')}</span>
+                                <span class="font-semibold text-white">₹${(o.diagnosis_charge || window.diagnosisFee || 250).toLocaleString('en-IN')}</span>
                             </div>
                             <div class="flex justify-between text-gray-300 pt-0.5">
                                 <span>🔧 Workmanship &amp; Re-assembly Labor</span>
@@ -799,7 +815,7 @@ async function calculateEstimate() {
             const price = 0;
             const labor = 0;
             const serviceFee = 150.00;
-            const diagnosisCharge = 250.00;
+            const diagnosisCharge = window.diagnosisFee || 250;
             const total = serviceFee + diagnosisCharge;
             
             if (surveyContainer) {
@@ -814,7 +830,7 @@ async function calculateEstimate() {
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Diagnosis Fee:</span>
-                            <span class="text-white font-bold">₹250.00</span>
+                            <span class="text-white font-bold">₹window.diagnosisFee || 250</span>
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Service / Labor Fee:</span>
@@ -843,7 +859,7 @@ async function calculateEstimate() {
             const price = 0;
             const labor = 0;
             const serviceFee = 100.00;
-            const diagnosisCharge = 250.00;
+            const diagnosisCharge = window.diagnosisFee || 250;
             const total = serviceFee + diagnosisCharge;
             
             if (surveyContainer) {
@@ -858,7 +874,7 @@ async function calculateEstimate() {
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Diagnosis Fee:</span>
-                            <span class="text-white font-bold">₹250.00</span>
+                            <span class="text-white font-bold">₹window.diagnosisFee || 250</span>
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Service / Labor Fee:</span>
@@ -968,8 +984,8 @@ async function calculateEstimate() {
             
             if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
             if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹0.00';
-            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹250.00';
-            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹250.00';
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹window.diagnosisFee || 250';
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹window.diagnosisFee || 250.00';
         }
     } catch (err) {
         console.error("Local records estimation calculation failed:", err);
@@ -1027,7 +1043,7 @@ function runCatalogFallbackCalculation() {
     if (offerClaimed) {
         serviceFee = serviceFee * 0.5; // Claim 50% discount on service
     }
-    const diagnosisCharge = 250.0;
+    const diagnosisCharge = window.diagnosisFee || 250;
     const totalEstimate = discountedParts + serviceFee + diagnosisCharge;
 
     const partsTotalDisplay = document.getElementById('partsTotalDisplay');
@@ -1205,12 +1221,12 @@ async function submitRequest(e) {
         let partsTotalVal = 0;
         let serviceFeeVal = 150.00;
         let totalEstimateVal = 400.00;
-        let diagnosisVal = 250.00;
+        let diagnosisVal = window.diagnosisFee || 250;
 
         if (window._reqEstimate) {
             partsTotalVal = window._reqEstimate.partsTotal || 0;
             serviceFeeVal = window._reqEstimate.serviceFee || 0;
-            diagnosisVal = window._reqEstimate.diagnosisCharge || 250.00;
+            diagnosisVal = window._reqEstimate.diagnosisCharge || window.diagnosisFee || 250.00;
             totalEstimateVal = window._reqEstimate.total || 0;
         } else {
             // Fallback calculation (similar to your existing code)
@@ -1236,7 +1252,7 @@ async function submitRequest(e) {
             }
             partsTotalVal = partsTotal * 0.9;
             serviceFeeVal = partsTotalVal > 0 ? (partsTotalVal * 0.15) : 150.00;
-            totalEstimateVal = partsTotalVal + serviceFeeVal + 250.00;
+            totalEstimateVal = partsTotalVal + serviceFeeVal + window.diagnosisFee || 250;
         }
 
         // --- Build order object ---
@@ -1844,7 +1860,7 @@ function showQuotationForm(orderId, basePrice, customPartsStr) {
     // Store in global window for active editing
     window.editingQuotationParts[orderId] = partsList;
     window.editingQuotationServiceFee[orderId] = order ? (parseFloat(order.service_fee) || 100) : 100;
-    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || 250) : 250;
+    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || window.diagnosisFee || 250;
     
     renderQuotationFormInlineEditable(orderId);
 }
@@ -2032,7 +2048,7 @@ async function submitFinalizedQuotation(orderId) {
     try {
         const partsList = window.editingQuotationParts[orderId] || [];
         const serviceFee = window.editingQuotationServiceFee[orderId] || 100;
-        const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 250;
+        const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || window.diagnosisFee || 250;
         
         // Separate parts into original vs additional to calculate parts_total
         const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
@@ -3664,7 +3680,7 @@ function generateInvoiceHtml(order) {
             
             <tr class="item">
                 <td>🩺 Scientific Bench Diagnosis</td>
-                <td>₹${(order.diagnosis_charge || 250).toLocaleString('en-IN')}</td>
+                <td>₹${(order.diagnosis_charge || window.diagnosisFee || 250).toLocaleString('en-IN')}</td>
             </tr>
             <tr class="item">
                 <td>🔧 Workmanship &amp; Labor</td>
@@ -4032,7 +4048,7 @@ function showRequestEstimate() {
     let partsPrice = 0;
     let laborPrice = 0;
     let serviceFee = 0;
-    let diagnosisCharge = 250;
+    let diagnosisCharge = window.diagnosisFee || 250;
     let total = 0;
     let discountedParts = 0;
 
@@ -4044,7 +4060,7 @@ function showRequestEstimate() {
         laborPrice = 0;
         discountedParts = 0;
         serviceFee = 150.00;
-        diagnosisCharge = 250.00;
+        diagnosisCharge = window.diagnosisFee || 250;
         total = serviceFee + diagnosisCharge;
     } else {
         const allParts = window.RECORDS || [];
@@ -4070,12 +4086,12 @@ function showRequestEstimate() {
             if (quality === 'premium') multiplier = 1.5;
             if (quality === 'compatible') multiplier = 0.7;
             partsPrice = 1000 * multiplier;
-            laborPrice = 250;
+            laborPrice = window.diagnosisFee || 250;
         }
 
         discountedParts = partsPrice * 0.9;
         serviceFee = (discountedParts * 0.15) + laborPrice;
-        diagnosisCharge = 250.00;
+        diagnosisCharge = window.diagnosisFee || 250.00;
         total = discountedParts + serviceFee + diagnosisCharge;
     }
 
@@ -4412,6 +4428,7 @@ document.addEventListener('DOMContentLoaded', async function() {
 
     // 2. Hydrate database parts catalogs and offers
     await loadCatalog();
+    await loadDiagnosisFee();
 
     if (document.getElementById('brandSelect')) {
         populateBrands();
