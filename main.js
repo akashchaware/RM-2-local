@@ -6589,3 +6589,39 @@ window.submitAssignRoles = async function(userId) {
         showToast('❌ Privilege synchronization failed: ' + err.message, 'error');
     }
 };
+
+// ─── MANAGEMENT PRIVILEGES & DISPATCH PANEL HANDLER ───
+window.submitAssignRoles = async function(userId) {
+    if (!supabase) {
+        showToast('⚠️ Supabase connection is offline.', 'error');
+        return;
+    }
+
+    const roleSelect = document.getElementById(`roleSelect-${userId}`);
+    if (!roleSelect) {
+        showToast('❌ Assignment input element targets missing.', 'error');
+        return;
+    }
+
+    const selectedRole = roleSelect.value;
+
+    try {
+        const { error } = await supabase
+            .from('profiles') // Change to 'users' if your profile table uses a different identifier
+            .update({ role: selectedRole })
+            .eq('id', userId);
+
+        if (error) throw error;
+
+        showToast(`✅ Access updated to: ${selectedRole}`, 'success');
+        
+        // Dynamic dashboard view refresh
+        if (typeof loadDashboard === 'function') {
+            loadDashboard();
+        } else {
+            window.location.reload();
+        }
+    } catch (err) {
+        showToast('❌ Operations update failed: ' + err.message, 'error');
+    }
+};
