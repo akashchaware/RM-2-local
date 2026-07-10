@@ -4167,7 +4167,6 @@ async function signInWithGoogle() {
 function toggleMobileMenu() {
     let mobileDrawer = document.getElementById('mobileNavDrawer');
     if (!mobileDrawer) {
-        // Create drawer
         mobileDrawer = document.createElement('div');
         mobileDrawer.id = 'mobileNavDrawer';
         mobileDrawer.className = 'fixed inset-0 z-50 hidden';
@@ -4175,60 +4174,56 @@ function toggleMobileMenu() {
             <!-- Backdrop -->
             <div class="fixed inset-0 bg-slate-950/60 backdrop-blur-sm transition-opacity duration-300" onclick="toggleMobileMenu()"></div>
             <!-- Drawer Body -->
-            <div class="fixed inset-y-0 right-0 w-80 bg-[#0A0F1D] border-l border-slate-800 shadow-2xl p-6 flex flex-col justify-between z-10 transition-transform duration-300 transform translate-x-full" id="mobileDrawerBody">
-                <div class="space-y-6">
-                    <!-- Drawer Header -->
-                    <div class="flex items-center justify-between border-b border-white/5 pb-4">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xs font-black text-tealAccent uppercase tracking-wider font-display">Navigation Menu</span>
-                        </div>
-                        <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white text-lg transition">✕</button>
+            <div class="fixed inset-y-0 right-0 w-80 bg-[#0A0F1D] border-l border-slate-800 shadow-2xl p-6 flex flex-col z-10 transition-transform duration-300 transform translate-x-full overflow-y-auto" id="mobileDrawerBody">
+                <!-- Drawer Header -->
+                <div class="flex items-center justify-between border-b border-white/5 pb-4">
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black text-tealAccent uppercase tracking-wider font-display">Navigation Menu</span>
                     </div>
-
-                    <!-- Navigation Links -->
-                    <nav class="flex flex-col gap-3 text-sm font-medium">
-                        <a href="index.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-index">
-                            <i class="fa-solid fa-house text-tealAccent/80"></i> Home
-                        </a>
-                        <a href="request.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-request">
-                            <i class="fa-solid fa-screwdriver-wrench text-tealAccent/80"></i> Repair Request
-                        </a>
-                        <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
-                            <i class="fa-solid fa-chart-line text-tealAccent/80"></i> Dashboard
-                        </a>
-                        <a href="marketplace.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-marketplace">
-                            <i class="fa-solid fa-store text-tealAccent/80"></i> Certified Store
-                        </a>
-                    </nav>
+                    <button onclick="toggleMobileMenu()" class="text-gray-400 hover:text-white text-lg transition">✕</button>
                 </div>
 
-                <!-- Footer (Auth / User Actions) -->
-                <div class="border-t border-white/5 pt-4 space-y-3" id="mobileDrawerAuthBlock">
-                    <!-- ✅ Placeholder for mobile user info & role switcher -->
-                    <div id="mobileNavUserInfo"></div>
-                </div>
+                <!-- ✅ User Profile & Role Switcher (moved to top) -->
+                <div id="mobileNavUserInfo" class="mt-4"></div>
+
+                <!-- Navigation Links -->
+                <nav class="flex flex-col gap-3 text-sm font-medium mt-6">
+                    <a href="index.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-index">
+                        <i class="fa-solid fa-house text-tealAccent/80"></i> Home
+                    </a>
+                    <a href="request.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-request">
+                        <i class="fa-solid fa-screwdriver-wrench text-tealAccent/80"></i> Repair Request
+                    </a>
+                    <a href="dashboard.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-dashboard">
+                        <i class="fa-solid fa-chart-line text-tealAccent/80"></i> Dashboard
+                    </a>
+                    <a href="marketplace.html" class="mobile-nav-link flex items-center gap-3 text-gray-300 hover:text-teal p-3 rounded-xl hover:bg-white/5 transition" id="mLink-marketplace">
+                        <i class="fa-solid fa-store text-tealAccent/80"></i> Certified Store
+                    </a>
+                </nav>
+
+                <!-- Spacer to push content up if needed -->
+                <div class="flex-1"></div>
             </div>
         `;
         document.body.appendChild(mobileDrawer);
     }
 
-    // ✅ Always re‑render the mobile user info based on currentUser
+    // ✅ Update the mobile user info section (at the top)
     const mNavUserInfo = document.getElementById('mobileNavUserInfo');
     if (mNavUserInfo) {
         if (currentUser) {
-            // Use the same logic as updateNavForAuth for the mobile version
             const username = currentUser.user_metadata?.full_name || currentUser.email.split('@')[0];
             const initials = username.substring(0, 2).toUpperCase();
 
-            // Fetch roles (async, but we'll use sync cache or fallback)
             const roles = JSON.parse(localStorage.getItem('allUserRoles') || '["customer"]');
             const activeRole = localStorage.getItem('activeRole') || roles[0] || 'customer';
 
             let mRoleSwitcherHtml = '';
             if (roles.length > 1) {
                 mRoleSwitcherHtml = `
-                    <div class="w-full mb-2">
-                        <label class="text-[9px] text-gray-400 font-bold uppercase tracking-wider block mb-1 text-center">Active Role Switcher</label>
+                    <div class="w-full mb-3">
+                        <label class="text-[9px] text-gray-400 font-bold uppercase tracking-wider block mb-1 text-center">Switch Dashboard View</label>
                         <select onchange="switchActiveRole(this.value)" class="w-full bg-slate-950 border border-slate-800 text-teal-400 text-xs font-bold rounded-xl py-2 px-3 outline-none focus:border-teal-400 text-center uppercase cursor-pointer">
                             ${roles.map(r => `<option value="${r}" ${r === activeRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
                         </select>
@@ -4237,31 +4232,30 @@ function toggleMobileMenu() {
             }
 
             mNavUserInfo.innerHTML = `
-                <div class="space-y-2">
-                    <div class="flex items-center gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800">
-                        <div class="w-9 h-9 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-bold text-xs flex items-center justify-center">
+                <div class="space-y-3 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal-400 font-bold text-sm flex items-center justify-center">
                             ${initials}
                         </div>
                         <div class="min-w-0">
-                            <p class="text-xs font-bold text-white truncate">${username}</p>
+                            <p class="text-sm font-bold text-white truncate">${username}</p>
                             <p class="text-[10px] text-teal-400">Registered DTC Member</p>
                         </div>
                     </div>
                     ${mRoleSwitcherHtml}
-                    <div class="grid grid-cols-2 gap-2">
-                        <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="bg-slate-900 border border-slate-800 hover:bg-slate-850 text-white p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
-                            <i class="fa-regular fa-user"></i> Profile
+                    <div class="flex gap-2 pt-1">
+                        <button onclick="toggleProfileDrawer(); toggleMobileMenu();" class="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg text-xs font-bold transition text-center">
+                            <i class="fa-regular fa-user mr-1"></i> Profile
                         </button>
-                        <button onclick="logoutUser(); toggleMobileMenu();" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition">
-                            <i class="fa-solid fa-power-off"></i> Logout
+                        <button onclick="logoutUser(); toggleMobileMenu();" class="flex-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 p-2 rounded-lg text-xs font-bold transition text-center">
+                            <i class="fa-solid fa-power-off mr-1"></i> Logout
                         </button>
                     </div>
                 </div>
             `;
         } else {
-            // Logged out
             mNavUserInfo.innerHTML = `
-                <div class="flex flex-col gap-2">
+                <div class="flex flex-col gap-2 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
                     <a href="login.html" class="w-full bg-teal text-slate-950 py-2.5 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 hover:bg-tealAccent transition" onclick="toggleMobileMenu()">
                         <i class="fa-solid fa-right-to-bracket"></i> Sign In
                     </a>
@@ -4304,6 +4298,7 @@ function toggleMobileMenu() {
     }
 }
 window.toggleMobileMenu = toggleMobileMenu;
+
 // Carousel controls
 let currentSlide = 0;
 const totalSlides = 5;
