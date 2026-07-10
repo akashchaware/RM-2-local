@@ -154,25 +154,25 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         if (isAdmin || isCoordinator) {
             if (status === 'Pending') {
                 actions += `
-                    <button onclick="showAssignForm('${o.id}')" class="action-btn btn-assign">Assign Staff</button>
+                    <button onclick="showAssignForm('${orderId}')" class="action-btn btn-assign">Assign Staff</button>
                 `;
             }
             if (isCoordinator) {
                 if (status === 'Pending' || status === 'Technician Assigned' || status === 'RepairMaster Assigned') {
                     actions += `
-                        <button onclick="assignSelfAsTechnician('${o.id}')" class="action-btn btn-pickup">Take as Tech</button>
-                       <button onclick="assignSelfAsRepairMaster('${o.id}')" class="action-btn btn-diagnose">Take as Master</button>
+                        <button onclick="assignSelfAsTechnician('${orderId}')" class="action-btn btn-pickup">Take as Tech</button>
+                       <button onclick="assignSelfAsRepairMaster('${orderId}')" class="action-btn btn-diagnose">Take as Master</button>
                     `;
                 }
             }
             if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Diagnosis-Completed'].includes(status)) {
                 actions += `
-                    <button onclick="showQuotationForm('${o.id}', ${o.total_price || 0}, '${(o.custom_quote_parts || '').replace(/'/g, "\\'")}')" class="action-btn btn-quote">Manage Price</button>
+                    <button onclick="showQuotationForm('${orderId}', ${o.total_price || 0}, '${(o.custom_quote_parts || '').replace(/'/g, "\\'")}')" class="action-btn btn-quote">Manage Price</button>
                 `;
             }
             if (status === 'Ready-For-Delivery') {
                 actions += `
-                    <button onclick="showAssignDeliveryForm('${o.id}')" class="action-btn btn-assign">Assign Delivery Tech</button>
+                    <button onclick="showAssignDeliveryForm('${orderId}')" class="action-btn btn-assign">Assign Delivery Tech</button>
                 `;
             }
         }
@@ -192,11 +192,11 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     </p>
                     <div class="space-y-2">
                         ${steps.map((step, idx) => {
-                            const stepKey = `${o.id}-step-${idx}`;
+                            const stepKey = `${orderId}-step-${idx}`;
                             const checked = localStorage.getItem(stepKey) === 'true' ? 'checked' : '';
                             return `
                                 <label class="flex items-start gap-2.5 text-xs text-gray-300 cursor-pointer hover:text-white transition">
-                                    <input type="checkbox" onchange="localStorage.setItem('${stepKey}', this.checked); checkAllStepsCompleted('${o.id}')" ${checked} class="mt-0.5 accent-teal rounded"/>
+                                    <input type="checkbox" onchange="localStorage.setItem('${stepKey}', this.checked); checkAllStepsCompleted('${orderId}')" ${checked} class="mt-0.5 accent-teal rounded"/>
                                     <span>${step}</span>
                                 </label>
                             `;
@@ -205,19 +205,19 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                 </div>
             `;
             if (status === 'Technician Assigned') {
-                actions += `<button onclick="initiatePickup('${o.id}')" class="action-btn btn-pickup">Start Pickup</button>`;
+                actions += `<button onclick="initiatePickup('${orderId}')" class="action-btn btn-pickup">Start Pickup</button>`;
             } else if (status === 'Pickup-Pending') {
                 actions += `
                     <div class="flex items-center gap-1 mt-1">
-                        <input type="text" id="otp-${o.id}" placeholder="Pickup OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                        <button onclick="verifyPickup('${o.id}', document.getElementById('otp-${o.id}').value)" class="action-btn btn-verify">Verify Handover</button>
+                        <input type="text" id="otp-${orderId}" placeholder="Pickup OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
+                        <button onclick="verifyPickup('${orderId}', document.getElementById('otp-${orderId}').value)" class="action-btn btn-verify">Verify Handover</button>
                     </div>
                 `;
             } else if (status === 'Ready-For-Delivery') {
                 actions += `
                     <div class="flex items-center gap-1 mt-1">
-                        <input type="text" id="delivery-otp-${o.id}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
-                        <button onclick="closeTicket('${o.id}', document.getElementById('delivery-otp-${o.id}').value)" class="action-btn btn-verify">Verify Delivery</button>
+                        <input type="text" id="delivery-otp-${orderId}" placeholder="Handover OTP" class="otp-input p-1.5 rounded-lg text-xs w-24 border border-teal-500/20 bg-slate-900 text-white mr-2"/>
+                        <button onclick="closeTicket('${orderId}', document.getElementById('delivery-otp-${orderId}').value)" class="action-btn btn-verify">Verify Delivery</button>
                     </div>
                 `;
             }
@@ -226,14 +226,14 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         if (isRepairMaster && o.repairmaster_id === currentUser?.id) {
             if (status === 'With-RepairMaster') {
                 actions += `
-                    <button onclick="showDiagnosisForm('${o.id}')" class="action-btn btn-diagnose">Diagnose Logs</button>
-                    <button onclick="showAddPartForm('${o.id}')" class="action-btn btn-part">+ Add Part</button>
+                    <button onclick="showDiagnosisForm('${orderId}')" class="action-btn btn-diagnose">Diagnose Logs</button>
+                    <button onclick="showAddPartForm('${orderId}')" class="action-btn btn-part">+ Add Part</button>
                 `;
             } else if (status === 'Confirmed' || status === 'Under-Repair') {
                 actions += `
                     <div class="flex flex-col gap-1 items-end">
                         <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
-                        <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
+                        <button onclick="completeRepair('${orderId}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
                     </div>
                 `;
             }
@@ -245,8 +245,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     if (isClient) {
         if (status === 'Quotation-Sent') {
             actions += `
-                <button onclick="confirmQuotation('${o.id}')" class="action-btn btn-confirm">Accept Quote</button>
-                <button onclick="rejectQuotation('${o.id}')" class="action-btn btn-reject">Decline</button>
+                <button onclick="confirmQuotation('${orderId}')" class="action-btn btn-confirm">Accept Quote</button>
+                <button onclick="rejectQuotation('${orderId}')" class="action-btn btn-reject">Decline</button>
             `;
         } else if (status === 'Confirmed' || status === 'Under-Repair') {
             if (!o.payment_status || o.payment_status === 'Unpaid') {
@@ -254,8 +254,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     <div class="mt-2 space-y-2 text-left">
                         <span class="text-xs text-amber-400 font-bold block"><i class="fa-solid fa-credit-card"></i> Choose Payment Method:</span>
                         <div class="flex flex-wrap gap-2">
-                            <button onclick="payForRepair('${o.id}', ${o.grand_total || o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm py-1.5 px-3 text-[11px]"><i class="fa-solid fa-shield-halved"></i> 💳 Pay Now (₹${(o.grand_total || o.total_price || 0).toLocaleString('en-IN')})</button>
-                            <button onclick="selectCODPayment('${o.id}')" class="action-btn btn-pickup py-1.5 px-3 text-[11px]"><i class="fa-solid fa-hand-holding-dollar"></i> 💵 Confirm COD</button>
+                            <button onclick="payForRepair('${orderId}', ${o.grand_total || o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm py-1.5 px-3 text-[11px]"><i class="fa-solid fa-shield-halved"></i> 💳 Pay Now (₹${(o.grand_total || o.total_price || 0).toLocaleString('en-IN')})</button>
+                            <button onclick="selectCODPayment('${orderId}')" class="action-btn btn-pickup py-1.5 px-3 text-[11px]"><i class="fa-solid fa-hand-holding-dollar"></i> 💵 Confirm COD</button>
                         </div>
                     </div>
                 `;
@@ -278,7 +278,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
         } else if (status === 'Awaiting-Payment' || (status === 'Rejected' && (o.total_price || 0) > 0)) {
             const labelPay = status === 'Rejected' ? `Pay Rejection Fee (₹${(o.total_price || 0).toLocaleString('en-IN')})` : `💳 Pay ₹${(o.total_price || 0).toLocaleString('en-IN')}`;
             actions += `
-                <button onclick="payForRepair('${o.id}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
+                <button onclick="payForRepair('${orderId}', ${o.total_price || 0}, '${deviceName.replace(/'/g, "\\'")}')" class="action-btn btn-confirm">${labelPay}</button>
             `;
         } else if (status === 'Completed' || o.pickup_otp === 'VERIFIED') {
             // If they have not left a rating yet, allow writing a review!
@@ -291,8 +291,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                                 <button onclick="this.parentElement.setAttribute('data-rating', '${star}'); Array.from(this.parentElement.children).forEach((el, idx) => el.className = idx < ${star} ? 'text-amber-400' : 'text-gray-600')" class="text-gray-600 text-lg transition"><i class="fa-solid fa-star"></i></button>
                             `).join('')}
                         </div>
-                        <textarea id="review-text-${o.id}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
-                        <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${o.id}', parseInt(starVal), document.getElementById('review-text-${o.id}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
+                        <textarea id="review-text-${orderId}" placeholder="Any suggestions or feedback? (e.g. Excellent doorstep technician support in Wardha!)" class="w-full bg-slate-950 border border-slate-800 p-2 rounded-lg text-xs text-white outline-none mb-2" rows="2"></textarea>
+                        <button onclick="const starVal = this.parentElement.querySelector('[data-rating]')?.getAttribute('data-rating') || '5'; submitOrderReview('${orderId}', parseInt(starVal), document.getElementById('review-text-${orderId}').value)" class="bg-teal px-3 py-1.5 rounded-lg text-slate-950 hover:bg-teal-500 font-bold text-[10px] transition">Submit Review</button>
                     </div>
                 `;
             } else {
@@ -512,7 +512,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const borderClass = isMatched ? 'border-teal-500/20' : 'border-grayBorder/40';
 
    // ✅ Fallback order ID – use order_number if id is missing
-const orderId = o.id || o.order_number || 'unknown';
+const orderId = orderId || o.order_number || 'unknown';
 const isClickableCard = isCoordinator || isAdmin;
 // Only generate onclick if we have a valid ID
 const cardClickHandler = (isClickableCard && orderId !== 'unknown') 
@@ -560,13 +560,13 @@ const cursorClass = isClickableCard ? 'cursor-pointer hover:bg-slate-900/10 hove
                     ${quotationHtml}
                     ${otpNoticeHtml}
                     ${workflowHtml}
-                    <div id="inline-form-container-${o.id}"></div>
+                    <div id="inline-form-container-${orderId}"></div>
                 </div>
                 <div class="flex flex-col items-end gap-2">
                     ${isTechnician ? '' : `<span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>`}
-                    <div id="actions-${o.id}" class="flex flex-wrap gap-1 justify-end">
+                    <div id="actions-${orderId}" class="flex flex-wrap gap-1 justify-end">
                         ${actions}
-                        ${o.payment_status === 'Paid' ? `<button onclick="openInvoicePage('${o.id}')" class="action-btn btn-confirm bg-emerald-600 hover:bg-emerald-500 text-white font-bold my-1"><i class="fa-solid fa-file-invoice-dollar"></i> View Invoice</button>` : ''}
+                        ${o.payment_status === 'Paid' ? `<button onclick="openInvoicePage('${orderId}')" class="action-btn btn-confirm bg-emerald-600 hover:bg-emerald-500 text-white font-bold my-1"><i class="fa-solid fa-file-invoice-dollar"></i> View Invoice</button>` : ''}
                     </div>
                 </div>
             </div>
@@ -1544,7 +1544,7 @@ async function submitAssignDelivery(orderId) {
     await assignDeliveryTechnician(orderId, techId);
 }
 function showDiagnosisForm(orderId) {
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
     const currentDiag = order ? (order.diagnosis_notes || '') : '';
     const currentNotes = order ? (order.notes || '') : '';
     const currentPartsTotal = order ? (order.parts_total || 0) : 0;
@@ -1739,7 +1739,7 @@ async function submitRedesignedDiagnosis(orderId) {
         if (error) throw error;
 
         if (isRepairMaster) {
-            const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+            const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
             const devName = order ? (getDeviceName(order.device_id) !== 'Device' ? getDeviceName(order.device_id) : (order.device_other || 'Device')) : 'Device';
             await createAlert(orderId, `Bench diagnosis completed for ${devName}. Estimate review required.`, 'diagnosis_completed');
             showToast('📋 Lab diagnosis recommendation submitted to Coordinator!', 'success');
@@ -1791,7 +1791,7 @@ function serializeCustomQuoteParts(partsList) {
 }
 
 function showQuotationForm(orderId, basePrice, customPartsStr) {
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
     
     // Parse custom parts
     let partsList = parseCustomQuoteParts(customPartsStr);
@@ -2589,7 +2589,7 @@ async function loadDashboard() {
         const hasActiveFilter = !!(searchQuery || selectedStatus !== 'All' || selectedTechnician !== 'All' || filterStartDate || filterEndDate || (window.customStatFilter && window.customStatFilter !== 'All'));
 
         function isOrderMatching(o) {
-            if (window.singleOrderFilter && window.singleOrderFilter !== o.id) {
+            if (window.singleOrderFilter && window.singleOrderFilter !== orderId) {
                 return false;
             }
             let matchesSearch = true;
@@ -3675,7 +3675,7 @@ function generateInvoiceHtml(order) {
 }
 
 function openInvoicePage(orderId) {
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
     if (!order) {
         showToast('Invoice reference order not found.', 'error');
         return;
@@ -5484,15 +5484,15 @@ async function fetchAndRenderAlerts() {
     // Dynamic alerts from orders (only if order has a valid id)
     const orders = window.allFetchedOrders || [];
     orders.forEach(o => {
-        if (!o.id || o.id === 'undefined' || o.id === 'null') return; // skip invalid
+        if (!orderId || orderId === 'undefined' || orderId === 'null') return; // skip invalid
 
         const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
-        const isReadLocally = localStorage.getItem(`dyn-alert-read-${o.id}`) === 'true';
+        const isReadLocally = localStorage.getItem(`dyn-alert-read-${orderId}`) === 'true';
 
         if (o.status === 'Pending') {
             alerts.push({
-                id: `dyn-pending-${o.id}`,
-                order_id: o.id,
+                id: `dyn-pending-${orderId}`,
+                order_id: orderId,
                 message: `New Service Request: ${deviceName} needs staff assignment.`,
                 type: 'new_request',
                 is_read: isReadLocally,
@@ -5500,8 +5500,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Diagnosis-Completed') {
             alerts.push({
-                id: `dyn-diag-${o.id}`,
-                order_id: o.id,
+                id: `dyn-diag-${orderId}`,
+                order_id: orderId,
                 message: `Diagnosis Completed: ${deviceName} has repair recommendations. Review & quote.`,
                 type: 'diagnosis_completed',
                 is_read: isReadLocally,
@@ -5509,8 +5509,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Pickup-Pending' && o.pickup_otp) {
             alerts.push({
-                id: `dyn-pickup-${o.id}`,
-                order_id: o.id,
+                id: `dyn-pickup-${orderId}`,
+                order_id: orderId,
                 message: `Active Pickup: OTP generated for ${deviceName} verification.`,
                 type: 'pickup_pending',
                 is_read: isReadLocally,
@@ -5518,8 +5518,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Ready-For-Delivery' && o.pickup_otp) {
             alerts.push({
-                id: `dyn-delivery-${o.id}`,
-                order_id: o.id,
+                id: `dyn-delivery-${orderId}`,
+                order_id: orderId,
                 message: `Pending Dispatch: ${deviceName} is ready for delivery. Assign dispatcher.`,
                 type: 'ready_for_delivery',
                 is_read: isReadLocally,
@@ -5621,7 +5621,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
         return;
     }
 
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
+    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
     if (!order) {
         showToast('Order details sync reference not found.', 'error');
         return;
