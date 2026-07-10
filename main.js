@@ -1452,21 +1452,21 @@ async function submitAssignRoles(orderId) {
     const techId = techSelect.value;
     const masterId = masterSelect.value;
 
-    // Reject empty, null, or literal "undefined"
     if (!techId || !masterId || techId === 'undefined' || masterId === 'undefined') {
         showToast('Please select both a valid Technician and RepairMaster.', 'error');
         return;
     }
 
-    // Basic UUID format check (optional but helpful)
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(techId) || !uuidRegex.test(masterId)) {
         showToast('Invalid staff ID format. Please refresh and try again.', 'error');
         return;
     }
 
-    await (orderId, techId, masterId);
+    // ✅ FIX: actually call the assignment function
+    await assignOrderRoles(orderId, techId, masterId);
 }
+
 function showAssignDeliveryForm(orderId) {
     const techs = window.allTechnicians || [];
     
@@ -5546,7 +5546,7 @@ async function createAlert(orderId, message, type = 'system_alert') {
 }
 
 async function viewOrderDetails(orderId, alertId = null, event = null) {
-    // ✅ GUARD: Skip if clicked inside a button/input (prevents unwanted triggers)
+    // ✅ GUARD: Skip if clicked inside a button/input
     if (event && (event.target.tagName === 'BUTTON' || event.target.closest('button') || event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT')) {
         return;
     }
@@ -5563,7 +5563,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
         return;
     }
 
-    // ✅ VALIDATE alertId before trying to update Supabase
+    // ✅ VALIDATE alertId
     if (alertId) {
         if (alertId.startsWith('dyn-pending-') || alertId.startsWith('dyn-diag-') || alertId.startsWith('dyn-pickup-') || alertId.startsWith('dyn-delivery-')) {
             localStorage.setItem(`dyn-alert-read-${orderId}`, 'true');
@@ -5680,7 +5680,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
         `;
     }
 
-    // Build Payment & Billing HTML
+    // Payment & Billing
     const paymentMethod = order.payment_method || 'Pending Selection';
     const paymentStatus = order.payment_status || 'Unpaid';
     const invoiceNumber = order.invoice_number || 'Not Generated';
