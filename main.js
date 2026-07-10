@@ -511,9 +511,14 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const opacityClass = isMatched ? '' : 'opacity-40 hover:opacity-100 transition-opacity duration-300';
     const borderClass = isMatched ? 'border-teal-500/20' : 'border-grayBorder/40';
 
-    const isClickableCard = isCoordinator || isAdmin;
-    const cardClickHandler = isClickableCard ? `onclick="viewOrderDetails('${o.id}')"` : '';
-    const cursorClass = isClickableCard ? 'cursor-pointer hover:bg-slate-900/10 hover:shadow-lg hover:shadow-teal-500/5' : '';
+   // ✅ Fallback order ID – use order_number if id is missing
+const orderId = o.id || o.order_number || 'unknown';
+const isClickableCard = isCoordinator || isAdmin;
+// Only generate onclick if we have a valid ID
+const cardClickHandler = (isClickableCard && orderId !== 'unknown') 
+    ? `onclick="viewOrderDetails('${orderId}')"` 
+    : '';
+const cursorClass = isClickableCard ? 'cursor-pointer hover:bg-slate-900/10 hover:shadow-lg hover:shadow-teal-500/5' : '';
 
     return `
         <div ${cardClickHandler} class="order-card bg-navyBG/40 border ${borderClass} rounded-xl p-5 hover:border-teal-500/30 transition-all ${opacityClass} ${cursorClass}">
