@@ -20,7 +20,6 @@ function showToast(message, type = 'info') {
     console.log(`[Toast ${type.toUpperCase()}]: ${message}`);
     let t = document.getElementById('toast');
     if (!t) {
-        // Create toast element on the fly if not exists
         t = document.createElement('div');
         t.id = 'toast';
         t.className = 'fixed bottom-8 right-8 z-50 px-6 py-4 rounded-xl font-bold text-sm shadow-xl max-w-md pointer-events-none opacity-0 translate-y-8 transition-all duration-500';
@@ -148,7 +147,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const statusClass = 'status-' + status.replace(/\s/g, '-');
     const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
     const repairLabel = getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
-    // ✅ Correct fallback ID
+    // ✅ Use the UUID as the primary identifier
     const orderId = o.id || o.order_number || 'unknown';
 
     let actions = '';
