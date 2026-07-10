@@ -1348,7 +1348,7 @@ async function loadStaffLists() {
                 const roleName = ur.roles?.name?.toLowerCase() || '';
                 const roleId = parseInt(ur.role_id);
                 const user = users.find(u => u.id === ur.user_id);
-                if (user) {
+                if (user && user.id) { // ✅ Ensure user has an id
                     const displayName = user.name ? `${user.name} (${user.email})` : user.email;
                     const staffObj = { id: user.id, name: displayName, email: user.email };
                     if (roleName === 'technician' || roleId === 3) {
@@ -1359,7 +1359,7 @@ async function loadStaffLists() {
                 }
             });
             
-            // Combine with some fallbacks to guarantee non-empty lists in sandbox/demo
+            // Only use fallbacks if we got zero valid staff
             window.allTechnicians = techs.length > 0 ? techs : fallbackTechs;
             window.allRepairMasters = masters.length > 0 ? masters : fallbackMasters;
         } else {
@@ -1372,7 +1372,6 @@ async function loadStaffLists() {
         window.allRepairMasters = fallbackMasters;
     }
 }
-
 function closeAllDashboardModals() {
     const modals = document.querySelectorAll('.dashboard-modal');
     modals.forEach(m => m.remove());
