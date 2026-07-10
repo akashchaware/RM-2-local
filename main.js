@@ -5923,3 +5923,4 @@ window.clearSingleOrderFilter = clearSingleOrderFilter;
 window.selectCODPayment = selectCODPayment;
 window.confirmPaymentManual = confirmPaymentManual;
 window.openInvoicePage = openInvoicePage;
+window.handleSignIn = handleSignIn;
