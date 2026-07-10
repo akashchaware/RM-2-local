@@ -2036,10 +2036,15 @@ async function submitFinalizedQuotation(orderId) {
 async function assignOrderRoles(orderId, technicianId, repairmasterId) {
     if (!supabase) return;
 
-    // Validate UUIDs
+    // Reject literal "undefined" strings
+    if (technicianId === 'undefined' || repairmasterId === 'undefined' || !technicianId || !repairmasterId) {
+        showToast('Invalid staff selection. Please choose valid staff members.', 'error');
+        return;
+    }
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(technicianId) || !uuidRegex.test(repairmasterId)) {
-        showToast('Invalid staff UUID(s). Please select valid staff.', 'error');
+        showToast('Invalid staff ID format. Please refresh and try again.', 'error');
         return;
     }
 
