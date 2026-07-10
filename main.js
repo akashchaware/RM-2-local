@@ -2586,8 +2586,8 @@ async function loadDashboard() {
 
         const hasActiveFilter = !!(searchQuery || selectedStatus !== 'All' || selectedTechnician !== 'All' || filterStartDate || filterEndDate || (window.customStatFilter && window.customStatFilter !== 'All'));
 
-        function isOrderMatching(o) {
-            if (window.singleOrderFilter && window.singleOrderFilter !== orderId) {
+        function isOrderMatching(o) {if (window.singleOrderFilter && window.singleOrderFilter !== o.id) {
+            
                 return false;
             }
             let matchesSearch = true;
