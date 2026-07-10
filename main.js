@@ -4909,8 +4909,8 @@ const ROLE_TABS = {
         { id: 'inventory', label: 'Lab Inventory', icon: 'fa-boxes-stacked' },
         { id: 'map', label: 'Live Active Map', icon: 'fa-map-location-dot' },
         { id: 'cities', label: 'Cities Coverage', icon: 'fa-city' },
-        { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' }
-        { id: 'settings', label: '⚙️ Settings', icon: 'fa-sliders-h' }
+        { id: 'finances', label: 'Financial Ledgers', icon: 'fa-indian-rupee-sign' },
+        { id: 'settings', label: '⚙️ Settings', icon: 'fa-sliders-h' },
     ],
     technician: [
         { id: 'tickets', label: 'Diagnostic Workstation', icon: 'fa-laptop-code' },
