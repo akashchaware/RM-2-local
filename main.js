@@ -14,7 +14,7 @@ let allRepairTypes = [];
 let allParts = [];
 let currentUser = null;
 let currentRoles = [];
-window.diagnosisFee = parseFloat(localStorage.getItem('diagnosis_fee')) || 250;
+window.diagnosisFee = parseFloat(localStorage.getItem('diagnosis_fee')) || window.diagnosisFee || 250;
 
 // ─── TOAST NOTIFICATION ENGINE ───
 function showToast(message, type = 'info') {
@@ -459,7 +459,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                         <div class="bg-slate-900/40 border border-white/5 rounded-lg px-3 py-1.5 text-[11px] space-y-1">
                             <div class="flex justify-between text-gray-300 border-b border-white/5 pb-1">
                                 <span>🩺 Scientific Bench Diagnosis</span>
-                                <span class="font-semibold text-white">₹${(o.diagnosis_charge || 250).toLocaleString('en-IN')}</span>
+                                <span class="font-semibold text-white">₹${(o.diagnosis_charge || window.diagnosisFee || 250).toLocaleString('en-IN')}</span>
                             </div>
                             <div class="flex justify-between text-gray-300 pt-0.5">
                                 <span>🔧 Workmanship &amp; Labor</span>
@@ -844,7 +844,7 @@ async function calculateEstimate() {
             const price = 0;
             const labor = 0;
             const serviceFee = 150.00;
-            const diagnosisCharge = 250.00;
+            const diagnosisCharge = window.diagnosisFee || 250.00;
             const total = serviceFee + diagnosisCharge;
             
             if (surveyContainer) {
@@ -859,7 +859,7 @@ async function calculateEstimate() {
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Diagnosis Fee:</span>
-                            <span class="text-white font-bold">₹250.00</span>
+                            <span class="text-white font-bold">₹window.diagnosisFee || 250.00</span>
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Service / Labor Fee:</span>
@@ -888,7 +888,7 @@ async function calculateEstimate() {
             const price = 0;
             const labor = 0;
             const serviceFee = 100.00;
-            const diagnosisCharge = 250.00;
+            const diagnosisCharge = window.diagnosisFee || 250.00;
             const total = serviceFee + diagnosisCharge;
             
             if (surveyContainer) {
@@ -903,7 +903,7 @@ async function calculateEstimate() {
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Diagnosis Fee:</span>
-                            <span class="text-white font-bold">₹250.00</span>
+                            <span class="text-white font-bold">₹window.diagnosisFee || 250.00</span>
                         </div>
                         <div class="flex justify-between text-xs py-1 border-b border-white/5 pb-2">
                             <span class="text-slate-400">Service / Labor Fee:</span>
@@ -1013,8 +1013,8 @@ async function calculateEstimate() {
             
             if (partsTotalDisplay) partsTotalDisplay.textContent = '₹0.00';
             if (serviceFeeDisplay) serviceFeeDisplay.textContent = '₹0.00';
-            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹250.00';
-            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹250.00';
+            if (diagnosisChargeDisplay) diagnosisChargeDisplay.textContent = '₹window.diagnosisFee || 250.00';
+            if (totalPriceDisplay) totalPriceDisplay.textContent = '₹window.diagnosisFee || 250.00';
         }
     } catch (err) {
         console.error("Local records estimation calculation failed:", err);
@@ -1072,7 +1072,7 @@ function runCatalogFallbackCalculation() {
     if (offerClaimed) {
         serviceFee = serviceFee * 0.5; // Claim 50% discount on service
     }
-    const diagnosisCharge = 250.0;
+    const diagnosisCharge = window.diagnosisFee || 250.0;
     const totalEstimate = discountedParts + serviceFee + diagnosisCharge;
 
     const partsTotalDisplay = document.getElementById('partsTotalDisplay');
@@ -1250,17 +1250,19 @@ async function submitRequest(e) {
         const session = await supabase.auth.getSession();
         const user = session.data?.session?.user || null;
 
+        // ─── Use the live estimate from the form (already calculated) ───
         let partsTotalVal = 0;
         let serviceFeeVal = 150.00;
+        let diagnosisVal = window.diagnosisFee || 250;
         let totalEstimateVal = 400.00;
-        let diagnosisVal = 250.00;
 
         if (window._reqEstimate) {
             partsTotalVal = window._reqEstimate.partsTotal || 0;
             serviceFeeVal = window._reqEstimate.serviceFee || 0;
-            diagnosisVal = window._reqEstimate.diagnosisCharge || 250.00;
+            diagnosisVal = window._reqEstimate.diagnosisCharge || window.diagnosisFee || 250;
             totalEstimateVal = window._reqEstimate.total || 0;
         } else {
+            // Fallback calculation (only if window._reqEstimate is missing)
             let partsTotal = 0;
             if (modelSelect && repairSelect) {
                 const brandVal = brandSelect.value;
@@ -1283,9 +1285,11 @@ async function submitRequest(e) {
             }
             partsTotalVal = partsTotal * 0.9;
             serviceFeeVal = partsTotalVal > 0 ? (partsTotalVal * 0.15) : 150.00;
-            totalEstimateVal = partsTotalVal + serviceFeeVal + 250.00;
+            totalEstimateVal = partsTotalVal + serviceFeeVal + (window.diagnosisFee || 250);
+            diagnosisVal = window.diagnosisFee || 250;
         }
 
+        // ─── Build order object ───
         const orderData = {
             order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
             user_id: user?.id || null,
@@ -1309,29 +1313,42 @@ async function submitRequest(e) {
             created_at: new Date().toISOString()
         };
 
-        // Bypassing Supabase and storing locally as requested:
-        console.log("POST captured form data locally:", orderData);
-        let localOrders = [];
-        try {
-            localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-        } catch(e) {
-            console.error(e);
-        }
-        localOrders.push(orderData);
-        localStorage.setItem('local_orders', JSON.stringify(localOrders));
+        // ─── Insert into Supabase ───
+        const { data, error } = await supabase
+            .from('orders')
+            .insert([orderData])
+            .select();
 
-        const orderNumber = orderData.order_number;
+        if (error) throw error;
+
+        // ─── Optionally assign to a coordinator ───
+        const coordinatorId = await getCoordinatorId();
+        if (coordinatorId && data && data[0]) {
+            await supabase
+                .from('orders')
+                .update({ assigned_to: coordinatorId })
+                .eq('id', data[0].id);
+        }
+
+        const orderNumber = data && data[0] ? data[0].order_number : orderData.order_number;
+
+        // ─── Show success message ───
         const successDiv = document.getElementById('requestSuccess');
         if (successDiv) {
             successDiv.classList.remove('hidden');
             successDiv.innerHTML = `
                 <i class="fa-regular fa-circle-check mr-2"></i>
-                Request submitted successfully! Reference: <strong>#${orderNumber}</strong>. Our service coordinators will assign a technician to Wardha shortly.
+                Request submitted successfully! Reference: <strong>#${orderNumber}</strong>. Our service coordinators will assign a technician shortly.
             `;
         }
         e.target.reset();
         showToast('✅ Service request submitted!', 'success');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
+
+        // ─── Redirect to dashboard ───
+        setTimeout(() => {
+            window.location.href = 'dashboard.html';
+        }, 2000);
+
     } catch (err) {
         if (submitBtn) {
             submitBtn.disabled = false;
@@ -1514,10 +1531,14 @@ async function showAssignForm(orderId) {
 }
 window.showAssignForm = showAssignForm;
 
+// ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
 async function assignOrderRoles(orderId, technicianId, repairmasterId) {
-    if (!supabase) return;
+    if (!supabase) {
+        showToast('Supabase offline. Cannot assign roles.', 'error');
+        return;
+    }
 
-    // Validate orderId
+    // ✅ Validate orderId
     if (!orderId || orderId === 'undefined' || orderId === 'null') {
         showToast('Invalid order ID. Please refresh and try again.', 'error');
         return;
@@ -1538,7 +1559,7 @@ async function assignOrderRoles(orderId, technicianId, repairmasterId) {
                 showToast('Invalid order reference. Please refresh and try again.', 'error');
                 return;
             }
-            realOrderId = data.id; // Replace with actual UUID
+            realOrderId = data.id;
         } catch (err) {
             showToast('Error fetching order: ' + err.message, 'error');
             return;
@@ -1892,7 +1913,7 @@ function showQuotationForm(orderId, basePrice, customPartsStr) {
     // Store in global window for active editing
     window.editingQuotationParts[orderId] = partsList;
     window.editingQuotationServiceFee[orderId] = order ? (parseFloat(order.service_fee) || 100) : 100;
-    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || 250) : 250;
+    window.editingQuotationDiagnosisCharge[orderId] = order ? (parseFloat(order.diagnosis_charge) || window.diagnosisFee || 250) : window.diagnosisFee || 250;
     
     renderQuotationFormInlineEditable(orderId);
 }
@@ -2080,7 +2101,7 @@ async function submitFinalizedQuotation(orderId) {
     try {
         const partsList = window.editingQuotationParts[orderId] || [];
         const serviceFee = window.editingQuotationServiceFee[orderId] || 100;
-        const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 250;
+        const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || window.diagnosisFee || 250;
         
         // Separate parts into original vs additional to calculate parts_total
         const originalParts = partsList.filter(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
@@ -2127,72 +2148,57 @@ async function submitFinalizedQuotation(orderId) {
     }
 }
 
-// ─── 7. MULTI-ROLE TRANSITIONS & CUSTOM QUOTATION FLOW ───
-async function assignOrderRoles(orderId, technicianId, repairmasterId) {
-    try {
-        let localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-        const idx = localOrders.findIndex(o => o.id === orderId);
-        if (idx !== -1) {
-            localOrders[idx].technician_id = technicianId;
-            localOrders[idx].repairmaster_id = repairmasterId;
-            localOrders[idx].status = 'Technician Assigned';
-            localStorage.setItem('local_orders', JSON.stringify(localOrders));
-        }
-    } catch (e) {
-        console.error("Local storage assignment update error:", e);
-    }
 
-    if (supabase) {
-        try {
-            const { error } = await supabase
-                .from('orders')
-                .update({ technician_id: technicianId, repairmaster_id: repairmasterId, status: 'Technician Assigned' })
-                .eq('id', orderId);
-            if (error) throw error;
-            showToast('Roles assigned & notifications dispatched!', 'success');
-            loadDashboard();
-        } catch (err) {
-            showToast('Assignment error: ' + err.message, 'error');
-        }
-    } else {
-        showToast('Offline Mode: Roles assigned locally!', 'success');
-        loadDashboard();
-    }
-}
 
 async function assignDeliveryTechnician(orderId, techId) {
-    if (!techId) return;
-    const handoverOtp = Math.floor(1000 + Math.random() * 9000).toString(); // generate delivery OTP automatically
-    
-    try {
-        let localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-        const idx = localOrders.findIndex(o => o.id === orderId);
-        if (idx !== -1) {
-            localOrders[idx].technician_id = techId;
-            localOrders[idx].pickup_otp = handoverOtp;
-            localOrders[idx].status = 'Ready-For-Delivery';
-            localStorage.setItem('local_orders', JSON.stringify(localOrders));
-        }
-    } catch (e) {
-        console.error("Local storage assignment delivery error:", e);
+    if (!supabase) {
+        showToast('Supabase offline. Cannot assign delivery.', 'error');
+        return;
+    }
+    if (!techId) {
+        showToast('Please select a delivery technician.', 'error');
+        return;
     }
 
-    if (supabase) {
+    // ✅ Validate and resolve orderId to UUID if needed
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    let realOrderId = orderId;
+    if (!uuidRegex.test(orderId)) {
         try {
-            const { error } = await supabase.from('orders').update({
-                technician_id: techId,
-                pickup_otp: handoverOtp,
-                status: 'Ready-For-Delivery'
-            }).eq('id', orderId);
-            if (error) throw error;
-            showToast('🚚 Delivery Technician assigned successfully & Delivery OTP generated!', 'success');
-            loadDashboard();
+            const { data, error } = await supabase
+                .from('orders')
+                .select('id')
+                .eq('order_number', orderId)
+                .single();
+            if (error || !data) {
+                showToast('Invalid order reference. Please refresh and try again.', 'error');
+                return;
+            }
+            realOrderId = data.id;
         } catch (err) {
-            showToast('Assignment failed: ' + err.message, 'error');
+            showToast('Error fetching order: ' + err.message, 'error');
+            return;
         }
-    } else {
-        showToast('Offline Mode: Delivery Tech assigned locally!', 'success');
+    }
+
+    // Validate technician UUID
+    if (!uuidRegex.test(techId)) {
+        showToast('Invalid technician ID format.', 'error');
+        return;
+    }
+
+    const handoverOtp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
+    try {
+        const { error } = await supabase.from('orders').update({
+            technician_id: techId,
+            pickup_otp: handoverOtp,
+            status: 'Ready-For-Delivery'
+        }).eq('id', realOrderId);
+        if (error) throw error;
+        showToast(`🚚 Delivery OTP: ${handoverOtp} (Share with customer)`, 'success');
         loadDashboard();
+    } catch (err) {
+        showToast('Delivery assignment failed: ' + err.message, 'error');
     }
 }
 
@@ -2509,20 +2515,41 @@ async function loadDashboard() {
         }
     }
 
-    let orders = [];
+    // ─── Load real orders from Supabase ───
+let orders = [];
+if (supabase) {
     try {
-        orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-    } catch (e) {
-        console.error("Failed to parse local_orders from localStorage:", e);
+        // Build the query based on the user's role
+        let query = supabase.from('orders').select('*');
+        const activeRole = localStorage.getItem('activeRole') || 'customer';
+        const isAdmin = activeRole === 'admin';
+        const isCoordinator = activeRole === 'coordinator';
+        const isTechnician = activeRole === 'technician';
+        const isRepairMaster = activeRole === 'repairmaster';
+
+        if (isAdmin || isCoordinator) {
+            // Coordinators and admins see all orders
+        } else if (isTechnician) {
+            query = query.eq('technician_id', currentUser.id);
+        } else if (isRepairMaster) {
+            query = query.eq('repairmaster_id', currentUser.id);
+        } else {
+            // Customers see only their own orders
+            query = query.eq('user_id', currentUser.id);
+        }
+
+        const { data, error } = await query.order('created_at', { ascending: false });
+        if (error) throw error;
+        orders = data || [];
+    } catch (err) {
+        console.warn("Supabase fetch error:", err);
+        orders = [];
     }
-    if (orders.length === 0) {
-        orders = [
-            { id: 'm1', order_number: 'RM-REQ-VIVOV30', customer_name: 'Akash Chaware', customer_phone: '9876543210', customer_email: 'akash@example.com', device_other: 'Vivo V30 Pro', repair_other: 'Screen Replacement', parts_quality: 'Premium', total_price: 6300, status: 'Pending', created_at: new Date().toISOString() },
-            { id: 'm2', order_number: 'RM-REQ-IPHONE14', customer_name: 'Sneha Patil', customer_phone: '9123456789', customer_email: 'sneha@example.com', device_other: 'iPhone 14', repair_other: 'Battery Replacement', parts_quality: 'Standard', total_price: 3200, status: 'Completed', created_at: new Date(Date.now() - 86400000).toISOString() }
-        ];
-        localStorage.setItem('local_orders', JSON.stringify(orders));
-    }
-    orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+} else {
+    console.warn("Supabase not available");
+    orders = [];
+}
+// ✅ No mock orders – use real data only
 
     // Update stats counters
     const metricContainer = document.getElementById('metric-cards-container');
@@ -3727,7 +3754,7 @@ function generateInvoiceHtml(order) {
             
             <tr class="item">
                 <td>🩺 Scientific Bench Diagnosis</td>
-                <td>₹${(order.diagnosis_charge || 250).toLocaleString('en-IN')}</td>
+                <td>₹${(order.diagnosis_charge || window.diagnosisFee || 250).toLocaleString('en-IN')}</td>
             </tr>
             <tr class="item">
                 <td>🔧 Workmanship &amp; Labor</td>
@@ -4102,7 +4129,7 @@ function showRequestEstimate() {
     let partsPrice = 0;
     let laborPrice = 0;
     let serviceFee = 0;
-    let diagnosisCharge = 250;
+    let diagnosisCharge = window.diagnosisFee || 250;
     let total = 0;
     let discountedParts = 0;
 
@@ -4114,7 +4141,7 @@ function showRequestEstimate() {
         laborPrice = 0;
         discountedParts = 0;
         serviceFee = 150.00;
-        diagnosisCharge = 250.00;
+        diagnosisCharge = window.diagnosisFee || 250.00;
         total = serviceFee + diagnosisCharge;
     } else {
         const allParts = window.RECORDS || [];
@@ -4140,12 +4167,12 @@ function showRequestEstimate() {
             if (quality === 'premium') multiplier = 1.5;
             if (quality === 'compatible') multiplier = 0.7;
             partsPrice = 1000 * multiplier;
-            laborPrice = 250;
+            laborPrice = window.diagnosisFee || 250;
         }
 
         discountedParts = partsPrice * 0.9;
         serviceFee = (discountedParts * 0.15) + laborPrice;
-        diagnosisCharge = 250.00;
+        diagnosisCharge = window.diagnosisFee || 250.00;
         total = discountedParts + serviceFee + diagnosisCharge;
     }
 
