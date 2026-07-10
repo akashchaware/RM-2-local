@@ -2044,15 +2044,16 @@ async function submitFinalizedQuotation(orderId) {
 async function assignOrderRoles(orderId, technicianId, repairmasterId) {
     if (!supabase) return;
 
-    // Reject literal "undefined" strings
-    if (technicianId === 'undefined' || repairmasterId === 'undefined' || !technicianId || !repairmasterId) {
-        showToast('Invalid staff selection. Please choose valid staff members.', 'error');
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order ID. Please refresh and try again.', 'error');
         return;
     }
 
+    // Validate UUIDs
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(technicianId) || !uuidRegex.test(repairmasterId)) {
-        showToast('Invalid staff ID format. Please refresh and try again.', 'error');
+        showToast('Invalid staff UUID(s). Please select valid staff.', 'error');
         return;
     }
 
@@ -2063,6 +2064,7 @@ async function assignOrderRoles(orderId, technicianId, repairmasterId) {
             .eq('id', orderId);
         if (error) throw error;
         showToast('Roles assigned & notifications dispatched!', 'success');
+        closeAllDashboardModals();
         loadDashboard();
     } catch (err) {
         showToast('Assignment error: ' + err.message, 'error');
