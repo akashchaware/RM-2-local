@@ -5792,12 +5792,12 @@ async function viewOrderDetails(orderId, alertId = null, event =null) {
     let techNameDisplay = 'Not Assigned';
     let masterNameDisplay = 'Not Assigned';
     if (order.technician_id) {
-        const { data } = await supabase.from('users').select('name').eq('id', order.technician_id).single();
-        if (data) techName = data.name;
+    const { data } = await supabase.from('users').select('name').eq('id', order.technician_id).single();
+    if (data) techNameDisplay = data.name;
     }
     if (order.repairmaster_id) {
-        const { data } = await supabase.from('users').select('name').eq('id', order.repairmaster_id).single();
-        if (data) masterName = data.name;
+    const { data } = await supabase.from('users').select('name').eq('id', order.repairmaster_id).single();
+    if (data) masterNameDisplay = data.name;
     }
 
     // Resolve staff names from cache instead of showing raw UUIDs
@@ -6045,8 +6045,8 @@ async function viewOrderDetails(orderId, alertId = null, event =null) {
                 <div class="space-y-1.5">
                     <p>🔬 <strong>Diagnosis Notes:</strong> ${order.diagnosis_notes || 'Pending technician diagnosis.'}</p>
                     <p>📝 <strong>Fault Description:</strong> ${order.additional_notes || 'N/A'}</p>
-                    <p>🛠️ <strong>Assigned Tech:</strong> <span class="text-teal-300 font-semibold">${techName}</span></p>
-                    <p>🧪 <strong>Assigned Master:</strong> <span class="text-teal-300 font-semibold">${masterName}</span></p>
+                    <p>🛠️ <strong>Assigned Tech:</strong> <span class="text-gray-400">${techNameDisplay}</span></p>
+                    <p>🧪 <strong>Assigned Master:</strong> <span class="text-gray-400">${masterNameDisplay}</span></p>
                 </div>
             </div>
 
