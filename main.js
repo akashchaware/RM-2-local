@@ -1509,6 +1509,12 @@ function showAssignDeliveryForm(orderId) {
 }
 
 async function submitAssignDelivery(orderId) {
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
+        return;
+    }
+
     const techSelect = document.getElementById(`assign-delivery-tech-${orderId}`);
     if (!techSelect) return;
 
@@ -1527,7 +1533,6 @@ async function submitAssignDelivery(orderId) {
 
     await assignDeliveryTechnician(orderId, techId);
 }
-
 function showDiagnosisForm(orderId) {
     const order = (window.allFetchedOrders || []).find(o => o.id === orderId);
     const currentDiag = order ? (order.diagnosis_notes || '') : '';
@@ -2074,6 +2079,12 @@ async function assignOrderRoles(orderId, technicianId, repairmasterId) {
 async function assignDeliveryTechnician(orderId, techId) {
     if (!techId || !supabase) return;
 
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
+        return;
+    }
+
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(techId)) {
         showToast('Invalid technician ID format.', 'error');
@@ -2096,6 +2107,12 @@ async function assignDeliveryTechnician(orderId, techId) {
 }
 
 async function assignSelfAsTechnician(orderId) {
+    // ✅ Validate orderId
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+        showToast('Invalid order reference. Please refresh and try again.', 'error');
+        return;
+    }
+
     if (!currentUser || !currentUser.id) {
         showToast('You must be logged in to take this action.', 'error');
         return;
