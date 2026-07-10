@@ -148,6 +148,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const statusClass = 'status-' + status.replace(/\s/g, '-');
     const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
     const repairLabel = getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair');
+    // ✅ Correct fallback ID
+    const orderId = o.id || o.order_number || 'unknown';
 
     let actions = '';
     if (!isGuestMode) {
@@ -511,14 +513,11 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const opacityClass = isMatched ? '' : 'opacity-40 hover:opacity-100 transition-opacity duration-300';
     const borderClass = isMatched ? 'border-teal-500/20' : 'border-grayBorder/40';
 
-   // ✅ Fallback order ID – use order_number if id is missing
-const orderId = orderId || o.order_number || 'unknown';
-const isClickableCard = isCoordinator || isAdmin;
-// Only generate onclick if we have a valid ID
-const cardClickHandler = (isClickableCard && orderId !== 'unknown') 
-    ? `onclick="viewOrderDetails('${orderId}')"` 
-    : '';
-const cursorClass = isClickableCard ? 'cursor-pointer hover:bg-slate-900/10 hover:shadow-lg hover:shadow-teal-500/5' : '';
+    const isClickableCard = isCoordinator || isAdmin;
+    const cardClickHandler = (isClickableCard && orderId !== 'unknown') 
+        ? `onclick="viewOrderDetails('${orderId}')"` 
+        : '';
+    const cursorClass = isClickableCard ? 'cursor-pointer hover:bg-slate-900/10 hover:shadow-lg hover:shadow-teal-500/5' : '';
 
     return `
         <div ${cardClickHandler} class="order-card bg-navyBG/40 border ${borderClass} rounded-xl p-5 hover:border-teal-500/30 transition-all ${opacityClass} ${cursorClass}">
@@ -5484,15 +5483,15 @@ async function fetchAndRenderAlerts() {
     // Dynamic alerts from orders (only if order has a valid id)
     const orders = window.allFetchedOrders || [];
     orders.forEach(o => {
-        if (!orderId || orderId === 'undefined' || orderId === 'null') return; // skip invalid
-
+        const oid = o.id || o.order_number;
+        if (!oid || oid === 'undefined' || oid === 'null') return; // skip invalid
         const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
-        const isReadLocally = localStorage.getItem(`dyn-alert-read-${orderId}`) === 'true';
+        const isReadLocally = localStorage.getItem(`dyn-alert-read-${oid}`) === 'true';
 
         if (o.status === 'Pending') {
             alerts.push({
-                id: `dyn-pending-${orderId}`,
-                order_id: orderId,
+                id: `dyn-pending-${oid}`,
+                order_id: oid,
                 message: `New Service Request: ${deviceName} needs staff assignment.`,
                 type: 'new_request',
                 is_read: isReadLocally,
@@ -5500,8 +5499,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Diagnosis-Completed') {
             alerts.push({
-                id: `dyn-diag-${orderId}`,
-                order_id: orderId,
+                id: `dyn-diag-${oid}`,
+                order_id: oid,
                 message: `Diagnosis Completed: ${deviceName} has repair recommendations. Review & quote.`,
                 type: 'diagnosis_completed',
                 is_read: isReadLocally,
@@ -5509,8 +5508,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Pickup-Pending' && o.pickup_otp) {
             alerts.push({
-                id: `dyn-pickup-${orderId}`,
-                order_id: orderId,
+                id: `dyn-pickup-${oid}`,
+                order_id: oid,
                 message: `Active Pickup: OTP generated for ${deviceName} verification.`,
                 type: 'pickup_pending',
                 is_read: isReadLocally,
@@ -5518,8 +5517,8 @@ async function fetchAndRenderAlerts() {
             });
         } else if (o.status === 'Ready-For-Delivery' && o.pickup_otp) {
             alerts.push({
-                id: `dyn-delivery-${orderId}`,
-                order_id: orderId,
+                id: `dyn-delivery-${oid}`,
+                order_id: oid,
                 message: `Pending Dispatch: ${deviceName} is ready for delivery. Assign dispatcher.`,
                 type: 'ready_for_delivery',
                 is_read: isReadLocally,
@@ -5621,7 +5620,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
         return;
     }
 
-    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
     if (!order) {
         showToast('Order details sync reference not found.', 'error');
         return;
@@ -5693,8 +5692,8 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                     <p class="text-xs font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-user-plus text-teal mr-1"></i> Assignment Controls</p>
                     <p class="text-[11px] text-gray-400">This request is waiting to be dispatched or assigned to active bench staff.</p>
                     <div class="flex gap-2">
-                        <button onclick="showAssignForm('${order.id}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Staff</button>
-                        <button onclick="assignSelfAsTechnician('${order.id}'); closeOrderDetailModal();" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition">Take as Tech</button>
+                        <button onclick="showAssignForm('${orderId}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Staff</button>
+                        <button onclick="assignSelfAsTechnician('${orderId}'); closeOrderDetailModal();" class="bg-slate-800 hover:bg-slate-700 text-white font-bold px-4 py-2 rounded-xl text-xs transition">Take as Tech</button>
                     </div>
                 </div>
             `;
@@ -5708,7 +5707,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                         <p>💬 <strong>Advice to Coordinator:</strong> ${order.notes || 'N/A'}</p>
                         <p>💰 <strong>Recommended Total:</strong> <span class="text-teal font-extrabold">₹${(order.total_price || 0).toLocaleString('en-IN')}</span></p>
                     </div>
-                    <button onclick="showQuotationForm('${order.id}', ${order.total_price || 0}, '${(order.custom_quote_parts || '').replace(/'/g, "\\'") || ''}'); closeOrderDetailModal();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">✏️ Adjust Pricing &amp; Send Quotation</button>
+                    <button onclick="showQuotationForm('${orderId}', ${order.total_price || 0}, '${(order.custom_quote_parts || '').replace(/'/g, "\\'") || ''}'); closeOrderDetailModal();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">✏️ Adjust Pricing &amp; Send Quotation</button>
                 </div>
             `;
         } else if (order.status === 'Ready-For-Delivery') {
@@ -5716,7 +5715,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                 <div class="p-4 bg-slate-950/60 border border-slate-800 rounded-2xl space-y-3">
                     <p class="text-xs font-bold text-white uppercase tracking-wider"><i class="fa-solid fa-truck-ramp-box text-teal mr-1"></i> Dispatch Courier Controls</p>
                     <p class="text-[11px] text-gray-400">Repair successfully fixed. Ready for regional delivery handover.</p>
-                    <button onclick="showAssignDeliveryForm('${order.id}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Delivery Tech</button>
+                    <button onclick="showAssignDeliveryForm('${orderId}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Delivery Tech</button>
                 </div>
             `;
         }
@@ -5760,7 +5759,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
     if (isCoordinator && paymentStatus !== 'Paid' && (paymentMethod === 'COD' || paymentStatus === 'Pending COD Confirmation' || paymentMethod === 'Online' || paymentStatus === 'Unpaid')) {
         confirmBtnHtml = `
             <div class="mt-3">
-                <button onclick="confirmPaymentManual('${order.id}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition">
+                <button onclick="confirmPaymentManual('${orderId}')" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2 rounded-xl text-xs transition">
                     💵 Confirm Payment &amp; Mark Paid
                 </button>
             </div>
@@ -5793,7 +5792,7 @@ async function viewOrderDetails(orderId, alertId = null, event = null) {
                 </div>
                 ${paymentStatus === 'Paid' ? `
                     <div class="pt-2">
-                        <button onclick="openInvoicePage('${order.id}')" class="w-full bg-slate-800 hover:bg-slate-750 text-teal-300 border border-teal-500/20 font-bold py-1.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
+                        <button onclick="openInvoicePage('${orderId}')" class="w-full bg-slate-800 hover:bg-slate-750 text-teal-300 border border-teal-500/20 font-bold py-1.5 rounded-xl text-xs transition flex items-center justify-center gap-1.5">
                             <i class="fa-solid fa-file-invoice-dollar"></i> View/Print Invoice
                         </button>
                     </div>
