@@ -1257,9 +1257,10 @@ async function submitRequest(e) {
 let insertedOrder = null;
 
 // Set the ID to the order_number (since we changed the column to text)
+// ─── SAVE ORDER TO SUPABASE (if logged in) & LOCAL STORAGE ───
 const orderDataWithId = {
     ...orderData,
-    id: orderData.order_number   // Primary key = RM-REQ-XXXX
+    id: orderData.order_number
 };
 
 if (supabase && currentUser) {
@@ -1267,31 +1268,24 @@ if (supabase && currentUser) {
         const { data, error } = await supabase
             .from('orders')
             .insert([orderDataWithId])
-            .select();   // Returns the inserted row
-
+            .select();
         if (error) throw error;
         if (data && data.length > 0) {
-            insertedOrder = data[0];
-            // Also store in localStorage for offline fallback
-            storeOrderLocally(insertedOrder);
+            storeOrderLocally(data[0]);
         }
         showToast('✅ Service request submitted to database!', 'success');
     } catch (err) {
         console.warn('Supabase insert failed, storing locally only:', err);
-        // Fallback: save locally
         storeOrderLocally(orderDataWithId);
         showToast('⚠️ Saved locally (offline mode).', 'warning');
     }
 } else {
-    // Not logged in or no Supabase – store locally
     storeOrderLocally(orderDataWithId);
     showToast('✅ Service request saved locally!', 'success');
 }
 
-// Helper function to store in localStorage (avoids duplicates)
 function storeOrderLocally(order) {
     let localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-    // Avoid duplicates (check by order_number)
     const exists = localOrders.some(o => o.order_number === order.order_number);
     if (!exists) {
         localOrders.push(order);
@@ -1299,6 +1293,7 @@ function storeOrderLocally(order) {
     }
 }
 
+// ─── SUCCESS MESSAGE, RESET, REDIRECT (ONLY ONCE) ───
 const orderNumber = orderData.order_number;
 const successDiv = document.getElementById('requestSuccess');
 if (successDiv) {
@@ -1312,17 +1307,6 @@ e.target.reset();
 setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
 
 
-        const successDiv = document.getElementById('requestSuccess');
-        if (successDiv) {
-            successDiv.classList.remove('hidden');
-            successDiv.innerHTML = `
-                <i class="fa-regular fa-circle-check mr-2"></i>
-                Request submitted successfully! Reference: <strong>#${orderNumber}</strong>. Our service coordinators will assign a technician to Wardha shortly.
-            `;
-        }
-        e.target.reset();
-        showToast('✅ Service request submitted!', 'success');
-        setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
     } catch (err) {
         showToast('❌ Failed to submit: ' + err.message, 'error');
     }
