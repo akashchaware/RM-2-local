@@ -1229,6 +1229,7 @@ async function submitRequest(e) {
             totalEstimateVal = partsTotalVal + serviceFeeVal + 250.00;
         }
 
+        
         const orderData = {
             order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
             user_id: user?.id || null,
