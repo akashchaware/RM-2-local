@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     styleEl.id = 'global-brand-logo-styles';
     styleEl.innerHTML = `
         .rm-logo {
-            background-image: url('brand-logo-circular.jpg') !important;
+            background-image: url('https://mpcnfrshpgcpmrgledwy.supabase.co/storage/v1/object/public/RequestBucket/brand-logo.jpg.png') !important;
             background-size: cover !important;
             background-position: center !important;
             background-repeat: no-repeat !important;
