@@ -170,6 +170,8 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
             case 'Confirmed':
             case 'Under-Repair':
                 return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
+            case 'Quality-Check':
+                return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
             case 'Ready-For-Delivery':
             case 'Delivery-In-Progress':
                 return 'bg-pink-500/10 text-pink-400 border border-pink-500/20';
@@ -209,6 +211,11 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
             if (status === 'Ready-For-Delivery') {
                 actions += `
                     <button onclick="showAssignDeliveryForm('${o.id}')" class="action-btn btn-assign">Assign Delivery Tech</button>
+                `;
+            }
+            if (status === 'Quality-Check') {
+                actions += `
+                    <button onclick="submitQualityCheck('${o.id}')" class="action-btn btn-confirm py-1.5 px-3.5"><i class="fa-solid fa-clipboard-check mr-1"></i> Pass Quality Check</button>
                 `;
             }
         }
@@ -265,11 +272,23 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     <button onclick="showDiagnosisForm('${o.id}')" class="action-btn btn-diagnose">Diagnose Logs</button>
                     <button onclick="showAddPartForm('${o.id}')" class="action-btn btn-part">+ Add Part</button>
                 `;
-            } else if (status === 'Confirmed' || status === 'Under-Repair') {
+            } else if (status === 'Confirmed') {
+                actions += `
+                    <div class="flex flex-col gap-1 items-end">
+                        <button onclick="startRepairWork('${o.id}')" class="action-btn btn-confirm py-1 px-3 text-[11px]"><i class="fa-solid fa-play mr-1"></i> Start Repair Work</button>
+                    </div>
+                `;
+            } else if (status === 'Under-Repair') {
                 actions += `
                     <div class="flex flex-col gap-1 items-end">
                         <span class="text-xs text-emerald-400 font-bold"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Under Active Work</span>
-                        <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]">Finish Repair</button>
+                        <button onclick="completeRepair('${o.id}')" class="action-btn btn-confirm py-1 px-3 mt-1 text-[11px]"><i class="fa-solid fa-circle-check mr-1"></i> Finish Repair</button>
+                    </div>
+                `;
+            } else if (status === 'Quality-Check') {
+                actions += `
+                    <div class="flex flex-col gap-1 items-end">
+                        <span class="text-[11px] text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 rounded px-2 py-0.5"><i class="fa-solid fa-magnifying-glass-chart mr-1 animate-pulse"></i> Quality-Check Pending</span>
                     </div>
                 `;
             }
@@ -489,13 +508,13 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     if (isClient) {
         const steps = [
             { name: 'Placed', active: true },
-            { name: 'Assigned', active: ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-            { name: 'Pickup', active: ['Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-            { name: 'Lab Diagnosed', active: ['With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-            { name: 'Quoted', active: ['Quotation-Sent', 'Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-            { name: 'Repairing', active: ['Confirmed', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed'].includes(status) },
-            { name: 'Paid', active: ['Ready-For-Delivery', 'Completed'].includes(status) },
-            { name: 'Delivered', active: ['Completed'].includes(status) }
+            { name: 'Assigned', active: ['Technician Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Under-Repair', 'Quality-Check', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed', 'Delivered'].includes(status) },
+            { name: 'Pickup', active: ['Pickup-Pending', 'With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Under-Repair', 'Quality-Check', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed', 'Delivered'].includes(status) },
+            { name: 'Lab Diagnosed', active: ['With-RepairMaster', 'Quotation-Sent', 'Confirmed', 'Under-Repair', 'Quality-Check', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed', 'Delivered'].includes(status) },
+            { name: 'Quoted', active: ['Quotation-Sent', 'Confirmed', 'Under-Repair', 'Quality-Check', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed', 'Delivered'].includes(status) },
+            { name: 'Repairing', active: ['Confirmed', 'Under-Repair', 'Quality-Check', 'Awaiting-Payment', 'Ready-For-Delivery', 'Completed', 'Delivered'].includes(status) },
+            { name: 'Paid', active: ['Ready-For-Delivery', 'Completed', 'Delivered'].includes(status) },
+            { name: 'Delivered', active: ['Completed', 'Delivered'].includes(status) }
         ];
         workflowHtml = `
             <div class="mt-4 border-t border-grayBorder pt-3">
@@ -2155,7 +2174,7 @@ async function submitFinalizedQuotation(orderId) {
                 localOrders[idx].total_price = liveTotal;
                 localOrders[idx].custom_quote_parts = customPartsStr;
                 localOrders[idx].status = 'Quotation-Sent';
-                localOrders[idx].invoice_number = invoiceNum;
+                localOrders[idx].invoice_number = null;
                 localOrders[idx].tax_amount = taxAmount;
                 localOrders[idx].platform_fee = platformFee;
                 localOrders[idx].grand_total = grandTotal;
@@ -2175,7 +2194,7 @@ async function submitFinalizedQuotation(orderId) {
                     total_price: liveTotal,
                     custom_quote_parts: customPartsStr,
                     status: 'Quotation-Sent',
-                    invoice_number: invoiceNum,
+                    invoice_number: null,
                     tax_amount: taxAmount,
                     platform_fee: platformFee,
                     grand_total: grandTotal
@@ -2427,7 +2446,7 @@ async function sendQuotation(orderId) {
             .update({
                 total_price: finalizedTotal,
                 status: 'Quotation-Sent',
-                invoice_number: invoiceNum,
+                invoice_number: null,
                 tax_amount: taxAmount,
                 platform_fee: platformFee,
                 grand_total: grandTotal
@@ -2442,6 +2461,7 @@ async function sendQuotation(orderId) {
 }
 
 async function confirmQuotation(orderId) {
+    const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
     try {
         // Save locally first
         try {
@@ -2449,6 +2469,7 @@ async function confirmQuotation(orderId) {
             const idx = localOrders.findIndex(o => String(o.id) === String(orderId));
             if (idx !== -1) {
                 localOrders[idx].status = 'Confirmed';
+                localOrders[idx].invoice_number = invoiceNum;
                 localStorage.setItem('local_orders', JSON.stringify(localOrders));
             }
         } catch (e) {
@@ -2456,11 +2477,14 @@ async function confirmQuotation(orderId) {
         }
 
         if (supabase) {
-            const { error } = await supabase.from('orders').update({ status: 'Confirmed' }).eq('id', orderId);
+            const { error } = await supabase.from('orders').update({ 
+                status: 'Confirmed', 
+                invoice_number: invoiceNum 
+            }).eq('id', orderId);
             if (error) throw error;
-            showToast('✅ Quotation approved! Repair work is starting.', 'success');
+            showToast('✅ Quotation approved! Invoice Generated & Repair work is scheduled.', 'success');
         } else {
-            showToast('Offline Mode: Quotation approved locally! Repair starting.', 'success');
+            showToast('Offline Mode: Quotation approved locally! Invoice Generated.', 'success');
         }
         loadDashboard();
     } catch (err) {
@@ -2695,8 +2719,8 @@ async function loadDashboard() {
         if (isRepairMaster) {
             const countNew = orders.filter(o => ['New', 'Pending'].includes(o.status)).length;
             const countDiagnosis = orders.filter(o => ['With-RepairMaster', 'Diagnosis-Pending'].includes(o.status)).length;
-            const countRepair = orders.filter(o => ['Repair-In-Progress', 'Confirmed', 'Under-Repair'].includes(o.status)).length;
-            const countComplete = orders.filter(o => ['Repair-Completed', 'Completed'].includes(o.status)).length;
+            const countRepair = orders.filter(o => ['Repair-In-Progress', 'Confirmed', 'Under-Repair', 'Quality-Check'].includes(o.status)).length;
+            const countComplete = orders.filter(o => ['Repair-Completed', 'Completed', 'Ready-For-Delivery'].includes(o.status)).length;
 
             const cur = window.customStatFilter || 'All';
             metricContainer.innerHTML = `
@@ -2837,9 +2861,9 @@ async function loadDashboard() {
                 } else if (selectedStatus === 'PendingAction') {
                     matchesStatus = ['Pending', 'Quotation-Sent'].includes(o.status);
                 } else if (selectedStatus === 'Active') {
-                    matchesStatus = ['Technician Assigned', 'Pickup-Pending', 'Confirmed', 'With-RepairMaster', 'Quotation-Sent', 'Awaiting-Payment', 'Under-Repair'].includes(o.status);
+                    matchesStatus = ['Technician Assigned', 'Pickup-Pending', 'Confirmed', 'With-RepairMaster', 'Quotation-Sent', 'Awaiting-Payment', 'Under-Repair', 'Quality-Check'].includes(o.status);
                 } else if (selectedStatus === 'Repair') {
-                    matchesStatus = o.status === 'With-RepairMaster' || o.status === 'Confirmed' || o.status === 'Under-Repair';
+                    matchesStatus = o.status === 'With-RepairMaster' || o.status === 'Confirmed' || o.status === 'Under-Repair' || o.status === 'Quality-Check';
                 } else if (selectedStatus === 'Delivery') {
                     matchesStatus = o.status === 'Ready-For-Delivery';
                 } else if (selectedStatus === 'Closed') {
@@ -2873,9 +2897,9 @@ async function loadDashboard() {
                     } else if (window.customStatFilter === 'Diagnosis') {
                         matchesStatCard = ['With-RepairMaster', 'Diagnosis-Pending'].includes(o.status);
                     } else if (window.customStatFilter === 'Repair') {
-                        matchesStatCard = ['Repair-In-Progress', 'Confirmed', 'Under-Repair'].includes(o.status);
+                        matchesStatCard = ['Repair-In-Progress', 'Confirmed', 'Under-Repair', 'Quality-Check'].includes(o.status);
                     } else if (window.customStatFilter === 'Complete') {
-                        matchesStatCard = ['Repair-Completed', 'Completed'].includes(o.status);
+                        matchesStatCard = ['Repair-Completed', 'Completed', 'Ready-For-Delivery'].includes(o.status);
                     }
                 } else if (activeRole === 'technician') {
                     if (window.customStatFilter === 'New') {
@@ -3629,17 +3653,87 @@ function switchActiveRole(newRole) {
 window.switchActiveRole = switchActiveRole;
 
 async function completeRepair(orderId) {
-    if (!supabase) return;
     try {
-        // Change status to 'Ready-For-Delivery' instead of 'Completed' to bypass billing and payment
-        const { error } = await supabase.from('orders').update({ status: 'Ready-For-Delivery' }).eq('id', orderId);
-        if (error) throw error;
-        showToast('🎉 Repair completed! Bypassed billing & payment. Coordinator can now assign a delivery technician.', 'success');
+        // Save locally first
+        try {
+            let localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+            const idx = localOrders.findIndex(o => String(o.id) === String(orderId));
+            if (idx !== -1) {
+                localOrders[idx].status = 'Quality-Check';
+                localStorage.setItem('local_orders', JSON.stringify(localOrders));
+            }
+        } catch (e) {
+            console.error("Local save error in completeRepair:", e);
+        }
+
+        if (supabase) {
+            const { error } = await supabase.from('orders').update({ status: 'Quality-Check' }).eq('id', orderId);
+            if (error) throw error;
+            showToast('🎉 Repair completed! Device sent for Coordinator Quality Check & Verification.', 'success');
+        } else {
+            showToast('Offline Mode: Repair completed locally! Sent for Quality Check.', 'success');
+        }
         loadDashboard();
     } catch (err) {
         showToast('Failed to complete repair: ' + err.message, 'error');
     }
 }
+
+async function startRepairWork(orderId) {
+    try {
+        // Save locally first
+        try {
+            let localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+            const idx = localOrders.findIndex(o => String(o.id) === String(orderId));
+            if (idx !== -1) {
+                localOrders[idx].status = 'Under-Repair';
+                localStorage.setItem('local_orders', JSON.stringify(localOrders));
+            }
+        } catch (e) {
+            console.error("Local save error in startRepairWork:", e);
+        }
+
+        if (supabase) {
+            const { error } = await supabase.from('orders').update({ status: 'Under-Repair' }).eq('id', orderId);
+            if (error) throw error;
+            showToast('🔧 Work started! Device is now under active laboratory repair.', 'success');
+        } else {
+            showToast('Offline Mode: Work started locally!', 'success');
+        }
+        loadDashboard();
+    } catch (err) {
+        showToast('Start repair error: ' + err.message, 'error');
+    }
+}
+window.startRepairWork = startRepairWork;
+
+async function submitQualityCheck(orderId) {
+    try {
+        // Save locally first
+        try {
+            let localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+            const idx = localOrders.findIndex(o => String(o.id) === String(orderId));
+            if (idx !== -1) {
+                localOrders[idx].status = 'Ready-For-Delivery';
+                localStorage.setItem('local_orders', JSON.stringify(localOrders));
+            }
+        } catch (e) {
+            console.error("Local save error in submitQualityCheck:", e);
+        }
+
+        if (supabase) {
+            const { error } = await supabase.from('orders').update({ status: 'Ready-For-Delivery' }).eq('id', orderId);
+            if (error) throw error;
+            showToast('✅ Quality Check Approved! Device marked ready for delivery dispatch.', 'success');
+        } else {
+            showToast('Offline Mode: Quality Check Approved locally!', 'success');
+        }
+        loadDashboard();
+    } catch (err) {
+        showToast('Quality check error: ' + err.message, 'error');
+    }
+}
+window.submitQualityCheck = submitQualityCheck;
 
 async function payForRepair(orderId, amount, deviceName) {
     // Show a premium payment confirmation gateway popup!
@@ -5912,6 +6006,15 @@ async function fetchAndRenderAlerts() {
                     is_read: isReadLocally,
                     created_at: o.created_at
                 });
+            } else if (o.status === 'Quality-Check') {
+                alerts.push({
+                    id: `dyn-qc-${o.id}`,
+                    order_id: o.id,
+                    message: `Quality Check Pending: ${deviceName} needs coordinator inspection.`,
+                    type: 'diagnosis_completed',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
             }
         } else if (activeRole === 'technician' && currentUser && String(o.technician_id) === String(currentUser.id)) {
             if (o.status === 'Technician Assigned') {
@@ -5952,12 +6055,30 @@ async function fetchAndRenderAlerts() {
                     is_read: isReadLocally,
                     created_at: o.created_at
                 });
-            } else if (o.status === 'Confirmed' || o.status === 'Under-Repair') {
+            } else if (o.status === 'Confirmed') {
+                alerts.push({
+                    id: `dyn-master-conf-${o.id}`,
+                    order_id: o.id,
+                    message: `Quotation Approved: Start active repair work on ${deviceName}.`,
+                    type: 'new_request',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Under-Repair') {
                 alerts.push({
                     id: `dyn-master-work-${o.id}`,
                     order_id: o.id,
                     message: `Active Repair: Lab work approved for ${deviceName}. Complete post-repair testing.`,
                     type: 'new_request',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Quality-Check') {
+                alerts.push({
+                    id: `dyn-master-qc-${o.id}`,
+                    order_id: o.id,
+                    message: `Quality Check: ${deviceName} completed. Awaiting coordinator approval.`,
+                    type: 'diagnosis_completed',
                     is_read: isReadLocally,
                     created_at: o.created_at
                 });
@@ -5981,12 +6102,30 @@ async function fetchAndRenderAlerts() {
                     is_read: isReadLocally,
                     created_at: o.created_at
                 });
-            } else if (o.status === 'Confirmed' || o.status === 'Under-Repair') {
+            } else if (o.status === 'Confirmed') {
                 alerts.push({
-                    id: `dyn-cust-repair-${o.id}`,
+                    id: `dyn-cust-repair-conf-${o.id}`,
                     order_id: o.id,
-                    message: `Progress: Your ${deviceName} has started active lab repair work.`,
+                    message: `Approved: Quotation accepted! Your ${deviceName} is scheduled for active repair bench work.`,
                     type: 'new_request',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Under-Repair') {
+                alerts.push({
+                    id: `dyn-cust-repair-active-${o.id}`,
+                    order_id: o.id,
+                    message: `In Progress: Your ${deviceName} has started active lab repair work.`,
+                    type: 'new_request',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Quality-Check') {
+                alerts.push({
+                    id: `dyn-cust-qc-${o.id}`,
+                    order_id: o.id,
+                    message: `Quality Check: Your ${deviceName} repair is completed. Now undergoing multi-point quality testing.`,
+                    type: 'diagnosis_completed',
                     is_read: isReadLocally,
                     created_at: o.created_at
                 });
@@ -6196,6 +6335,14 @@ async function viewOrderDetails(orderId, alertId = null) {
                     <button onclick="showAssignDeliveryForm('${order.id}'); closeOrderDetailModal();" class="bg-teal hover:bg-teal-500 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs transition">Assign Delivery Tech</button>
                 </div>
             `;
+        } else if (order.status === 'Quality-Check') {
+            actionPanelHtml = `
+                <div class="p-4 bg-purple-500/5 border border-purple-500/20 rounded-2xl space-y-3">
+                    <p class="text-xs font-bold text-purple-400 uppercase tracking-wider"><i class="fa-solid fa-clipboard-check mr-1"></i> Quality Check Pending</p>
+                    <p class="text-[11px] text-gray-300">Repair work has been completed by the bench RepairMaster. Please approve the quality check of the device to prepare it for delivery dispatch.</p>
+                    <button onclick="submitQualityCheck('${order.id}'); closeOrderDetailModal();" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 rounded-xl text-xs transition"><i class="fa-solid fa-clipboard-check mr-1"></i> Approve Quality Check &amp; Pass</button>
+                </div>
+            `;
         }
     }
 
@@ -6322,6 +6469,7 @@ async function viewOrderDetails(orderId, alertId = null) {
                                 case 'Quotation-Sent': return 'bg-orange-500/10 text-orange-400 border border-orange-500/20';
                                 case 'Confirmed':
                                 case 'Under-Repair': return 'bg-cyan-500/10 text-cyan-400 border border-cyan-500/20';
+                                case 'Quality-Check': return 'bg-purple-500/10 text-purple-400 border border-purple-500/20';
                                 case 'Ready-For-Delivery':
                                 case 'Delivery-In-Progress': return 'bg-pink-500/10 text-pink-400 border border-pink-500/20';
                                 case 'Completed':
