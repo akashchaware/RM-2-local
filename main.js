@@ -1908,21 +1908,28 @@ function showQuotationForm(orderId, basePrice = null, customPartsStr = null) {
     if (order && order.parts_quality === 'premium') qualityMultiplier = 1.4;
     else if (order && order.parts_quality === 'budget') qualityMultiplier = 0.7;
     
-    // If empty, pre-populate with original parts
-    if (partsList.length === 0 && order) {
+    // Pre-populate with original parts if they are not already listed
+    const hasOriginal = partsList.some(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
+    if (!hasOriginal && order) {
         const originalDbParts = (window.allParts || []).filter(p => String(p.device_id) === String(order.device_id) && String(p.repair_type_id) === String(order.repair_type_id));
         if (originalDbParts.length > 0) {
+            // Add original parts to the beginning of the list
             originalDbParts.forEach(p => {
-                partsList.push({
+                partsList.unshift({
                     name: `[Original] ${p.name}`,
                     price: Math.round(p.price * qualityMultiplier * 0.9)
                 });
             });
         } else if (order.parts_total > 0) {
-            partsList.push({
-                name: `[Original] Estimated Spare Components`,
-                price: parseFloat(order.parts_total) || 0
-            });
+            // Subtract additional parts prices from total parts_total to get original estimate parts price
+            const additionalPartsSum = partsList.filter(p => !p.name.startsWith('[Original]') && !p.name.startsWith('[Old]')).reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+            const origPrice = Math.max(0, (parseFloat(order.parts_total) || 0) - additionalPartsSum);
+            if (origPrice > 0) {
+                partsList.unshift({
+                    name: `[Original] Estimated Spare Components`,
+                    price: origPrice
+                });
+            }
         }
     }
     
@@ -2038,7 +2045,7 @@ function renderQuotationFormInlineEditable(orderId) {
             
             <div class="flex items-center justify-between bg-teal-500/5 border border-teal-500/10 p-3 rounded-lg">
                 <div class="text-xs font-semibold text-gray-300">Finalized Customer Quote Total:</div>
-                <div class="text-sm font-black text-emerald-400">₹${liveTotal.toLocaleString('en-IN')}</div>
+                <div class="text-sm font-black text-emerald-400" id="quote-live-total-${orderId}">₹${liveTotal.toLocaleString('en-IN')}</div>
             </div>
             
             <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
@@ -2053,11 +2060,25 @@ function renderQuotationFormInlineEditable(orderId) {
     createDashboardModal(`quoteModal-${orderId}`, contentHtml, 'max-w-xl');
 }
 
+function updateQuoteLiveTotal(orderId) {
+    const partsList = window.editingQuotationParts[orderId] || [];
+    const serviceFee = window.editingQuotationServiceFee[orderId] || 0;
+    const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 0;
+    
+    const partsSum = partsList.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+    const liveTotal = serviceFee + diagnosisCharge + partsSum;
+    
+    const totalEl = document.getElementById(`quote-live-total-${orderId}`);
+    if (totalEl) {
+        totalEl.textContent = `₹${liveTotal.toLocaleString('en-IN')}`;
+    }
+}
+
 function updateQuotationPartPrice(orderId, index, value) {
     const val = parseFloat(value) || 0;
     if (window.editingQuotationParts[orderId] && window.editingQuotationParts[orderId][index]) {
         window.editingQuotationParts[orderId][index].price = val;
-        renderQuotationFormInlineEditable(orderId);
+        updateQuoteLiveTotal(orderId);
     }
 }
 
@@ -2082,13 +2103,13 @@ function toggleQuotationPartType(orderId, index, isOriginal) {
 function updateQuotationDiagnosisChargeEditable(orderId, value) {
     const val = parseFloat(value) || 0;
     window.editingQuotationDiagnosisCharge[orderId] = val;
-    renderQuotationFormInlineEditable(orderId);
+    updateQuoteLiveTotal(orderId);
 }
 
 function updateQuotationServiceFeeEditable(orderId, value) {
     const val = parseFloat(value) || 0;
     window.editingQuotationServiceFee[orderId] = val;
-    renderQuotationFormInlineEditable(orderId);
+    updateQuoteLiveTotal(orderId);
 }
 
 function addNewQuotationPartPromptEditable(orderId, isOriginal = false) {
