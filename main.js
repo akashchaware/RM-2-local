@@ -1229,7 +1229,7 @@ async function submitRequest(e) {
             totalEstimateVal = partsTotalVal + serviceFeeVal + 250.00;
         }
 
-        
+
         const orderData = {
             order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
             user_id: user?.id || null,
@@ -1311,7 +1311,7 @@ if (successDiv) {
 e.target.reset();
 setTimeout(() => { window.location.href = 'dashboard.html'; }, 2000);
 
-        const orderNumber = orderData.order_number;
+
         const successDiv = document.getElementById('requestSuccess');
         if (successDiv) {
             successDiv.classList.remove('hidden');
