@@ -1453,7 +1453,7 @@ async function submitAssignRoles(orderId) {
     console.log('🔍 submitAssignRoles called with orderId:', orderId);
 
     // ✅ Guard against undefined orderId
-    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -1520,7 +1520,7 @@ function showAssignDeliveryForm(orderId) {
 
 async function submitAssignDelivery(orderId) {
     // ✅ Validate orderId
-    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -2060,7 +2060,7 @@ async function assignOrderRoles(orderId, technicianId, repairmasterId) {
     if (!supabase) return;
 
     // ✅ Validate orderId
-    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
         showToast('Invalid order ID. Please refresh and try again.', 'error');
         return;
     }
@@ -2090,7 +2090,7 @@ async function assignDeliveryTechnician(orderId, techId) {
     if (!techId || !supabase) return;
 
     // ✅ Validate orderId
-    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -2118,7 +2118,7 @@ async function assignDeliveryTechnician(orderId, techId) {
 
 async function assignSelfAsTechnician(orderId) {
     // ✅ Validate orderId
-    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -2144,7 +2144,7 @@ async function assignSelfAsTechnician(orderId) {
 
 async function assignSelfAsRepairMaster(orderId) {
     // ✅ Validate orderId
-    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
+    if (!orderId || orderId === 'undefined' || orderId === 'null') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -2450,18 +2450,63 @@ async function loadDashboard() {
     }
 
     let orders = [];
+
+// 1. Try to load from Supabase first (if logged in)
+if (supabase && currentUser) {
     try {
-        orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+        const { data, error } = await supabase
+            .from('orders')
+            .select('*')
+            .order('created_at', { ascending: false });
+        if (!error && data && data.length > 0) {
+            orders = data;
+            // Save a copy to localStorage for offline use
+            localStorage.setItem('local_orders', JSON.stringify(orders));
+        } else {
+            // Fallback to localStorage if Supabase has no orders
+            orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+        }
     } catch (e) {
-        console.error("Failed to parse local_orders from localStorage:", e);
+        console.warn('Supabase fetch failed, using localStorage:', e);
+        orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
     }
-    if (orders.length === 0) {
-        orders = [
-            { id: 'm1', order_number: 'RM-REQ-VIVOV30', customer_name: 'Akash Chaware', customer_phone: '9876543210', customer_email: 'akash@example.com', device_other: 'Vivo V30 Pro', repair_other: 'Screen Replacement', parts_quality: 'Premium', total_price: 6300, status: 'Pending', created_at: new Date().toISOString() },
-            { id: 'm2', order_number: 'RM-REQ-IPHONE14', customer_name: 'Sneha Patil', customer_phone: '9123456789', customer_email: 'sneha@example.com', device_other: 'iPhone 14', repair_other: 'Battery Replacement', parts_quality: 'Standard', total_price: 3200, status: 'Completed', created_at: new Date(Date.now() - 86400000).toISOString() }
-        ];
-        localStorage.setItem('local_orders', JSON.stringify(orders));
-    }
+} else {
+    // Guest or not logged in — use localStorage only
+    orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+}
+
+// 2. If still empty, create fallback orders with REAL IDs (text, not UUIDs)
+if (orders.length === 0) {
+    orders = [
+        { 
+            id: 'RM-REQ-VIVOV30',   // Use order_number as ID (now text is accepted)
+            order_number: 'RM-REQ-VIVOV30',
+            customer_name: 'Akash Chaware',
+            customer_phone: '9876543210',
+            customer_email: 'akash@example.com',
+            device_other: 'Vivo V30 Pro',
+            repair_other: 'Screen Replacement',
+            parts_quality: 'Premium',
+            total_price: 6300,
+            status: 'Pending',
+            created_at: new Date().toISOString()
+        },
+        { 
+            id: 'RM-REQ-IPHONE14',
+            order_number: 'RM-REQ-IPHONE14',
+            customer_name: 'Sneha Patil',
+            customer_phone: '9123456789',
+            customer_email: 'sneha@example.com',
+            device_other: 'iPhone 14',
+            repair_other: 'Battery Replacement',
+            parts_quality: 'Standard',
+            total_price: 3200,
+            status: 'Completed',
+            created_at: new Date(Date.now() - 86400000).toISOString()
+        }
+    ];
+    localStorage.setItem('local_orders', JSON.stringify(orders));
+}
     orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     // Update stats counters
