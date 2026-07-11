@@ -113,120 +113,131 @@
         .btn-confirm { background: #10B981; color: #0A0F1D; }
         .btn-reject { background: #EF4444; color: #fff; }
 
-        /* Professional SaaS Mobile Framework Layout */
-        @media (max-width: 768px) {
-            .container-custom {
-                padding: 0 8px !important;
-            }
-            .mobile-menu {
-                display: block;
-            }
-            .desktop-nav {
-                display: none;
-            }
-            
-            /* Top Stats Block Optimization: 2 columns instead of vertical rows */
-            .grid-cols-4, [class*="grid-cols-"] {
-                display: grid !important;
-                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 8px !important;
-            }
-
-            /* Ticket Wrapper Layout */
-            .order-card {
-                padding: 12px !important;
-                margin: 8px 0 !important;
-                border-radius: 10px !important;
-                border: 1px solid #1E293B !important;
-                background-color: #121B33 !important;
-            }
-
-            /* Re-organize layout sections cleanly */
-            .order-card .flex, 
-            .order-card .flex-wrap {
+        /* REAL-WORLD MOBILE SYSTEM LAYOUT OVERHAUL */
+        @media (max-width: 1024px) {
+            /* 1. Kill the side-by-side main container grid layout entirely */
+            .grid, [class*="grid-cols-"] {
                 display: flex !important;
-                flex-direction: row !important;
-                flex-wrap: wrap !important;
-                justify-content: space-between !important;
-                align-items: center !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                gap: 16px !important;
             }
 
-            /* Force Customer Contact block into a readable, high-density 2-column grid */
-            .order-card div[class*="border"] || .order-card div:has(h4) {
+            /* Force the main dashboard sections into standalone vertical blocks */
+            main > div > div {
+                display: flex !important;
+                flex-direction: column !important;
+                width: 100% !important;
+            }
+
+            /* Make sure the tickets area fills 100% of the mobile screen width */
+            #ticketsCol, .lg\:col-span-2, .lg\:col-span-3 {
+                width: 100% !important;
+                max-width: 100% !important;
+                flex: none !important;
+                display: block !important;
+            }
+
+            /* 2. Top Metric Cards Row: 2 items per row max */
+            .container-custom > div:first-of-type,
+            main div:first-child .grid {
                 display: grid !important;
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 6px !important;
-                padding: 10px !important;
-                background: rgba(10, 15, 29, 0.4) !important;
-                border-radius: 6px !important;
-            }
-            
-            /* Clean structural spans inside customer information grids */
-            .order-card div:has(h4) h4,
-            .order-card div:has(h4) p:last-child {
-                grid-column: span 2 !important;
+                gap: 10px !important;
             }
 
-            /* Format Text Elements safely without clipping */
+            /* 3. High-Fidelity Ticket Cards Layout Styling */
+            .order-card {
+                width: 100% !important;
+                min-width: 100% !important;
+                max-width: 100% !important;
+                margin: 12px 0 !important;
+                padding: 16px !important;
+                border-radius: 12px !important;
+                background: #121B33 !important;
+                border: 1px solid #1E293B !important;
+                display: flex !important;
+                flex-direction: column !important;
+                box-sizing: border-box !important;
+            }
+
+            /* Clear formatting block squeezes */
+            .order-card div, 
             .order-card p, 
-            .order-card span, 
-            .order-card div {
-                font-size: 12px !important;
-                line-height: 1.4 !important;
+            .order-card span,
+            .order-card flex {
+                white-space: normal !important; /* Allow letters to break onto new lines naturally */
                 word-break: break-word !important;
-                white-space: nowrap !important;
-                text-overflow: ellipsis !important;
-                overflow: hidden !important;
-            }
-            
-            /* Keep explicit status parameters readable */
-            .status-badge {
-                white-space: nowrap !important;
-                padding: 2px 8px !important;
-                font-size: 10px !important;
+                width: 100% !important;
+                display: block !important;
+                text-align: left !important;
             }
 
-            /* Horizontal Invoice Component Breakdown */
+            /* 4. Setup Customer Details and Invoice Boxes as clean blocks */
+            .order-card div[class*="border"],
+            .order-card div:has(h4) {
+                background: rgba(10, 15, 29, 0.6) !important;
+                padding: 12px !important;
+                border-radius: 8px !important;
+                margin-top: 10px !important;
+                border: 1px solid rgba(255, 255, 255, 0.05) !important;
+            }
+
+            /* Keep field labels distinct */
+            .order-card h4, .order-card strong {
+                font-size: 13px !important;
+                color: #14B8A6 !important;
+                margin-bottom: 4px !important;
+            }
+
+            /* 5. Clean Horizontal Row For Invoices / Summary totals */
+            .order-card .text-teal, 
             .order-card div:has(.text-teal) {
                 display: flex !important;
                 flex-direction: row !important;
                 justify-content: space-between !important;
                 align-items: center !important;
                 width: 100% !important;
-                padding-top: 8px !important;
-                margin-top: 8px !important;
-                border-top: 1px solid rgba(255, 255, 255, 0.05) !important;
+                margin-top: 12px !important;
+                border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+                padding-top: 12px !important;
             }
 
-            /* Compact Grid-Based Mobile Action Buttons Split */
+            /* 6. Tactical Action Buttons Grid (2 elements side-by-side) */
             .order-card .items-end,
             .order-card .justify-end,
             .order-card div:has(.action-btn) {
                 display: grid !important;
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-                gap: 6px !important;
+                gap: 8px !important;
                 width: 100% !important;
-                margin-top: 10px !important;
+                margin-top: 14px !important;
                 padding: 0 !important;
                 border: none !important;
             }
 
-            /* If three buttons exist, make the primary action button take full width */
-            .order-card div:has(.action-btn) .action-btn:first-child:nth-last-child(3) {
+            /* If there is a single primary full-width action rule */
+            .order-card div:has(.action-btn) .action-btn:first-child:nth-last-child(1) {
                 grid-column: span 2 !important;
             }
 
             .action-btn {
-                min-height: 38px !important;
-                padding: 6px 10px !important;
-                font-size: 12px !important;
+                min-height: 44px !important;
+                font-size: 13px !important;
                 font-weight: 700 !important;
                 margin: 0 !important;
                 width: 100% !important;
-                border-radius: 6px !important;
-                display: inline-flex !important;
+                border-radius: 8px !important;
+                display: flex !important;
                 align-items: center !important;
                 justify-content: center !important;
+            }
+
+            /* Fix header alignment constraints */
+            h2 {
+                font-size: 20px !important;
+                line-height: 28px !important;
+                text-align: left !important;
             }
         }
 
