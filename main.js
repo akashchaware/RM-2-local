@@ -14,6 +14,7 @@ let allRepairTypes = [];
 let allParts = [];
 let currentUser = null;
 let currentRoles = [];
+var orderId = null;   // or let orderId = null;
 
 // ─── TOAST NOTIFICATION ENGINE ───
 function showToast(message, type = 'info') {
@@ -1452,7 +1453,7 @@ async function submitAssignRoles(orderId) {
     console.log('🔍 submitAssignRoles called with orderId:', orderId);
 
     // ✅ Guard against undefined orderId
-    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -1519,7 +1520,7 @@ function showAssignDeliveryForm(orderId) {
 
 async function submitAssignDelivery(orderId) {
     // ✅ Validate orderId
-    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -2059,7 +2060,7 @@ async function assignOrderRoles(orderId, technicianId, repairmasterId) {
     if (!supabase) return;
 
     // ✅ Validate orderId
-    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
         showToast('Invalid order ID. Please refresh and try again.', 'error');
         return;
     }
@@ -2089,7 +2090,7 @@ async function assignDeliveryTechnician(orderId, techId) {
     if (!techId || !supabase) return;
 
     // ✅ Validate orderId
-    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -2117,7 +2118,7 @@ async function assignDeliveryTechnician(orderId, techId) {
 
 async function assignSelfAsTechnician(orderId) {
     // ✅ Validate orderId
-    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -2143,7 +2144,7 @@ async function assignSelfAsTechnician(orderId) {
 
 async function assignSelfAsRepairMaster(orderId) {
     // ✅ Validate orderId
-    if (!orderId || orderId === 'undefined' || orderId === 'null') {
+    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
         showToast('Invalid order reference. Please refresh and try again.', 'error');
         return;
     }
@@ -5608,25 +5609,29 @@ async function createAlert(orderId, message, type = 'system_alert') {
     }
 }
 
-async function viewOrderDetails(orderId, alertId = null, event = null) {
+async function viewOrderDetails(orderIdParam, alertId = null, event = null) {
     // ✅ GUARD: Skip if clicked inside a button/input
     if (event && (event.target.tagName === 'BUTTON' || event.target.closest('button') || event.target.tagName === 'INPUT' || event.target.tagName === 'SELECT')) {
         return;
     }
 
-    // ✅ VALIDATE orderId
-    if (!orderId || orderId === 'undefined' || orderId === 'null' || orderId === '') {
+    // ✅ VALIDATE orderIdParam
+    if (!orderIdParam || orderIdParam === 'undefined' || orderIdParam === 'null' || orderIdParam === '') {
         showToast('Invalid order reference. Please select a valid ticket.', 'error');
         return;
     }
 
-    const order = (window.allFetchedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
+    // ✅ Set the global variable so isOrderMatching can see it
+    orderId = orderIdParam;   // This now refers to the global 'var orderId'
+
+    // Find the order (using orderIdParam, not the global)
+    const order = (window.allFetchedOrders || []).find(o => o.id === orderIdParam || o.order_number === orderIdParam);
     if (!order) {
         showToast('Order details sync reference not found.', 'error');
         return;
     }
 
-    // ✅ VALIDATE alertId
+    // ✅ VALIDATE alertId – keep your existing logic here
     if (alertId) {
         if (alertId.startsWith('dyn-pending-') || alertId.startsWith('dyn-diag-') || alertId.startsWith('dyn-pickup-') || alertId.startsWith('dyn-delivery-')) {
             localStorage.setItem(`dyn-alert-read-${orderId}`, 'true');
