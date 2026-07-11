@@ -97,7 +97,7 @@
 
         .action-btn {
             padding: 8px 16px;
-            font-size: 12px;
+            font-size: 13px;
             font-weight: 700;
             border-radius: 8px;
             border: none;
@@ -117,19 +117,18 @@
         .btn-confirm { background: #10B981; color: #0A0F1D; }
         .btn-reject { background: #EF4444; color: #fff; }
 
-        /* REAL-WORLD MOBILE SYSTEM LAYOUT OVERHAUL */
+        /* PRODUCTION SAAS DUAL-BLOCK MOBILE DESIGN */
         @media (max-width: 1024px) {
             .container-custom {
-                padding: 0 12px !important;
+                padding: 0 8px !important;
             }
 
-            /* Main structure columns space styling */
             #ticketsCol {
                 width: 100% !important;
                 display: block !important;
             }
 
-            /* Top Metric Summary Blocks Row customization */
+            /* 1. Top Metric Cards Row: Split cleanly into 2 columns */
             #metric-cards-container {
                 display: grid !important;
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -139,47 +138,86 @@
                 padding: 12px 6px !important;
             }
 
-            /* High-Density Clean Card Framework for Dynamic Rows */
+            /* 2. Main Ticket Card Layout: Transformed into a side-by-side 2-Block Grid */
             .order-card, #dashboardContent > div {
                 width: 100% !important;
                 max-width: 100% !important;
-                margin: 16px 0 !important;
+                margin: 14px 0 !important;
                 padding: 14px !important;
                 border-radius: 12px !important;
                 background: #111827 !important; 
                 border: 1px solid #1F2937 !important;
-                display: flex !important;
-                flex-direction: column !important;
-                gap: 12px !important;
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 14px !important;
                 box-sizing: border-box !important;
             }
 
-            /* Normalize inner element blocks cleanly without vertical breaking */
-            .order-card text, .order-card p, .order-card span {
+            /* Increase standard base text size for quick field readability */
+            .order-card p, 
+            .order-card span,
+            .order-card div {
+                font-size: 14px !important;
+                line-height: 1.5 !important;
                 white-space: normal !important;
                 word-break: break-word !important;
             }
 
-            /* Customer Details Container Panel Transformation */
-            .order-card div[class*="border"], 
-            .order-card div:has(h4) {
-                background: rgba(17, 24, 39, 0.8) !important;
+            /* Font size boost for labels and primary headers */
+            .order-card h4, 
+            .order-card strong {
+                font-size: 15px !important;
+                color: #14B8A6 !important;
+                margin-bottom: 2px !important;
+            }
+
+            /* Force standard horizontal elements (like main headers) to cross full card span */
+            .order-card > div:first-of-type,
+            .order-card h3,
+            .order-card .flex-wrap {
+                grid-column: span 2 !important;
+            }
+
+            /* 3. Left Column: Core Ticket Data & Contact Details Block */
+            .order-card div:has(> [class*="fa-user"]),
+            .order-card div:has(h4:contains("CONTACT")) {
+                grid-column: span 1 !important;
+                background: rgba(7, 11, 20, 0.5) !important;
                 padding: 12px !important;
                 border-radius: 8px !important;
-                border: 1px solid rgba(255, 255, 255, 0.05) !important;
-                display: block !important;
-                width: 100% !important;
+                border: 1px solid rgba(255, 255, 255, 0.04) !important;
             }
 
-            /* Invoice Component breakdown fields spacing */
+            /* 4. Right Column: Itemized Invoice Block Integration */
+            .order-card div:has([class*="fa-file-invoice"]), 
+            .order-card div:has(h4:contains("INVOICE")),
             .order-card div:has(.text-teal) {
-                border-top: 1px dashed rgba(255, 255, 255, 0.1) !important;
-                padding-top: 10px !important;
-                margin-top: 4px !important;
+                grid-column: span 1 !important;
+                background: rgba(7, 11, 20, 0.7) !important;
+                padding: 12px !important;
+                border-radius: 8px !important;
+                border: 1px solid rgba(20, 184, 166, 0.15) !important;
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: space-between !important;
+                margin: 0 !important;
             }
 
-            /* Quick Action Buttons Grid Setup (Side-by-side layout) */
-            .order-card div:has(.action-btn) {
+            /* Display pricing labels prominently inside the Right Block layout */
+            .order-card div:has(.text-teal) p,
+            .order-card .text-2xl,
+            .order-card [class*="text-teal"] {
+                font-size: 20px !important;
+                font-weight: 800 !important;
+                color: #14B8A6 !important;
+                text-align: right !important;
+            }
+
+            /* 5. Mobile Operational Action Buttons: Fixed at the base, crossing full width */
+            .order-card div:has(.action-btn),
+            .order-card .justify-end,
+            .order-card .items-end {
+                grid-column: span 2 !important;
                 display: grid !important;
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 gap: 8px !important;
@@ -187,11 +225,17 @@
                 padding: 0 !important;
                 background: transparent !important;
                 border: none !important;
+                margin-top: 4px !important;
             }
 
-            /* If an operation card has exactly 1 primary action button */
+            /* Force single elements inside action panel to expand naturally */
             .order-card div:has(.action-btn) .action-btn:first-child:nth-last-child(1) {
                 grid-column: span 2 !important;
+            }
+
+            .action-btn {
+                min-height: 44px !important;
+                border-radius: 8px !important;
             }
         }
 
