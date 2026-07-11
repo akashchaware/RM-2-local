@@ -1824,7 +1824,7 @@ function serializeCustomQuoteParts(partsList) {
 }
 
 function showQuotationForm(orderId, basePrice, customPartsStr) {
-    const order = (window.allFetchedOrders || []).find(o => orderId === orderId);
+   const order = (window.allFetchedOrders || []).find(o => o.id === orderId || o.order_number === orderId);
     
     // Parse custom parts
     let partsList = parseCustomQuoteParts(customPartsStr);
