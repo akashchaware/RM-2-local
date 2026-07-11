@@ -329,6 +329,19 @@
                     <!-- Unified Coordinator Operations Desk -->
                     <div id="coordinatorOpsDeskContainer" class="hidden space-y-6"></div>
 
+                    <!-- Console Filtered Tickets List -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-800/60 pb-2 mt-8">
+                            <h4 class="text-sm font-bold uppercase tracking-wider text-teal flex items-center gap-1.5 font-display">
+                                <i class="fa-solid fa-list-check"></i> Filtered Tickets Result
+                            </h4>
+                            <span id="consoleTicketsCountBadge" class="text-[10px] bg-teal-500/10 text-teal-300 font-bold px-2.5 py-0.5 rounded-full">0 found</span>
+                        </div>
+                        <div id="consoleTicketsContent" class="space-y-4">
+                            <!-- Filtered tickets list rendered here dynamically -->
+                        </div>
+                    </div>
+
                     <!-- Non-Staff/Guest Notice -->
                     <div id="nonStaffFilterNotice" class="hidden bg-[#121B33]/20 border border-slate-800/80 p-8 rounded-2xl text-center space-y-4 max-w-md mx-auto">
                         <div class="w-16 h-16 rounded-full bg-amber-500/10 flex items-center justify-center text-3xl text-amber-500 mx-auto">

@@ -1911,25 +1911,12 @@ function showQuotationForm(orderId, basePrice = null, customPartsStr = null) {
     // Pre-populate with original parts if they are not already listed
     const hasOriginal = partsList.some(p => p.name.startsWith('[Original]') || p.name.startsWith('[Old]'));
     if (!hasOriginal && order) {
-        const originalDbParts = (window.allParts || []).filter(p => String(p.device_id) === String(order.device_id) && String(p.repair_type_id) === String(order.repair_type_id));
-        if (originalDbParts.length > 0) {
-            // Add original parts to the beginning of the list
-            originalDbParts.forEach(p => {
-                partsList.unshift({
-                    name: `[Original] ${p.name}`,
-                    price: Math.round(p.price * qualityMultiplier * 0.9)
-                });
+        const origPrice = parseFloat(order.parts_total) || 0;
+        if (origPrice > 0) {
+            partsList.unshift({
+                name: `[Original] Estimated Spare Components`,
+                price: origPrice
             });
-        } else if (order.parts_total > 0) {
-            // Subtract additional parts prices from total parts_total to get original estimate parts price
-            const additionalPartsSum = partsList.filter(p => !p.name.startsWith('[Original]') && !p.name.startsWith('[Old]')).reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
-            const origPrice = Math.max(0, (parseFloat(order.parts_total) || 0) - additionalPartsSum);
-            if (origPrice > 0) {
-                partsList.unshift({
-                    name: `[Original] Estimated Spare Components`,
-                    price: origPrice
-                });
-            }
         }
     }
     
@@ -2654,9 +2641,21 @@ async function loadDashboard() {
     const ticketsCol = document.getElementById('ticketsCol');
     const alertsCol = document.getElementById('coordinatorAlertsCol');
     if (ticketsCol && alertsCol) {
-        if (isCoordinator || isAdmin) {
+        if (currentUser) {
             ticketsCol.className = "lg:col-span-2 space-y-6";
             alertsCol.className = "lg:col-span-1 space-y-6";
+            
+            // Customize Alert Hub title dynamically based on activeRole
+            const headerTitle = document.querySelector('#coordinatorAlertsCol h3');
+            if (headerTitle) {
+                let label = "Alert Hub";
+                if (activeRole === 'coordinator') label = "Coordinator Alerts";
+                else if (activeRole === 'technician') label = "Technician Alerts";
+                else if (activeRole === 'repairmaster') label = "RepairMaster Alerts";
+                else if (activeRole === 'customer') label = "Customer Alerts";
+                headerTitle.innerHTML = `<i class="fa-solid fa-bell text-amber-500 animate-bounce"></i> ${label}`;
+            }
+            
             fetchAndRenderAlerts();
         } else {
             ticketsCol.className = "lg:col-span-3 space-y-6";
@@ -2820,9 +2819,15 @@ async function loadDashboard() {
             }
             let matchesSearch = true;
             if (searchQuery) {
+                const devName = (getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device')).toLowerCase();
+                const repLabel = (getRepairLabel(o.repair_type_id) !== 'Repair' ? getRepairLabel(o.repair_type_id) : (o.repair_other || 'Repair')).toLowerCase();
+                const statusName = (o.status || '').toLowerCase();
                 matchesSearch = (o.order_number || '').toLowerCase().includes(searchQuery) ||
                     (o.customer_name || '').toLowerCase().includes(searchQuery) ||
-                    (o.customer_phone || '').toLowerCase().includes(searchQuery);
+                    (o.customer_phone || '').toLowerCase().includes(searchQuery) ||
+                    devName.includes(searchQuery) ||
+                    repLabel.includes(searchQuery) ||
+                    statusName.includes(searchQuery);
             }
 
             let matchesStatus = true;
@@ -2889,13 +2894,19 @@ async function loadDashboard() {
         }
 
         let ordersToRender = [...window.allFetchedOrders];
+        let hasNoMatches = false;
 
-        // Sort so matched orders are placed at the top, and unmatched "old logs" are kept at the bottom
+        if (hasActiveFilter) {
+            const matched = ordersToRender.filter(isOrderMatching);
+            if (matched.length === 0) {
+                hasNoMatches = true;
+                ordersToRender = [];
+            } else {
+                ordersToRender = matched;
+            }
+        }
+
         ordersToRender.sort((a, b) => {
-            const matchA = isOrderMatching(a);
-            const matchB = isOrderMatching(b);
-            if (matchA && !matchB) return -1;
-            if (!matchA && matchB) return 1;
             return new Date(b.created_at || 0) - new Date(a.created_at || 0);
         });
 
@@ -2930,7 +2941,7 @@ async function loadDashboard() {
             `;
         }
 
-        if (ordersToRender.length === 0) {
+        if (ordersToRender.length === 0 && !hasNoMatches) {
             let emptyTitle = "No Tickets Available";
             let emptyDesc = "You do not have any active or historical tickets recorded on the platform.";
             if (activeRole === 'technician') {
@@ -2947,7 +2958,7 @@ async function loadDashboard() {
                 emptyDesc = "Your lab workbench is completely clear. No smartphone hardware assemblies are pending.";
             }
 
-            container.innerHTML = pillFilterHtml + `
+            const emptyHtml = pillFilterHtml + `
                 <div class="bg-slate-900/40 border border-slate-800 rounded-3xl p-10 text-center max-w-lg mx-auto my-6 space-y-4">
                     <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-teal-500/10 text-teal-400 border border-teal-500/20 mb-2">
                         <i class="fa-solid fa-folder-open text-2xl animate-pulse"></i>
@@ -2963,27 +2974,44 @@ async function loadDashboard() {
                     ` : ''}
                 </div>
             `;
+            if (container) container.innerHTML = emptyHtml;
+            const consoleContainer = document.getElementById('consoleTicketsContent');
+            if (consoleContainer) consoleContainer.innerHTML = emptyHtml;
             return;
         }
 
-        let hasMatchedCount = ordersToRender.filter(isOrderMatching).length;
-        let matchAlertHtml = '';
-        if (hasActiveFilter && hasMatchedCount === 0) {
-            matchAlertHtml = `
-                <div class="bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs rounded-xl p-3 mb-4 flex items-center gap-2">
-                    <i class="fa-solid fa-circle-exclamation text-amber-400"></i>
-                    <span>No exact matches found. All historic/older logs are shown below.</span>
+        let html = pillFilterHtml;
+        if (hasNoMatches) {
+            html += `
+                <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 text-center max-w-md mx-auto my-4 space-y-3">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                        <i class="fa-solid fa-circle-exclamation text-lg animate-pulse"></i>
+                    </div>
+                    <h4 class="text-sm font-bold text-white font-display">No Matching Tickets Found</h4>
+                    <p class="text-xs text-gray-400 leading-relaxed">No smartphone repair tickets matched your search query or selected filters. Try clearing or adjusting the status, technician, or date range.</p>
+                    <button onclick="clearAllConsoleFilters()" class="text-[10px] bg-[#14B8A6]/20 text-[#14B8A6] border border-[#14B8A6]/35 px-3 py-1.5 rounded-lg font-bold hover:bg-[#14B8A6]/30 transition">Clear Filters</button>
                 </div>
             `;
+        } else {
+            html += `<div class="grid grid-cols-1 gap-4">`;
+            ordersToRender.forEach(o => {
+                html += buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, false, true);
+            });
+            html += `</div>`;
         }
 
-        let html = pillFilterHtml + matchAlertHtml + `<div class="grid grid-cols-1 gap-4">`;
-        ordersToRender.forEach(o => {
-            const matched = isOrderMatching(o);
-            html += buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRepairMaster, false, matched);
-        });
-        html += `</div>`;
-        container.innerHTML = html;
+        if (container) {
+            container.innerHTML = html;
+        }
+
+        const consoleContainer = document.getElementById('consoleTicketsContent');
+        if (consoleContainer) {
+            consoleContainer.innerHTML = html;
+            const badge = document.getElementById('consoleTicketsCountBadge');
+            if (badge) {
+                badge.textContent = `${ordersToRender.length} found`;
+            }
+        }
 
         if (isCoordinator || isAdmin) {
             if (typeof renderCoordinatorOpsDesk === 'function') {
@@ -2997,6 +3025,24 @@ async function loadDashboard() {
         renderFilteredOrders();
     }
     window.applyDashboardFilters = applyDashboardFilters;
+
+    function clearAllConsoleFilters() {
+        const search = document.getElementById('filterSearch');
+        const status = document.getElementById('filterStatus');
+        const tech = document.getElementById('filterTechnician');
+        const start = document.getElementById('filterStartDate');
+        const end = document.getElementById('filterEndDate');
+        
+        if (search) search.value = '';
+        if (status) status.value = 'All';
+        if (tech) tech.value = 'All';
+        if (start) start.value = '';
+        if (end) end.value = '';
+        
+        window.customStatFilter = 'All';
+        applyDashboardFilters();
+    }
+    window.clearAllConsoleFilters = clearAllConsoleFilters;
 
     // Initialize default dashboard tab state
     setTimeout(() => {
@@ -5821,49 +5867,148 @@ async function fetchAndRenderAlerts() {
     const localAlerts = JSON.parse(localStorage.getItem('localAlerts') || '[]');
     alerts = [...alerts, ...localAlerts];
 
-    // Fallback/Dynamic alerts generation based on orders status
+    // Fallback/Dynamic alerts generation based on orders status and user role
+    const activeRole = localStorage.getItem('activeRole') || 'customer';
     const orders = window.allFetchedOrders || [];
     orders.forEach(o => {
         const deviceName = getDeviceName(o.device_id) !== 'Device' ? getDeviceName(o.device_id) : (o.device_other || 'Device');
         // Filter out read local storage alerts
         const isReadLocally = localStorage.getItem(`dyn-alert-read-${o.id}`) === 'true';
 
-        if (o.status === 'Pending') {
-            alerts.push({
-                id: `dyn-pending-${o.id}`,
-                order_id: o.id,
-                message: `New Service Request: ${deviceName} needs staff assignment.`,
-                type: 'new_request',
-                is_read: isReadLocally,
-                created_at: o.created_at
-            });
-        } else if (o.status === 'Diagnosis-Completed') {
-            alerts.push({
-                id: `dyn-diag-${o.id}`,
-                order_id: o.id,
-                message: `Diagnosis Completed: ${deviceName} has repair recommendations. Review & quote.`,
-                type: 'diagnosis_completed',
-                is_read: isReadLocally,
-                created_at: o.created_at
-            });
-        } else if (o.status === 'Pickup-Pending' && o.pickup_otp) {
-            alerts.push({
-                id: `dyn-pickup-${o.id}`,
-                order_id: o.id,
-                message: `Active Pickup: OTP generated for ${deviceName} verification.`,
-                type: 'pickup_pending',
-                is_read: isReadLocally,
-                created_at: o.created_at
-            });
-        } else if (o.status === 'Ready-For-Delivery' && o.pickup_otp) {
-            alerts.push({
-                id: `dyn-delivery-${o.id}`,
-                order_id: o.id,
-                message: `Pending Dispatch: ${deviceName} is ready for delivery. Assign dispatcher.`,
-                type: 'ready_for_delivery',
-                is_read: isReadLocally,
-                created_at: o.created_at
-            });
+        if (activeRole === 'coordinator' || activeRole === 'admin') {
+            if (o.status === 'Pending') {
+                alerts.push({
+                    id: `dyn-pending-${o.id}`,
+                    order_id: o.id,
+                    message: `New Service Request: ${deviceName} needs staff assignment.`,
+                    type: 'new_request',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Diagnosis-Completed') {
+                alerts.push({
+                    id: `dyn-diag-${o.id}`,
+                    order_id: o.id,
+                    message: `Diagnosis Completed: ${deviceName} has repair recommendations. Review & quote.`,
+                    type: 'diagnosis_completed',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Pickup-Pending' && o.pickup_otp) {
+                alerts.push({
+                    id: `dyn-pickup-${o.id}`,
+                    order_id: o.id,
+                    message: `Active Pickup: OTP generated for ${deviceName} verification.`,
+                    type: 'pickup_pending',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Ready-For-Delivery' && o.pickup_otp) {
+                alerts.push({
+                    id: `dyn-delivery-${o.id}`,
+                    order_id: o.id,
+                    message: `Pending Dispatch: ${deviceName} is ready for delivery. Assign dispatcher.`,
+                    type: 'ready_for_delivery',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            }
+        } else if (activeRole === 'technician' && currentUser && String(o.technician_id) === String(currentUser.id)) {
+            if (o.status === 'Technician Assigned') {
+                alerts.push({
+                    id: `dyn-tech-assigned-${o.id}`,
+                    order_id: o.id,
+                    message: `New Dispatch: Pick up ${deviceName} from ${o.customer_name || 'Customer'}.`,
+                    type: 'new_request',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Pickup-Pending' && o.pickup_otp) {
+                alerts.push({
+                    id: `dyn-tech-pickup-${o.id}`,
+                    order_id: o.id,
+                    message: `Awaiting OTP: Share OTP with customer to confirm ${deviceName} handover.`,
+                    type: 'pickup_pending',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Ready-For-Delivery') {
+                alerts.push({
+                    id: `dyn-tech-delivery-${o.id}`,
+                    order_id: o.id,
+                    message: `New Delivery: Deliver repaired ${deviceName} to ${o.customer_name || 'Customer'}.`,
+                    type: 'ready_for_delivery',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            }
+        } else if (activeRole === 'repairmaster' && currentUser && String(o.repairmaster_id) === String(currentUser.id)) {
+            if (o.status === 'With-RepairMaster' || o.status === 'Diagnosis-Pending') {
+                alerts.push({
+                    id: `dyn-master-diag-${o.id}`,
+                    order_id: o.id,
+                    message: `Bench Testing: ${deviceName} is waiting on diagnostics lab.`,
+                    type: 'diagnosis_completed',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Confirmed' || o.status === 'Under-Repair') {
+                alerts.push({
+                    id: `dyn-master-work-${o.id}`,
+                    order_id: o.id,
+                    message: `Active Repair: Lab work approved for ${deviceName}. Complete post-repair testing.`,
+                    type: 'new_request',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            }
+        } else if (activeRole === 'customer' && currentUser && String(o.user_id) === String(currentUser.id)) {
+            if (o.status === 'Quotation-Sent') {
+                alerts.push({
+                    id: `dyn-cust-quote-${o.id}`,
+                    order_id: o.id,
+                    message: `Action Required: Itemized repair quote ready for your ${deviceName}.`,
+                    type: 'diagnosis_completed',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Pickup-Pending' && o.pickup_otp) {
+                alerts.push({
+                    id: `dyn-cust-pickup-${o.id}`,
+                    order_id: o.id,
+                    message: `Handover Code: Show OTP ${o.pickup_otp} to technician for ${deviceName} pickup.`,
+                    type: 'pickup_pending',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Confirmed' || o.status === 'Under-Repair') {
+                alerts.push({
+                    id: `dyn-cust-repair-${o.id}`,
+                    order_id: o.id,
+                    message: `Progress: Your ${deviceName} has started active lab repair work.`,
+                    type: 'new_request',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Ready-For-Delivery' && o.pickup_otp) {
+                alerts.push({
+                    id: `dyn-cust-delivery-${o.id}`,
+                    order_id: o.id,
+                    message: `Delivery Ready: Confirm OTP ${o.pickup_otp} to receive your repaired ${deviceName}.`,
+                    type: 'ready_for_delivery',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            } else if (o.status === 'Awaiting-Payment') {
+                alerts.push({
+                    id: `dyn-cust-payment-${o.id}`,
+                    order_id: o.id,
+                    message: `Invoice Ready: Please pay online or select COD for ${deviceName}.`,
+                    type: 'diagnosis_completed',
+                    is_read: isReadLocally,
+                    created_at: o.created_at
+                });
+            }
         }
     });
 
