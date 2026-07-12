@@ -7,17 +7,6 @@ const SUPABASE_URL = 'https://mpcnfrshpgcpmrgledwy.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_IlSzuHbWowZ84IdxRwBCxg_DDT9P_Vz';
 const supabase = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
-// Force fresh dashboard render on any snapshot update
-const orderSubscription = supabase
-  .channel('public:orders')
-  .on('postgres_changes', { event: '*', schema: 'public', table: 'orders' }, (payload) => {
-    console.log('Realtime update captured:', payload);
-    // Do not rely on local variables; re-trigger full fetch
-    fetchDashboardStats(); 
-    loadAssignedTickets();
-  })
-  .subscribe();
-
 // ─── GLOBAL STATE ───
 let allBrands = [];
 let allDevices = [];
