@@ -4153,11 +4153,16 @@ async function completeOrderPayment(orderId, displayMethod, handoverOtp, payment
 
     if (supabase) {
         try {
+            // Append the Razorpay Payment ID to the payment_method field in Supabase to avoid breaking the DB schema
+            let dbPaymentMethod = displayMethod;
+            if (paymentId) {
+                dbPaymentMethod = `${displayMethod} (RP: ${paymentId})`;
+            }
+
             const updatePayload = {
-                payment_method: displayMethod,
+                payment_method: dbPaymentMethod,
                 payment_status: isCod ? 'COD Selected' : 'Paid',
-                pickup_otp: handoverOtp,
-                razorpay_payment_id: paymentId || ''
+                pickup_otp: handoverOtp
             };
             if (!isCod) {
                 updatePayload.status = 'Under-Repair';
