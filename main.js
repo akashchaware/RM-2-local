@@ -591,23 +591,29 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
     const masterNameStr = masterObj ? masterObj.name.split(" (")[0] : (o.repairmaster_id ? `Master ID: ${o.repairmaster_id.substring(0,8)}...` : '');
 
     return `
-        <div ${cardClickHandler} class="order-card bg-navyBG/40 border ${borderClass} rounded-xl p-5 hover:border-teal-500/30 transition-all ${opacityClass} ${cursorClass}">
-            <div class="flex flex-wrap items-start justify-between gap-3">
+        <div ${cardClickHandler} class="order-card bg-navyBG/40 border ${borderClass} rounded-2xl p-5 hover:border-teal-500/30 transition-all ${opacityClass} ${cursorClass}">
+            <div class="flex flex-col lg:flex-row items-stretch justify-between gap-5">
                 <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-3 flex-wrap">
-                        <span class="text-lg font-bold text-white">${deviceName}</span>
-                        <span class="text-sm text-grayText">—</span>
-                        <span class="text-sm text-tealAccent font-medium">${repairLabel}</span>
-                        <span class="inline-block px-2.5 py-1 rounded-full font-black uppercase text-[10px] tracking-wider ${getStatusBadgeClass(status)}">${status}</span>
-                        ${!isMatched ? `<span class="inline-block bg-slate-800 text-gray-400 text-[9px] uppercase font-bold px-2.5 py-0.5 rounded-full">Older Log</span>` : ''}
+                    <!-- Redesigned Ticket Header -->
+                    <div class="border-b border-slate-800/60 pb-3.5 mb-3.5">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-md"><i class="fa-solid fa-wrench"></i> ${repairLabel}</span>
+                            <span class="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-md"><i class="fa-solid fa-mobile-screen"></i> ${deviceName}</span>
+                            <span class="inline-block px-2.5 py-1 rounded-md font-black uppercase text-[10px] tracking-wider ${getStatusBadgeClass(status)}">${status}</span>
+                            ${!isMatched ? `<span class="inline-block bg-slate-800 text-gray-400 text-[10px] uppercase font-black px-2.5 py-1 rounded-md">Older Log</span>` : ''}
+                        </div>
+                        <h4 class="text-base font-bold text-white mt-3 flex items-center gap-2">
+                            <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-gray-400 text-xs"><i class="fa-regular fa-user"></i></span>
+                            <span class="text-gray-300">Customer: <strong class="text-teal font-black text-white hover:text-tealAccent transition-colors">${o.customer_name || 'Anonymous User'}</strong></span>
+                        </h4>
                     </div>
-                    <div class="text-xs text-grayText mt-1 flex flex-wrap items-center gap-y-1">
-                        <span>ID: ${o.order_number}</span>
-                        <span class="mx-2 text-slate-600">•</span>
-                        <span>📅 ${new Date(o.created_at).toLocaleDateString()}</span>
-                        ${o.address && !isRepairMaster && !isTechnician ? `<span class="mx-2 text-slate-600">•</span><span>📍 ${o.address}</span>` : ''}
-                        ${techNameStr ? `<span class="mx-2 text-slate-600">•</span><span class="text-sky-400 font-semibold bg-sky-500/10 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-truck-pickup text-[9px]"></i> ${techNameStr}</span>` : ''}
-                        ${masterNameStr ? `<span class="mx-2 text-slate-600">•</span><span class="text-amber-400 font-semibold bg-amber-500/10 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench text-[9px]"></i> ${masterNameStr}</span>` : ''}
+
+                    <div class="text-[11px] text-grayText mt-2.5 flex flex-wrap items-center gap-y-1.5 gap-x-2">
+                        <span class="bg-slate-900/40 border border-slate-800 px-2 py-0.5 rounded-md">ID: ${o.order_number}</span>
+                        <span class="bg-slate-900/40 border border-slate-800 px-2 py-0.5 rounded-md">📅 ${new Date(o.created_at).toLocaleDateString()}</span>
+                        ${o.address && !isRepairMaster && !isTechnician ? `<span class="bg-slate-900/40 border border-slate-800 px-2 py-0.5 rounded-md">📍 ${o.address}</span>` : ''}
+                        ${techNameStr ? `<span class="text-sky-400 font-semibold bg-sky-500/10 border border-sky-500/15 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-truck-pickup text-[9px]"></i> ${techNameStr}</span>` : ''}
+                        ${masterNameStr ? `<span class="text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/15 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench text-[9px]"></i> ${masterNameStr}</span>` : ''}
                     </div>
                     ${o.photo_url ? `<img src="${o.photo_url}" class="mt-3 max-h-24 rounded-lg border border-grayBorder" />` : ''}
                     ${o.diagnosis_notes ? `<p class="mt-2 text-xs text-grayText italic bg-navyBG/20 p-2 rounded border border-grayBorder">Lab Diagnosis Logs: ${o.diagnosis_notes}</p>` : ''}
@@ -634,11 +640,16 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     ${workflowHtml}
                     <div id="inline-form-container-${o.id}"></div>
                 </div>
-                <div class="flex flex-col items-end gap-2">
-                    ${isTechnician ? '' : `<span class="text-lg font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>`}
-                    <div id="actions-${o.id}" class="flex flex-wrap gap-1 justify-end">
+                <div class="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-3 border-t border-slate-800/60 pt-4 lg:border-t-0 lg:pt-0 shrink-0">
+                    ${isTechnician ? '' : `
+                        <div class="text-left lg:text-right">
+                            <span class="text-[10px] text-gray-500 uppercase tracking-wider block font-bold">Quotation Estimate</span>
+                            <span class="text-xl font-black text-tealAccent">₹${(o.total_price || 0).toLocaleString('en-IN')}</span>
+                        </div>
+                    `}
+                    <div id="actions-${o.id}" class="flex flex-wrap gap-1.5 justify-end w-full lg:w-auto">
                         ${actions}
-                        ${o.payment_status === 'Paid' ? `<button onclick="openInvoicePage('${o.id}')" class="action-btn btn-confirm bg-emerald-600 hover:bg-emerald-500 text-white font-bold my-1"><i class="fa-solid fa-file-invoice-dollar"></i> View Invoice</button>` : ''}
+                        ${o.payment_status === 'Paid' ? `<button onclick="openInvoicePage('${o.id}')" class="action-btn btn-confirm bg-emerald-600 hover:bg-emerald-500 text-white font-bold my-1 flex items-center gap-1.5"><i class="fa-solid fa-file-invoice-dollar"></i> View Invoice</button>` : ''}
                     </div>
                 </div>
             </div>
@@ -1150,6 +1161,13 @@ async function getCoordinatorId() {
     }
 }
 
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // ─── 5. SUBMIT REQUEST PIPELINE ───
 function fileToBase64(file) {
     return new Promise((resolve, reject) => {
@@ -1163,8 +1181,7 @@ function fileToBase64(file) {
 async function submitRequest(e) {
     e.preventDefault();
     if (!supabase) {
-        showToast('⚠️ Supabase connection is offline.', 'error');
-        return;
+        console.warn('Supabase connection is offline. Storing request locally.');
     }
 
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -1310,7 +1327,7 @@ async function submitRequest(e) {
         }
 
         const orderData = {
-            id: 'local-' + Date.now().toString(36),
+            id: generateUUID(),
             order_number: 'RM-REQ-' + Date.now().toString(36).toUpperCase(),
             user_id: user?.id || null,
             customer_name: name,
@@ -1333,7 +1350,22 @@ async function submitRequest(e) {
             created_at: new Date().toISOString()
         };
 
-        // Bypassing Supabase and storing locally as requested:
+        if (supabase) {
+            try {
+                const { error: insertError } = await supabase
+                    .from('orders')
+                    .insert([orderData]);
+                if (insertError) {
+                    console.warn("Supabase insertion returned error, using local fallback:", insertError);
+                } else {
+                    console.log("Order saved to Supabase successfully!");
+                }
+            } catch (supaErr) {
+                console.warn("Supabase insert exception:", supaErr);
+            }
+        }
+
+        // Also save locally for complete offline-resilience and local tracking:
         console.log("POST captured form data locally:", orderData);
         let localOrders = [];
         try {
@@ -2687,30 +2719,62 @@ async function loadDashboard() {
         }
     }
 
-    let orders = [];
-    try {
-        orders = JSON.parse(localStorage.getItem('local_orders') || '[]');
-        let changed = false;
-        orders = orders.map((o, idx) => {
-            if (!o.id) {
-                o.id = o.order_number || ('local-' + idx + '-' + Date.now().toString(36));
-                changed = true;
+    let dbOrders = [];
+    if (supabase) {
+        try {
+            const { data, error } = await supabase
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false });
+            if (!error && data) {
+                dbOrders = data;
+            } else {
+                console.warn("Supabase load orders returned error, using local fallback only:", error);
             }
-            return o;
-        });
-        if (changed) {
-            localStorage.setItem('local_orders', JSON.stringify(orders));
+        } catch (supaErr) {
+            console.error("Failed to fetch orders from Supabase:", supaErr);
         }
+    }
+
+    let localOrders = [];
+    try {
+        localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
     } catch (e) {
         console.error("Failed to parse local_orders from localStorage:", e);
     }
+
+    // Merge database orders with local cache, preventing duplicates by ID or order_number
+    const mergedOrdersMap = new Map();
+    dbOrders.forEach(o => {
+        mergedOrdersMap.set(o.id, o);
+    });
+    localOrders.forEach(o => {
+        const key = o.id || o.order_number;
+        if (key && !mergedOrdersMap.has(key)) {
+            mergedOrdersMap.set(key, o);
+        }
+    });
+
+    let orders = Array.from(mergedOrdersMap.values());
+
     if (orders.length === 0) {
         orders = [
             { id: 'm1', order_number: 'RM-REQ-VIVOV30', customer_name: 'Akash Chaware', customer_phone: '9876543210', customer_email: 'akash@example.com', device_other: 'Vivo V30 Pro', repair_other: 'Screen Replacement', parts_quality: 'Premium', total_price: 6300, status: 'Pending', created_at: new Date().toISOString() },
             { id: 'm2', order_number: 'RM-REQ-IPHONE14', customer_name: 'Sneha Patil', customer_phone: '9123456789', customer_email: 'sneha@example.com', device_other: 'iPhone 14', repair_other: 'Battery Replacement', parts_quality: 'Standard', total_price: 3200, status: 'Completed', created_at: new Date(Date.now() - 86400000).toISOString() }
         ];
-        localStorage.setItem('local_orders', JSON.stringify(orders));
     }
+
+    // Ensure everyone has proper ID
+    let changed = false;
+    orders = orders.map((o, idx) => {
+        if (!o.id) {
+            o.id = o.order_number || ('local-' + idx + '-' + Date.now().toString(36));
+            changed = true;
+        }
+        return o;
+    });
+
+    localStorage.setItem('local_orders', JSON.stringify(orders));
     orders.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     // Update stats counters
@@ -2918,6 +2982,23 @@ async function loadDashboard() {
         }
 
         let ordersToRender = [...window.allFetchedOrders];
+
+        // Filter by role to protect data and present specific lists
+        if (activeRole === 'customer') {
+            ordersToRender = ordersToRender.filter(o => 
+                (currentUser && String(o.user_id) === String(currentUser.id)) || 
+                (o.customer_email && currentUser && o.customer_email.toLowerCase() === currentUser.email.toLowerCase()) ||
+                (o.customer_phone && currentUser && String(o.customer_phone) === String(currentUser.phone))
+            );
+        } else if (activeRole === 'technician') {
+            ordersToRender = ordersToRender.filter(o => currentUser && String(o.technician_id) === String(currentUser.id));
+        } else if (activeRole === 'repairmaster') {
+            ordersToRender = ordersToRender.filter(o => 
+                (currentUser && String(o.repairmaster_id) === String(currentUser.id)) ||
+                (o.status && ['With-RepairMaster', 'Diagnosis-Pending', 'Confirmed', 'Under-Repair', 'Quality-Check'].includes(o.status))
+            );
+        }
+
         let hasNoMatches = false;
 
         if (hasActiveFilter) {
@@ -6165,6 +6246,42 @@ async function fetchAndRenderAlerts() {
     const unreadCount = alerts.filter(a => !a.is_read).length;
     if (badge) {
         badge.textContent = `${unreadCount} New`;
+    }
+
+    const navBadge = document.getElementById('navNotificationBadge');
+    if (navBadge) {
+        if (unreadCount > 0) {
+            navBadge.textContent = unreadCount;
+            navBadge.classList.remove('hidden');
+        } else {
+            navBadge.classList.add('hidden');
+        }
+    }
+
+    const navList = document.getElementById('notificationList');
+    if (navList) {
+        if (alerts.length === 0) {
+            navList.innerHTML = `
+                <div class="text-center py-6 text-xs text-gray-500">
+                    No new activity log alerts.
+                </div>
+            `;
+        } else {
+            navList.innerHTML = alerts.map(a => {
+                let icon = '🔔';
+                if (a.type === 'new_request') icon = '📋';
+                else if (a.type === 'diagnosis_completed') icon = '🩺';
+                else if (a.type === 'ready_for_delivery') icon = '🚚';
+                else if (a.type === 'pickup_pending') icon = '🔑';
+
+                return `
+                    <div onclick="viewOrderDetails('${a.order_id}', '${a.id}'); if (typeof toggleNotificationDropdown === 'function') toggleNotificationDropdown(event);" class="p-3 hover:bg-slate-800/30 transition text-xs cursor-pointer ${!a.is_read ? 'bg-amber-500/5' : ''}">
+                        <p class="text-white font-medium">${icon} ${a.message}</p>
+                        <p class="text-[9px] text-gray-500 mt-0.5">${new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                `;
+            }).join('');
+        }
     }
 
     if (alerts.length === 0) {
