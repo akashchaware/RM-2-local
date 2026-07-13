@@ -1939,6 +1939,93 @@ function serializeCustomQuoteParts(partsList) {
     return partsList.map(p => `${p.name},${p.price}`).join('\n');
 }
 
+function parseOrderNotesAndOffers(orderNotes) {
+    let notes = orderNotes || '';
+    let selectedOfferIds = [];
+    let customOfferName = '';
+    let customOfferDiscount = 0;
+    let customOfferType = 'percent';
+
+    if (notes.startsWith('__OFFERS_DATA__:')) {
+        try {
+            const parts = notes.split('__NOTES_BODYBody__:'); // Check fallback or standard separator
+            const separator = notes.includes('__NOTES_BODY__:') ? '__NOTES_BODY__:' : '__NOTES_BODYBody__:';
+            const splitted = notes.split(separator);
+            const jsonDataStr = splitted[0].replace('__OFFERS_DATA__:', '').trim();
+            const data = JSON.parse(jsonDataStr);
+            selectedOfferIds = data.selectedOfferIds || [];
+            customOfferName = data.customOfferName || '';
+            customOfferDiscount = parseFloat(data.customOfferDiscount) || 0;
+            customOfferType = data.customOfferType || 'percent';
+            notes = splitted[1] || '';
+        } catch (e) {
+            console.error("Error parsing offers data from notes:", e);
+        }
+    }
+    return { notes, selectedOfferIds, customOfferName, customOfferDiscount, customOfferType };
+}
+
+function serializeOrderNotesAndOffers(notesBody, selectedOfferIds, customOfferName, customOfferDiscount, customOfferType) {
+    const data = {
+        selectedOfferIds: selectedOfferIds || [],
+        customOfferName: customOfferName || '',
+        customOfferDiscount: parseFloat(customOfferDiscount) || 0,
+        customOfferType: customOfferType || 'percent'
+    };
+    return `__OFFERS_DATA__:${JSON.stringify(data)}__NOTES_BODY__:${notesBody || ''}`;
+}
+
+function calculateAppliedDiscounts(selectedOfferIds, customOfferName, customOfferDiscount, customOfferType, diagnosisCharge, serviceFee, partsSum) {
+    let discounts = [];
+    let totalDiscount = 0;
+    
+    const offers = window.allOffers || [];
+    const validOfferIds = (selectedOfferIds || []).map(id => String(id));
+    
+    offers.forEach(offer => {
+        if (validOfferIds.includes(String(offer.id))) {
+            let discountAmount = 0;
+            const name = offer.name.toLowerCase();
+            const pct = parseFloat(offer.discount_percent) || 0;
+            
+            if (name.includes('service') || name.includes('doorstep') || name.includes('labor')) {
+                discountAmount = Math.round(serviceFee * (pct / 100));
+            } else if (name.includes('battery') || name.includes('screen') || name.includes('part') || name.includes('guard')) {
+                discountAmount = Math.round(partsSum * (pct / 100));
+            } else {
+                discountAmount = Math.round((serviceFee + partsSum) * (pct / 100));
+            }
+            
+            discountAmount = Math.min(discountAmount, serviceFee + partsSum + diagnosisCharge - totalDiscount);
+            if (discountAmount > 0) {
+                discounts.push({ name: offer.name, amount: discountAmount });
+                totalDiscount += discountAmount;
+            }
+        }
+    });
+    
+    if (customOfferDiscount > 0) {
+        let customAmount = 0;
+        if (customOfferType === 'percent') {
+            customAmount = Math.round((serviceFee + partsSum + diagnosisCharge) * (customOfferDiscount / 100));
+        } else {
+            customAmount = parseFloat(customOfferDiscount);
+        }
+        customAmount = Math.min(customAmount, serviceFee + partsSum + diagnosisCharge - totalDiscount);
+        if (customAmount > 0) {
+            discounts.push({ name: customOfferName || 'Coordinator Extra Offer', amount: customAmount });
+            totalDiscount += customAmount;
+        }
+    }
+    
+    return { discounts, totalDiscount };
+}
+
+window.editingQuotationOfferIds = {};
+window.editingCustomOfferName = {};
+window.editingCustomOfferDiscount = {};
+window.editingCustomOfferType = {};
+
 function showQuotationForm(orderId, basePrice = null, customPartsStr = null) {
     const order = (window.allFetchedOrders || []).find(o => String(o.id) === String(orderId));
     
@@ -1968,6 +2055,18 @@ function showQuotationForm(orderId, basePrice = null, customPartsStr = null) {
         }
     }
     
+    // Initialize editing variables
+    window.editingQuotationOfferIds = window.editingQuotationOfferIds || {};
+    window.editingCustomOfferName = window.editingCustomOfferName || {};
+    window.editingCustomOfferDiscount = window.editingCustomOfferDiscount || {};
+    window.editingCustomOfferType = window.editingCustomOfferType || {};
+
+    const parsedData = parseOrderNotesAndOffers(order ? order.notes : '');
+    window.editingQuotationOfferIds[orderId] = parsedData.selectedOfferIds;
+    window.editingCustomOfferName[orderId] = parsedData.customOfferName;
+    window.editingCustomOfferDiscount[orderId] = parsedData.customOfferDiscount;
+    window.editingCustomOfferType[orderId] = parsedData.customOfferType;
+
     // Store in global window for active editing
     window.editingQuotationParts[orderId] = partsList;
     window.editingQuotationServiceFee[orderId] = order ? (parseFloat(order.service_fee) || 100) : 100;
@@ -1982,7 +2081,25 @@ function renderQuotationFormInlineEditable(orderId) {
     const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 0;
     
     const partsSum = partsList.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
-    const liveTotal = serviceFee + diagnosisCharge + partsSum;
+    const subtotalBeforeDiscount = serviceFee + diagnosisCharge + partsSum;
+    
+    // Offers configuration state
+    const selectedOfferIds = window.editingQuotationOfferIds[orderId] || [];
+    const customOfferName = window.editingCustomOfferName[orderId] || '';
+    const customOfferDiscount = window.editingCustomOfferDiscount[orderId] || 0;
+    const customOfferType = window.editingCustomOfferType[orderId] || 'percent';
+    
+    const { discounts, totalDiscount } = calculateAppliedDiscounts(
+        selectedOfferIds,
+        customOfferName,
+        customOfferDiscount,
+        customOfferType,
+        diagnosisCharge,
+        serviceFee,
+        partsSum
+    );
+    
+    const liveTotal = Math.max(0, subtotalBeforeDiscount - totalDiscount);
     
     let originalPartsHtml = '';
     let additionalPartsHtml = '';
@@ -2023,9 +2140,28 @@ function renderQuotationFormInlineEditable(orderId) {
     if (!additionalPartsHtml) {
         additionalPartsHtml = `<p class="text-xs text-gray-600 italic py-1">No additional diagnosed components listed yet.</p>`;
     }
+
+    // Build the offers checkboxes HTML
+    const offerCheckboxesHtml = (window.allOffers || []).map(o => {
+        const isChecked = selectedOfferIds.map(String).includes(String(o.id)) ? 'checked' : '';
+        return `
+            <label class="flex items-start gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-white/5 cursor-pointer hover:bg-slate-900/40 transition text-xs select-none">
+                <input type="checkbox" value="${o.id}" onchange="toggleQuotationOffer('${orderId}', '${o.id}', this.checked)" ${isChecked} class="mt-0.5 rounded border-white/10 text-teal focus:ring-teal bg-slate-950" />
+                <div class="flex-1">
+                    <span class="font-bold text-teal-400 block">${o.name}</span>
+                    <span class="text-[9.5px] text-gray-400 block mt-0.5 leading-relaxed">${o.description}</span>
+                    <span class="text-[9.5px] text-emerald-400 font-bold block mt-1"><i class="fa-solid fa-percent text-[8px] mr-0.5"></i> ${o.discount_percent}% Promo Off</span>
+                </div>
+            </label>
+        `;
+    }).join('');
+
+    const order = (window.allFetchedOrders || []).find(o => String(o.id) === String(orderId));
+    const currentNotesData = parseOrderNotesAndOffers(order ? order.notes : '');
+    const notesBodyText = currentNotesData.notes || '';
     
     const contentHtml = `
-        <div class="space-y-4">
+        <div class="space-y-4 max-h-[80vh] overflow-y-auto px-1">
             <div class="flex items-center gap-2 border-b border-white/5 pb-2">
                 <div class="w-10 h-10 bg-teal-500/10 border border-teal-500/20 text-teal-400 rounded-full flex items-center justify-center text-xl">
                     <i class="fa-solid fa-file-invoice-dollar"></i>
@@ -2077,10 +2213,67 @@ function renderQuotationFormInlineEditable(orderId) {
                     ${additionalPartsHtml}
                 </div>
             </div>
-            
-            <div class="flex items-center justify-between bg-teal-500/5 border border-teal-500/10 p-3 rounded-lg">
-                <div class="text-xs font-semibold text-gray-300">Finalized Customer Quote Total:</div>
-                <div class="text-sm font-black text-emerald-400" id="quote-live-total-${orderId}">₹${liveTotal.toLocaleString('en-IN')}</div>
+
+            <!-- Active Promotional Offers Selection -->
+            <div class="space-y-2 border-t border-white/5 pt-3">
+                <label class="block text-[10px] text-teal-400 uppercase font-bold tracking-wider flex items-center gap-1">
+                    <i class="fa-solid fa-gift"></i> Select Active Promo Offers (Multiple Allowed)
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-44 overflow-y-auto pr-1">
+                    ${offerCheckboxesHtml || '<div class="text-[10px] text-gray-500 italic">No promotional offers loaded.</div>'}
+                </div>
+            </div>
+
+            <!-- Custom Offer & Discounts -->
+            <div class="space-y-2 border-t border-white/5 pt-3">
+                <label class="block text-[10px] text-teal-400 uppercase font-bold tracking-wider flex items-center gap-1">
+                    <i class="fa-solid fa-tags"></i> Apply Custom Extra Offer
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 bg-slate-950/30 p-2.5 rounded-lg border border-white/5">
+                    <div class="col-span-1 sm:col-span-1">
+                        <label class="block text-[9px] text-gray-400 uppercase font-semibold mb-1">Offer Name</label>
+                        <input type="text" id="quote-custom-offer-name-${orderId}" value="${customOfferName}" oninput="updateCustomOfferName('${orderId}', this.value)" class="w-full bg-slate-950 border border-white/10 rounded px-2.5 py-1.5 text-xs text-white outline-none focus:border-teal" placeholder="e.g. Loyal Discount" />
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-[9px] text-gray-400 uppercase font-semibold mb-1">Discount Value</label>
+                        <input type="number" id="quote-custom-offer-discount-${orderId}" value="${customOfferDiscount}" oninput="updateCustomOfferDiscount('${orderId}', this.value)" class="w-full bg-slate-950 border border-white/10 rounded px-2.5 py-1.5 text-xs text-teal font-bold outline-none focus:border-teal" placeholder="e.g. 10" />
+                    </div>
+                    <div class="col-span-1">
+                        <label class="block text-[9px] text-gray-400 uppercase font-semibold mb-1">Discount Type</label>
+                        <select id="quote-custom-offer-type-${orderId}" onchange="updateCustomOfferType('${orderId}', this.value)" class="w-full bg-slate-950 border border-white/10 rounded px-2.5 py-1.5 text-xs text-white outline-none focus:border-teal">
+                            <option value="percent" ${customOfferType === 'percent' ? 'selected' : ''}>Percent (%)</option>
+                            <option value="flat" ${customOfferType === 'flat' ? 'selected' : ''}>Flat (₹)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notes/Comments box -->
+            <div class="space-y-1.5 border-t border-white/5 pt-3">
+                <label class="block text-[10px] text-gray-400 uppercase font-bold tracking-wider">💬 Coordinator Comments / Advice to Customer</label>
+                <textarea id="quote-notes-${orderId}" class="w-full bg-slate-950 border border-white/10 rounded-lg p-2.5 text-xs text-white outline-none focus:border-teal min-h-[60px]" placeholder="Add notes about repairs, guarantees, or special parts.">${notesBodyText}</textarea>
+            </div>
+
+            <!-- Live Calculation Summary panel -->
+            <div class="space-y-1.5 bg-slate-950/60 p-3 rounded-lg border border-teal-500/20">
+                <div class="flex justify-between text-xs text-gray-400">
+                    <span>Gross Subtotal (Before Offers):</span>
+                    <span class="font-semibold text-white">₹${subtotalBeforeDiscount.toLocaleString('en-IN')}</span>
+                </div>
+                ${discounts.map(d => `
+                    <div class="flex justify-between text-[11px] text-teal-400">
+                        <span>🎁 Offer: ${d.name}</span>
+                        <span>-₹${d.amount.toLocaleString('en-IN')}</span>
+                    </div>
+                `).join('')}
+                <div class="flex justify-between text-xs text-teal border-t border-white/5 pt-1.5 font-bold">
+                    <span>Total Discount Applied:</span>
+                    <span>-₹${totalDiscount.toLocaleString('en-IN')}</span>
+                </div>
+                <div class="flex justify-between text-sm text-emerald-400 font-black pt-1">
+                    <span>Final Approved Quotation Total:</span>
+                    <span id="quote-live-total-${orderId}">₹${liveTotal.toLocaleString('en-IN')}</span>
+                </div>
             </div>
             
             <div class="flex gap-2 justify-end pt-3 border-t border-white/5">
@@ -2101,7 +2294,24 @@ function updateQuoteLiveTotal(orderId) {
     const diagnosisCharge = window.editingQuotationDiagnosisCharge[orderId] || 0;
     
     const partsSum = partsList.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
-    const liveTotal = serviceFee + diagnosisCharge + partsSum;
+    const subtotalBeforeDiscount = serviceFee + diagnosisCharge + partsSum;
+
+    const selectedOfferIds = window.editingQuotationOfferIds[orderId] || [];
+    const customOfferName = window.editingCustomOfferName[orderId] || '';
+    const customOfferDiscount = window.editingCustomOfferDiscount[orderId] || 0;
+    const customOfferType = window.editingCustomOfferType[orderId] || 'percent';
+    
+    const { discounts, totalDiscount } = calculateAppliedDiscounts(
+        selectedOfferIds,
+        customOfferName,
+        customOfferDiscount,
+        customOfferType,
+        diagnosisCharge,
+        serviceFee,
+        partsSum
+    );
+    
+    const liveTotal = Math.max(0, subtotalBeforeDiscount - totalDiscount);
     
     const totalEl = document.getElementById(`quote-live-total-${orderId}`);
     if (totalEl) {
@@ -2147,6 +2357,47 @@ function updateQuotationServiceFeeEditable(orderId, value) {
     updateQuoteLiveTotal(orderId);
 }
 
+function toggleQuotationOffer(orderId, offerId, checked) {
+    window.editingQuotationOfferIds = window.editingQuotationOfferIds || {};
+    if (!window.editingQuotationOfferIds[orderId]) {
+        window.editingQuotationOfferIds[orderId] = [];
+    }
+    const idStr = String(offerId);
+    const index = window.editingQuotationOfferIds[orderId].map(String).indexOf(idStr);
+    
+    if (checked) {
+        if (index === -1) {
+            window.editingQuotationOfferIds[orderId].push(offerId);
+        }
+    } else {
+        if (index !== -1) {
+            window.editingQuotationOfferIds[orderId].splice(index, 1);
+        }
+    }
+    renderQuotationFormInlineEditable(orderId);
+}
+window.toggleQuotationOffer = toggleQuotationOffer;
+
+function updateCustomOfferName(orderId, value) {
+    window.editingCustomOfferName = window.editingCustomOfferName || {};
+    window.editingCustomOfferName[orderId] = value;
+}
+window.updateCustomOfferName = updateCustomOfferName;
+
+function updateCustomOfferDiscount(orderId, value) {
+    window.editingCustomOfferDiscount = window.editingCustomOfferDiscount || {};
+    window.editingCustomOfferDiscount[orderId] = parseFloat(value) || 0;
+    updateQuoteLiveTotal(orderId);
+}
+window.updateCustomOfferDiscount = updateCustomOfferDiscount;
+
+function updateCustomOfferType(orderId, value) {
+    window.editingCustomOfferType = window.editingCustomOfferType || {};
+    window.editingCustomOfferType[orderId] = value;
+    updateQuoteLiveTotal(orderId);
+}
+window.updateCustomOfferType = updateCustomOfferType;
+
 function addNewQuotationPartPromptEditable(orderId, isOriginal = false) {
     if (window.editingQuotationParts[orderId]) {
         const prefix = isOriginal ? '[Original] ' : '[Additional] ';
@@ -2166,6 +2417,10 @@ function cancelQuotationEdit(orderId) {
     delete window.editingQuotationParts[orderId];
     delete window.editingQuotationServiceFee[orderId];
     delete window.editingQuotationDiagnosisCharge[orderId];
+    delete window.editingQuotationOfferIds[orderId];
+    delete window.editingCustomOfferName[orderId];
+    delete window.editingCustomOfferDiscount[orderId];
+    delete window.editingCustomOfferType[orderId];
     loadDashboard();
 }
 
@@ -2180,12 +2435,40 @@ async function submitFinalizedQuotation(orderId) {
         const originalPartsSum = originalParts.reduce((sum, p) => sum + p.price, 0);
         
         const partsSum = partsList.reduce((sum, p) => sum + p.price, 0);
-        const liveTotal = serviceFee + diagnosisCharge + partsSum;
+        const grossSubtotal = serviceFee + diagnosisCharge + partsSum;
+        
+        // Retrieve and calculate offers/discounts
+        const selectedOfferIds = window.editingQuotationOfferIds[orderId] || [];
+        const customOfferName = window.editingCustomOfferName[orderId] || '';
+        const customOfferDiscount = window.editingCustomOfferDiscount[orderId] || 0;
+        const customOfferType = window.editingCustomOfferType[orderId] || 'percent';
+        
+        const { discounts, totalDiscount } = calculateAppliedDiscounts(
+            selectedOfferIds,
+            customOfferName,
+            customOfferDiscount,
+            customOfferType,
+            diagnosisCharge,
+            serviceFee,
+            partsSum
+        );
+        
+        const liveTotal = Math.max(0, grossSubtotal - totalDiscount);
+        
+        // Read comments/notes
+        const notesBodyText = document.getElementById(`quote-notes-${orderId}`)?.value || '';
+        const finalizedNotes = serializeOrderNotesAndOffers(
+            notesBodyText,
+            selectedOfferIds,
+            customOfferName,
+            customOfferDiscount,
+            customOfferType
+        );
         
         // Serialize parts list back
         const customPartsStr = serializeCustomQuoteParts(partsList);
         
-        // Calculate tax, platform fee, and grand total for invoice
+        // Calculate tax, platform fee, and grand total for invoice (No GST collected is shown on receipt, but keep these zero or local variables standard)
         const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
         const gstEnabled = (localStorage.getItem('gstEnabled') === 'true') || (window.gstEnabled === true);
         const taxAmount = gstEnabled ? parseFloat((liveTotal * 0.18).toFixed(2)) : 0;
@@ -2201,6 +2484,8 @@ async function submitFinalizedQuotation(orderId) {
                 localOrders[idx].service_fee = serviceFee;
                 localOrders[idx].parts_total = originalPartsSum;
                 localOrders[idx].total_price = liveTotal;
+                localOrders[idx].discount_applied = totalDiscount;
+                localOrders[idx].notes = finalizedNotes;
                 localOrders[idx].custom_quote_parts = customPartsStr;
                 localOrders[idx].status = 'Quotation-Sent';
                 localOrders[idx].invoice_number = null;
@@ -2221,6 +2506,8 @@ async function submitFinalizedQuotation(orderId) {
                     service_fee: serviceFee,
                     parts_total: originalPartsSum,
                     total_price: liveTotal,
+                    discount_applied: totalDiscount,
+                    notes: finalizedNotes,
                     custom_quote_parts: customPartsStr,
                     status: 'Quotation-Sent',
                     invoice_number: null,
@@ -2239,6 +2526,10 @@ async function submitFinalizedQuotation(orderId) {
         delete window.editingQuotationParts[orderId];
         delete window.editingQuotationServiceFee[orderId];
         delete window.editingQuotationDiagnosisCharge[orderId];
+        delete window.editingQuotationOfferIds[orderId];
+        delete window.editingCustomOfferName[orderId];
+        delete window.editingCustomOfferDiscount[orderId];
+        delete window.editingCustomOfferType[orderId];
         loadDashboard();
     } catch (err) {
         showToast('Failed to dispatch quotation: ' + err.message, 'error');
@@ -3485,6 +3776,9 @@ async function updateNavForAuth(user) {
         localStorage.setItem('currentUserRoles', JSON.stringify(roles));
         const activeRole = localStorage.getItem('activeRole') || roles[0] || 'customer';
 
+        // Render standard floating mobile dock on top of bottom navigation bar
+        renderFloatingMobileDock(user, roles, activeRole);
+
         let roleSwitcherHtml = '';
         if (roles.length > 1) {
             roleSwitcherHtml = `
@@ -3744,6 +4038,9 @@ async function updateNavForAuth(user) {
             console.warn("Could not load roles for nav update:", e);
         }
     } else {
+        // Clear standard floating mobile dock
+        renderFloatingMobileDock(null, [], '');
+
         if (navLogin) navLogin.style.display = 'inline-block';
         if (navSignup) navSignup.style.display = 'inline-block';
         if (navUserInfo) navUserInfo.classList.add('hidden');
@@ -3833,6 +4130,62 @@ function switchActiveRole(newRole) {
 }
 
 window.switchActiveRole = switchActiveRole;
+
+function renderFloatingMobileDock(user, roles, activeRole) {
+    let dock = document.getElementById('floatingMobileDock');
+    if (!user) {
+        if (dock) dock.remove();
+        return;
+    }
+    
+    if (!dock) {
+        dock = document.createElement('div');
+        dock.id = 'floatingMobileDock';
+        dock.className = 'md:hidden fixed bottom-[68px] left-1/2 -translate-x-1/2 w-[92%] max-w-sm bg-slate-900/95 border border-teal-500/25 backdrop-blur-md px-3.5 py-2.5 rounded-2xl flex items-center justify-between z-40 shadow-2xl transition-all duration-300';
+        document.body.appendChild(dock);
+    }
+    
+    const username = user.user_metadata?.full_name || user.email.split('@')[0];
+    const initials = username.substring(0, 2).toUpperCase();
+    
+    let roleSwitcherHtml = '';
+    if (roles.length > 1) {
+        roleSwitcherHtml = `
+            <div class="flex items-center gap-1 bg-slate-950 px-2.5 py-1 rounded-xl border border-slate-800">
+                <i class="fa-solid fa-arrows-spin text-[10px] text-teal"></i>
+                <select onchange="switchActiveRole(this.value)" class="bg-transparent text-teal text-[10px] font-black uppercase outline-none cursor-pointer">
+                    ${roles.map(r => `<option value="${r}" ${r === activeRole ? 'selected' : ''}>${r.toUpperCase()}</option>`).join('')}
+                </select>
+            </div>
+        `;
+    } else {
+        roleSwitcherHtml = `
+            <span class="bg-teal-500/10 border border-teal-500/20 text-teal text-[9px] uppercase font-bold px-2 py-1 rounded-xl">
+                Active: ${activeRole.toUpperCase()}
+            </span>
+        `;
+    }
+    
+    dock.innerHTML = `
+        <div class="flex items-center gap-2 cursor-pointer" onclick="toggleProfileDrawer()">
+            <div class="w-8 h-8 rounded-full bg-teal-500/10 border border-teal-500/30 text-teal font-black text-xs flex items-center justify-center">
+                ${initials}
+            </div>
+            <div class="min-w-0">
+                <p class="text-[10px] font-bold text-white leading-none truncate">${username}</p>
+                <p class="text-[8px] text-gray-400 mt-0.5">DTC Hub Account</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+            ${roleSwitcherHtml}
+            <button onclick="logoutUser()" class="w-7 h-7 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center hover:bg-red-500/20 transition-all" title="Logout">
+                <i class="fa-solid fa-power-off text-[10px]"></i>
+            </button>
+        </div>
+    `;
+}
+window.renderFloatingMobileDock = renderFloatingMobileDock;
 
 async function completeRepair(orderId) {
     try {
@@ -4232,14 +4585,50 @@ async function selectCODPayment(orderId) {
 }
 
 async function confirmPaymentManual(orderId) {
-    if (!supabase) return;
+    if (!supabase) {
+        showToast('Offline Mode: Cannot perform manual payment verification checks.', 'warning');
+        return;
+    }
     try {
+        // Fetch current order status
+        let orderObj = null;
+        const { data, error: fetchErr } = await supabase.from('orders').select('*').eq('id', orderId).single();
+        if (fetchErr || !data) {
+            let localOrders = JSON.parse(localStorage.getItem('local_orders') || '[]');
+            orderObj = localOrders.find(o => String(o.id) === String(orderId));
+        } else {
+            orderObj = data;
+        }
+
+        if (!orderObj) {
+            showToast('❌ Order reference not found.', 'error');
+            return;
+        }
+
+        // Rule 1: Work must be complete
+        const completedStatuses = ['Ready-For-Delivery', 'Completed', 'Delivered'];
+        const isWorkComplete = completedStatuses.includes(orderObj.status);
+        if (!isWorkComplete) {
+            showToast('⚠️ Action Blocked: Cannot confirm payment before repair work is completed by the technician.', 'error');
+            return;
+        }
+
+        // Rule 2: Must be confirmed by technician (during doorstep COD delivery/handover) or online via Razorpay
+        const isPaidOnline = orderObj.payment_method?.includes('Razorpay') || orderObj.payment_status === 'Paid';
+        const isPaidByTech = orderObj.pickup_otp === 'VERIFIED' && orderObj.payment_status === 'Paid';
+
+        if (!isPaidOnline && !isPaidByTech) {
+            showToast('⚠️ Action Blocked: Manual bypass disabled. Payment must be verified online via Razorpay or confirmed on delivery by the doorstep Technician.', 'error');
+            return;
+        }
+
+        // If rules are met, allow confirming
         const { error } = await supabase.from('orders').update({
             payment_status: 'Paid',
-            status: 'Under-Repair'
+            status: 'Completed'
         }).eq('id', orderId);
         if (error) throw error;
-        showToast('💵 Payment manually confirmed by Coordinator! Status updated to Under-Repair.', 'success');
+        showToast('💵 Payment status successfully verified and updated!', 'success');
         closeOrderDetailModal();
         loadDashboard();
     } catch (err) {
@@ -4247,7 +4636,7 @@ async function confirmPaymentManual(orderId) {
     }
 }
 
-function generateInvoiceHtml(order) {
+function old_generateInvoiceHtml(order) {
     const deviceName = getDeviceName(order.device_id) !== 'Device' ? getDeviceName(order.device_id) : (order.device_other || 'Device');
     const repairLabel = getRepairLabel(order.repair_type_id) !== 'Repair' ? getRepairLabel(order.repair_type_id) : (order.repair_other || 'Repair');
     const invoiceNum = order.invoice_number || `INV-2026-TEMP`;
@@ -4471,6 +4860,493 @@ function generateInvoiceHtml(order) {
         
         <div style="margin-top: 40px; text-align: center; color: #666; font-size: 12px; border-t: 1px solid #eee; padding-top: 20px;">
             Thank you for choosing RepairMaster! Your premium doorstep device diagnostic is securely validated.
+        </div>
+    </div>
+</body>
+</html>
+    `;
+}
+
+function generateInvoiceHtml(order) {
+    const deviceName = getDeviceName(order.device_id) !== 'Device' ? getDeviceName(order.device_id) : (order.device_other || 'Device');
+    const repairLabel = getRepairLabel(order.repair_type_id) !== 'Repair' ? getRepairLabel(order.repair_type_id) : (order.repair_other || 'Repair');
+    const isQuotation = !['Ready-For-Delivery', 'Completed', 'Delivered'].includes(order.status) && (order.payment_status !== 'Paid');
+    const docTitle = isQuotation ? 'Official Repair Quotation' : 'Official Service Invoice';
+    const invoiceNum = order.invoice_number || `EST-2026-${order.order_number ? order.order_number.replace('RM-REQ-', '') : Math.floor(1000 + Math.random() * 9000)}`;
+    const invoiceDate = order.created_at ? new Date(order.created_at).toLocaleDateString() : new Date().toLocaleDateString();
+
+    const partsList = parseCustomQuoteParts(order.custom_quote_parts);
+    let partsRowsHtml = '';
+    
+    // Parse offers
+    const { notes: notesBody, selectedOfferIds, customOfferName, customOfferDiscount, customOfferType } = parseOrderNotesAndOffers(order.notes);
+    
+    const partsSum = partsList.reduce((sum, p) => sum + (parseFloat(p.price) || 0), 0);
+    const serviceFee = parseFloat(order.service_fee) || 100;
+    const diagnosisCharge = parseFloat(order.diagnosis_charge) || 250;
+    
+    const { discounts, totalDiscount } = calculateAppliedDiscounts(
+        selectedOfferIds,
+        customOfferName,
+        customOfferDiscount,
+        customOfferType,
+        diagnosisCharge,
+        serviceFee,
+        partsSum
+    );
+
+    if (partsList.length > 0) {
+        partsList.forEach(p => {
+            const cleanName = p.name.replace(/^\[Original\]\s*/, '').replace(/^\[Old\]\s*/, '').replace(/^\[Additional\]\s*/, '').replace(/^\[New\]\s*/, '');
+            partsRowsHtml += `
+                <tr class="item">
+                    <td class="desc-cell">📦 ${cleanName} Spare Component</td>
+                    <td class="price-cell">₹${p.price.toLocaleString('en-IN')}</td>
+                </tr>
+            `;
+        });
+    } else if (order.parts_total > 0 || partsSum > 0) {
+        const pPrice = order.parts_total || partsSum || 0;
+        partsRowsHtml += `
+            <tr class="item">
+                <td class="desc-cell">📦 ${order.parts_quality ? order.parts_quality.charAt(0).toUpperCase() + order.parts_quality.slice(1) : 'Standard'} ${repairLabel} Spare Component</td>
+                <td class="price-cell">₹${pPrice.toLocaleString('en-IN')}</td>
+            </tr>
+        `;
+    }
+
+    const subtotalBeforeDiscount = diagnosisCharge + serviceFee + (partsList.length > 0 ? partsSum : (order.parts_total || 0));
+    const grandTotal = Math.max(0, subtotalBeforeDiscount - totalDiscount);
+
+    // Build the offers html list
+    let offersHtml = '';
+    if (discounts.length > 0) {
+        offersHtml += `
+            <tr class="heading">
+                <td colspan="2" class="section-title text-teal-600">🎁 Applied Promotional Offers &amp; Discounts</td>
+            </tr>
+        `;
+        discounts.forEach(d => {
+            offersHtml += `
+                <tr class="item offer-row">
+                    <td class="desc-cell text-teal-600">🎁 ${d.name}</td>
+                    <td class="price-cell text-teal-600">-₹${d.amount.toLocaleString('en-IN')}</td>
+                </tr>
+            `;
+        });
+        offersHtml += `
+            <tr class="item total-discount-row">
+                <td class="desc-cell font-bold">Total Promo Discount Applied</td>
+                <td class="price-cell font-bold text-teal-600">-₹${totalDiscount.toLocaleString('en-IN')}</td>
+            </tr>
+        `;
+    }
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${docTitle} - ${invoiceNum}</title>
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            color: #1e293b;
+            margin: 0;
+            padding: 40px;
+            background-color: #f8fafc;
+        }
+        .invoice-container {
+            max-width: 800px;
+            margin: auto;
+            background-color: #ffffff;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+        .invoice-box {
+            padding: 40px;
+        }
+        .btn-print {
+            background-color: #0f766e;
+            color: #ffffff;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 24px;
+            cursor: pointer;
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+        .btn-print:hover {
+            background-color: #115e59;
+            transform: translateY(-1px);
+        }
+        
+        /* Brand Header styling optimized for white backgrounds */
+        .brand-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 30px;
+            margin-bottom: 30px;
+        }
+        .brand-logo-section {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .brand-logo-svg {
+            width: 48px;
+            height: 48px;
+        }
+        .brand-text-container {
+            display: flex;
+            flex-direction: column;
+        }
+        .brand-name {
+            font-size: 26px;
+            font-weight: 900;
+            color: #0f766e;
+            margin: 0;
+            letter-spacing: -0.5px;
+            line-height: 1.1;
+        }
+        .brand-tagline {
+            font-size: 11px;
+            font-weight: 600;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 4px 0 0 0;
+        }
+        .company-details {
+            font-size: 11px;
+            color: #64748b;
+            line-height: 1.6;
+            margin-top: 8px;
+            font-weight: 500;
+        }
+        .doc-meta {
+            text-align: right;
+        }
+        .doc-type-badge {
+            display: inline-block;
+            background-color: ${isQuotation ? '#fef3c7' : '#dcfce7'};
+            color: ${isQuotation ? '#92400e' : '#166534'};
+            font-size: 11px;
+            font-weight: 800;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 12px;
+        }
+        .meta-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 13px;
+            color: #475569;
+            line-height: 1.6;
+        }
+        .meta-list li strong {
+            color: #0f172a;
+        }
+        
+        /* Information section grid */
+        .info-grid {
+            display: grid;
+            grid-template-cols: 1fr 1fr;
+            gap: 30px;
+            background-color: #f8fafc;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 30px;
+            border: 1px solid #f1f5f9;
+        }
+        .info-block-title {
+            font-size: 11px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 6px;
+        }
+        .info-content {
+            font-size: 13px;
+            line-height: 1.6;
+            color: #334155;
+        }
+        .info-content strong {
+            color: #0f172a;
+            font-size: 14px;
+        }
+        
+        /* Table styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+        tr.heading td {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            color: #334155;
+            font-weight: 700;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 12px 16px;
+        }
+        tr.item td {
+            border-bottom: 1px solid #f1f5f9;
+            padding: 14px 16px;
+            font-size: 13px;
+            color: #334155;
+        }
+        .desc-cell {
+            text-align: left;
+            font-weight: 500;
+        }
+        .price-cell {
+            text-align: right;
+            font-weight: 700;
+            color: #0f172a;
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .section-title {
+            font-weight: 800 !important;
+            font-size: 11px !important;
+            color: #0f766e !important;
+            padding-top: 24px !important;
+            padding-bottom: 8px !important;
+            border-bottom: 1px solid #e2e8f0 !important;
+        }
+        .offer-row td {
+            background-color: #f0fdfa;
+            border-bottom: 1px solid #ccfbf1 !important;
+        }
+        .total-discount-row td {
+            background-color: #f0fdfa;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        
+        /* Totals Block styling */
+        .totals-section {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .totals-table {
+            width: 320px;
+            margin-bottom: 0;
+        }
+        .totals-table tr td {
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+        .totals-table tr.grand-total-row td {
+            background-color: #0f766e;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 15px;
+            border-radius: 8px;
+        }
+        .totals-table tr.grand-total-row td.price-cell {
+            color: #ffffff;
+        }
+        
+        /* Notes and GST boxes */
+        .note-box {
+            background-color: #fffbeb;
+            border: 1px dashed #fcd34d;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-top: 30px;
+            font-size: 12.5px;
+            line-height: 1.6;
+            color: #92400e;
+            font-weight: 500;
+        }
+        .note-box strong {
+            color: #78350f;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            color: #94a3b8;
+            font-size: 11px;
+            border-top: 1px solid #f1f5f9;
+            padding-top: 24px;
+            font-weight: 500;
+        }
+        @media print {
+            body {
+                background-color: #ffffff;
+                padding: 0;
+            }
+            .btn-print {
+                display: none;
+            }
+            .invoice-container {
+                border: none;
+                box-shadow: none;
+            }
+            .invoice-box {
+                padding: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div style="max-width: 800px; margin: auto; text-align: right;">
+        <button class="btn-print" onclick="window.print()">
+            <svg style="width:16px;height:16px;fill:currentColor;" viewBox="0 0 24 24"><path d="M19,8H5V14H19V8M17,12H15V10H17V12M19,3H5C3.89,3 3,3.9 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.9 20.1,3 19,3M19,19H5V17H19V19M19,15H5V5H19V15Z"/></svg>
+            Print ${isQuotation ? 'Quotation' : 'Invoice'}
+        </button>
+    </div>
+    <div class="invoice-container">
+        <div class="invoice-box">
+            <!-- Brand Header optimized for light background -->
+            <div class="brand-header">
+                <div class="brand-logo-section">
+                    <!-- Standard High-contrast SVG Logo -->
+                    <svg class="brand-logo-svg" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="15" y="10" width="70" height="80" rx="12" fill="#0f766e" />
+                        <rect x="20" y="18" width="60" height="64" rx="6" fill="#ffffff" />
+                        <circle cx="50" cy="14" r="2.5" fill="#ffffff" />
+                        <circle cx="50" cy="85" r="4" fill="#334155" />
+                        <!-- wrench shape -->
+                        <path d="M 40,32 C 34,32 30,36 30,42 C 30,46.5 32.5,50 36,51.5 L 36,68 L 44,68 L 44,51.5 C 47.5,50 50,46.5 50,42 C 50,36 46,32 40,32 Z M 40,36 C 41.5,36 43,37 43.7,38.3 L 38.3,43.7 C 37,43 36,41.5 36,40 C 36,37.8 37.8,36 40,36 Z" fill="#0f766e" transform="translate(10, -2)" />
+                        <!-- Sparkle stars -->
+                        <path d="M 62,32 L 64,36 L 68,38 L 64,40 L 62,44 L 60,40 L 56,38 L 60,36 Z" fill="#14b8a6" />
+                        <path d="M 72,50 L 73,52 L 75,53 L 73,54 L 72,56 L 71,54 L 69,53 L 71,52 Z" fill="#14b8a6" />
+                    </svg>
+                    <div class="brand-text-container">
+                        <h1 class="brand-name">RepairMaster</h1>
+                        <span class="brand-tagline">Direct To Consumer Smartphone Repair Labs</span>
+                        <div class="company-details">
+                            <strong>Registered Lab Location:</strong><br>
+                            Dhyaneshwar Nagar Mhasada,<br>
+                            Wardha, Maharashtra - 442001<br>
+                            Email: operations@repairmaster.in | Web: www.repairmaster.in
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="doc-meta">
+                    <span class="doc-type-badge">${docTitle}</span>
+                    <ul class="meta-list">
+                        <li><strong>Reference ID:</strong> ${invoiceNum}</li>
+                        <li><strong>Order ID:</strong> ${order.order_number || order.id}</li>
+                        <li><strong>Date:</strong> ${invoiceDate}</li>
+                        <li><strong>Payment Mode:</strong> ${order.payment_method || 'Unpaid / Cash on Delivery'}</li>
+                        <li><strong>Payment Status:</strong> <span style="color: ${order.payment_status === 'Paid' ? '#166534' : '#92400e'}; font-weight: 800;">${(order.payment_status || 'Unpaid').toUpperCase()}</span></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Customer and Diagnostics grid -->
+            <div class="info-grid">
+                <div>
+                    <div class="info-block-title">👤 Customer / Bill To</div>
+                    <div class="info-content">
+                        <strong>${order.customer_name || 'Valued Customer'}</strong><br>
+                        📞 ${order.customer_phone || 'N/A'}<br>
+                        ✉️ ${order.customer_email || 'N/A'}<br>
+                        📍 ${order.address || 'N/A'}
+                    </div>
+                </div>
+                <div>
+                    <div class="info-block-title">📱 Device &amp; Service Request</div>
+                    <div class="info-content">
+                        <strong>Device Brand/Model:</strong> ${deviceName}<br>
+                        <strong>Requested Service:</strong> ${repairLabel}<br>
+                        <strong>Parts Quality:</strong> ${order.parts_quality ? order.parts_quality.charAt(0).toUpperCase() + order.parts_quality.slice(1) : 'Premium Grade'}<br>
+                        <strong>Bench Lab Status:</strong> <span style="font-weight: 700; color: #0f766e;">${order.status || 'Active'}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Line Items Table -->
+            <table>
+                <thead>
+                    <tr class="heading">
+                        <td class="desc-cell">Description of Spare Parts &amp; Service Repairs</td>
+                        <td class="price-cell">Price (INR)</td>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="item">
+                        <td class="desc-cell">🩺 Scientific Bench Diagnosis (For ${deviceName})</td>
+                        <td class="price-cell">₹${diagnosisCharge.toLocaleString('en-IN')}</td>
+                    </tr>
+                    <tr class="item">
+                        <td class="desc-cell">🔧 ${deviceName} ${repairLabel} Service &amp; Labor</td>
+                        <td class="price-cell">₹${serviceFee.toLocaleString('en-IN')}</td>
+                    </tr>
+                    ${partsRowsHtml}
+                    ${offersHtml}
+                </tbody>
+            </table>
+            
+            <!-- Totals and GST panel -->
+            <div class="totals-section">
+                <table class="totals-table">
+                    <tr>
+                        <td class="desc-cell">Subtotal (Gross Estimate)</td>
+                        <td class="price-cell">₹${subtotalBeforeDiscount.toLocaleString('en-IN')}</td>
+                    </tr>
+                    ${totalDiscount > 0 ? `
+                    <tr>
+                        <td class="desc-cell text-teal-600">Applied Promos &amp; Offers</td>
+                        <td class="price-cell text-teal-600">-₹${totalDiscount.toLocaleString('en-IN')}</td>
+                    </tr>
+                    ` : ''}
+                    <tr>
+                        <td class="desc-cell">CGST (0%)</td>
+                        <td class="price-cell">₹0.00</td>
+                    </tr>
+                    <tr>
+                        <td class="desc-cell">SGST (0%)</td>
+                        <td class="price-cell">₹0.00</td>
+                    </tr>
+                    <tr class="grand-total-row">
+                        <td class="desc-cell">Grand Total</td>
+                        <td class="price-cell">₹${grandTotal.toLocaleString('en-IN')}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <!-- Prominent No GST Note as requested -->
+            <div class="note-box">
+                <strong>⚠️ No GST collected note from consumer:</strong> No GST is collected from the consumer as RepairMaster operates under the GST threshold/composition scheme. The price listed above is final and inclusive of standard doorstep collection, secure transit, scientific lab diagnosis, and high-fidelity restoration.
+            </div>
+            
+            ${notesBody ? `
+            <div style="margin-top: 24px; padding: 16px; border-radius: 8px; background-color: #f8fafc; border: 1px solid #e2e8f0; font-size: 12px; color: #475569;">
+                <strong>Coordinator Desk Comments:</strong> ${notesBody}
+            </div>
+            ` : ''}
+            
+            <div class="footer">
+                Thank you for choosing RepairMaster! Your high-fidelity device diagnostic &amp; repair is backed by our direct-to-consumer lab guarantee.
+                <br>
+                <em>This is a system-generated document. No signature is required.</em>
+            </div>
         </div>
     </div>
 </body>
