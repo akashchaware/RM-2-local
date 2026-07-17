@@ -515,12 +515,19 @@ fun LandingView(
                                 Column(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    val imgId = if (promo.drawableResName == "img_dead_phone_offer_1782763644093") {
-                                        R.drawable.img_dead_phone_offer_1782763644093
-                                    } else if (promo.drawableResName == "img_indian_service_lab_1782739540576") {
-                                        R.drawable.img_indian_service_lab_1782739540576
+                                    val painter = if (promo.drawableResName == "img_dead_phone_offer_1782763644093") {
+                                        coil.compose.rememberAsyncImagePainter(
+                                            model = "https://mpcnfrshpgcpmrgledwy.supabase.co/storage/v1/object/public/RequestBucket/Gemini_Generated_Image_bgj7ssbgj7ssbgj7.png",
+                                            placeholder = painterResource(id = R.drawable.img_dead_phone_offer_1782763644093),
+                                            error = painterResource(id = R.drawable.img_dead_phone_offer_1782763644093)
+                                        )
                                     } else {
-                                        R.drawable.img_indian_service_scooter_1782739563064
+                                        val imgId = if (promo.drawableResName == "img_indian_service_lab_1782739540576") {
+                                            R.drawable.img_indian_service_lab_1782739540576
+                                        } else {
+                                            R.drawable.img_indian_service_scooter_1782739563064
+                                        }
+                                        painterResource(id = imgId)
                                     }
 
                                     Box(
@@ -529,7 +536,7 @@ fun LandingView(
                                             .height(140.dp)
                                     ) {
                                         Image(
-                                            painter = painterResource(id = imgId),
+                                            painter = painter,
                                             contentDescription = promo.title,
                                             modifier = Modifier.fillMaxSize(),
                                             contentScale = ContentScale.Crop
