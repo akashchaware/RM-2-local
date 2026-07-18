@@ -136,15 +136,36 @@ function useComprehensiveFallback() {
 
 function getDeviceName(deviceId) {
     if (!deviceId) return 'Generic Device';
-    const dev = allDevices.find(d => String(d.id) === String(deviceId));
-    return dev ? dev.name : 'Device';
+    const dev = allDevices.find(d => String(d.id) === String(deviceId) || d.name.toLowerCase() === String(deviceId).toLowerCase());
+    if (dev) return dev.name;
+    return deviceId;
 }
 window.getDeviceName = getDeviceName;
 
 function getRepairLabel(repairTypeId) {
     if (!repairTypeId) return 'Device Repair';
-    const rt = allRepairTypes.find(r => String(r.id) === String(repairTypeId));
-    return rt ? rt.label : 'Repair';
+    const rt = allRepairTypes.find(r => String(r.id) === String(repairTypeId) || r.name.toLowerCase() === String(repairTypeId).toLowerCase());
+    if (rt) return rt.label;
+    
+    // Map common raw values if present
+    const repairLabels = {
+        "screen": "📱 Screen Replacement",
+        "battery": "🔋 Battery Replacement",
+        "chargingport": "🔌 Charging Port Repair",
+        "camera": "📷 Camera Repair",
+        "speaker": "🔊 Speaker / Mic Repair",
+        "speaker/mic": "🔊 Speaker / Mic Repair",
+        "button": "🔘 Button Repair",
+        "motherboard": "💻 Motherboard Repair",
+        "waterdamage": "💧 Water Damage Repair",
+        "software": "📀 Software / OS Repair",
+        "network": "📶 Network / Antenna Repair",
+        "completeoverhaul": "⚙️ Complete Overhaul",
+        "deadphone": "💀 Dead Phone / No Power",
+        "other": "❓ Other / Not Sure"
+    };
+    const key = String(repairTypeId).toLowerCase().replace(/\s/g, '');
+    return repairLabels[key] || repairTypeId;
 }
 window.getRepairLabel = getRepairLabel;
 
@@ -203,7 +224,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     `;
                 }
             }
-            if (['Technician Assigned', 'RepairMaster Assigned', 'Pickup-Pending', 'With-RepairMaster', 'Diagnosis-Completed'].includes(status)) {
+            if (['Diagnosis-Completed', 'Quotation-Sent'].includes(status)) {
                 actions += `
                     <button onclick="showQuotationForm('${o.id}')" class="action-btn btn-quote">Manage Price</button>
                 `;
@@ -559,7 +580,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                         <div>👤 <strong>Name:</strong> ${o.customer_name || 'N/A'}</div>
                         <div>📞 <strong>Phone:</strong> ${o.customer_phone || 'N/A'}</div>
                         <div>✉️ <strong>Email:</strong> ${o.customer_email || 'N/A'}</div>
-                        <div class="text-gray-500">📍 <strong>Address:</strong> <span class="italic text-gray-550">Hidden for field routing</span></div>
+                        <div>📍 <strong>Address:</strong> ${o.address || 'N/A'}</div>
                         <div class="md:col-span-2">🎫 <strong>System Reference ID:</strong> ${o.order_number}</div>
                     </div>
                 </div>
@@ -611,7 +632,7 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     <div class="text-[11px] text-grayText mt-2.5 flex flex-wrap items-center gap-y-1.5 gap-x-2">
                         <span class="bg-slate-900/40 border border-slate-800 px-2 py-0.5 rounded-md">ID: ${o.order_number}</span>
                         <span class="bg-slate-900/40 border border-slate-800 px-2 py-0.5 rounded-md">📅 ${new Date(o.created_at).toLocaleDateString()}</span>
-                        ${o.address && !isRepairMaster && !isTechnician ? `<span class="bg-slate-900/40 border border-slate-800 px-2 py-0.5 rounded-md">📍 ${o.address}</span>` : ''}
+                        ${o.address && !isRepairMaster ? `<span class="bg-slate-900/40 border border-slate-800 px-2 py-0.5 rounded-md">📍 ${o.address}</span>` : ''}
                         ${techNameStr ? `<span class="text-sky-400 font-semibold bg-sky-500/10 border border-sky-500/15 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-truck-pickup text-[9px]"></i> ${techNameStr}</span>` : ''}
                         ${masterNameStr ? `<span class="text-amber-400 font-semibold bg-amber-500/10 border border-amber-500/15 px-2 py-0.5 rounded-md flex items-center gap-1"><i class="fa-solid fa-screwdriver-wrench text-[9px]"></i> ${masterNameStr}</span>` : ''}
                     </div>
@@ -2083,6 +2104,13 @@ window.editingCustomOfferType = {};
 
 function showQuotationForm(orderId, basePrice = null, customPartsStr = null) {
     const order = (window.allFetchedOrders || []).find(o => String(o.id) === String(orderId));
+    if (!order) return;
+    
+    // Strict requirement 2: coordinator cannot manage quotation without physical diagnosis completed
+    if (!['Diagnosis-Completed', 'Quotation-Sent', 'Confirmed', 'Under-Repair', 'Quality-Check', 'Ready-For-Delivery', 'Completed', 'Delivered'].includes(order.status)) {
+        showToast('⚠️ Cannot send or manage quotation before physical lab diagnosis is completed.', 'error');
+        return;
+    }
     
     if (customPartsStr === undefined || customPartsStr === null) {
         customPartsStr = order ? (order.custom_quote_parts || '') : '';
@@ -3448,6 +3476,20 @@ async function loadDashboard() {
                     } else if (window.customStatFilter === 'Complete') {
                         matchesStatCard = ['Delivered', 'Completed'].includes(o.status);
                     }
+                } else if (activeRole === 'coordinator' || activeRole === 'admin') {
+                    if (window.customStatFilter === 'New') {
+                        matchesStatCard = ['Pending'].includes(o.status);
+                    } else if (window.customStatFilter === 'PendingPickup') {
+                        matchesStatCard = ['Technician Assigned', 'Pickup-Pending', 'Pickup-In-Progress'].includes(o.status);
+                    } else if (window.customStatFilter === 'PendingDiagnosis') {
+                        matchesStatCard = ['RepairMaster Assigned', 'With-RepairMaster', 'Diagnosis-Pending'].includes(o.status);
+                    } else if (window.customStatFilter === 'PendingRepair') {
+                        matchesStatCard = ['Diagnosis-Completed', 'Quotation-Sent', 'Confirmed', 'Under-Repair'].includes(o.status);
+                    } else if (window.customStatFilter === 'PendingDelivery') {
+                        matchesStatCard = ['Quality-Check', 'Ready-For-Delivery', 'Delivery-In-Progress'].includes(o.status);
+                    } else if (window.customStatFilter === 'Complete') {
+                        matchesStatCard = ['Completed', 'Delivered'].includes(o.status);
+                    }
                 }
             }
 
@@ -3489,21 +3531,36 @@ async function loadDashboard() {
         });
 
         let pillFilterHtml = '';
-        if (isRepairMaster || isTechnician) {
+        if (isRepairMaster || isTechnician || isCoordinator || isAdmin) {
             const currentFilter = window.customStatFilter || 'All';
-            const options = isRepairMaster ? [
-                { id: 'All', label: 'All Jobs' },
-                { id: 'New', label: 'New Requests' },
-                { id: 'Diagnosis', label: 'Under Diagnosis' },
-                { id: 'Repair', label: 'Under Repair' },
-                { id: 'Complete', label: 'Completed' }
-            ] : [
-                { id: 'All', label: 'All Jobs' },
-                { id: 'New', label: 'New Requests' },
-                { id: 'Pickup', label: 'Under Pickup' },
-                { id: 'Delivery', label: 'Under Delivery' },
-                { id: 'Complete', label: 'Completed' }
-            ];
+            let options = [];
+            if (isRepairMaster) {
+                options = [
+                    { id: 'All', label: 'All Jobs' },
+                    { id: 'New', label: 'New Requests' },
+                    { id: 'Diagnosis', label: 'Under Diagnosis' },
+                    { id: 'Repair', label: 'Under Repair' },
+                    { id: 'Complete', label: 'Completed' }
+                ];
+            } else if (isTechnician) {
+                options = [
+                    { id: 'All', label: 'All Jobs' },
+                    { id: 'New', label: 'New Requests' },
+                    { id: 'Pickup', label: 'Under Pickup' },
+                    { id: 'Delivery', label: 'Under Delivery' },
+                    { id: 'Complete', label: 'Completed' }
+                ];
+            } else if (isCoordinator || isAdmin) {
+                options = [
+                    { id: 'All', label: 'All Jobs' },
+                    { id: 'New', label: 'New Requests' },
+                    { id: 'PendingPickup', label: 'Pending Pickup' },
+                    { id: 'PendingDiagnosis', label: 'Pending Diagnosis' },
+                    { id: 'PendingRepair', label: 'Pending Repair' },
+                    { id: 'PendingDelivery', label: 'Pending Delivery' },
+                    { id: 'Complete', label: 'Completed' }
+                ];
+            }
 
             pillFilterHtml = `
                 <div class="flex flex-wrap items-center gap-1.5 pb-4 mb-2">
@@ -3672,7 +3729,47 @@ async function loadDashboard() {
                             (o.customer_name || '').toLowerCase().includes(searchQuery) ||
                             devName.includes(searchQuery) || repLabel.includes(searchQuery);
                     }
-                    return matchesSearch;
+                    
+                    let matchesStatCard = true;
+                    if (window.customStatFilter && window.customStatFilter !== 'All') {
+                        if (activeRole === 'repairmaster') {
+                            if (window.customStatFilter === 'New') {
+                                matchesStatCard = ['New', 'Pending'].includes(o.status);
+                            } else if (window.customStatFilter === 'Diagnosis') {
+                                matchesStatCard = ['With-RepairMaster', 'Diagnosis-Pending'].includes(o.status);
+                            } else if (window.customStatFilter === 'Repair') {
+                                matchesStatCard = ['Repair-In-Progress', 'Confirmed', 'Under-Repair', 'Quality-Check'].includes(o.status);
+                            } else if (window.customStatFilter === 'Complete') {
+                                matchesStatCard = ['Repair-Completed', 'Completed', 'Ready-For-Delivery'].includes(o.status);
+                            }
+                        } else if (activeRole === 'technician') {
+                            if (window.customStatFilter === 'New') {
+                                matchesStatCard = ['Technician Assigned', 'RepairMaster Assigned'].includes(o.status);
+                            } else if (window.customStatFilter === 'Pickup') {
+                                matchesStatCard = ['Pickup-Pending', 'Pickup-In-Progress'].includes(o.status);
+                            } else if (window.customStatFilter === 'Delivery') {
+                                matchesStatCard = ['Delivery-Pending', 'Ready-For-Delivery', 'Delivery-In-Progress'].includes(o.status);
+                            } else if (window.customStatFilter === 'Complete') {
+                                matchesStatCard = ['Delivered', 'Completed'].includes(o.status);
+                            }
+                        } else if (activeRole === 'coordinator' || activeRole === 'admin') {
+                            if (window.customStatFilter === 'New') {
+                                matchesStatCard = ['Pending'].includes(o.status);
+                            } else if (window.customStatFilter === 'PendingPickup') {
+                                matchesStatCard = ['Technician Assigned', 'Pickup-Pending', 'Pickup-In-Progress'].includes(o.status);
+                            } else if (window.customStatFilter === 'PendingDiagnosis') {
+                                matchesStatCard = ['RepairMaster Assigned', 'With-RepairMaster', 'Diagnosis-Pending'].includes(o.status);
+                            } else if (window.customStatFilter === 'PendingRepair') {
+                                matchesStatCard = ['Diagnosis-Completed', 'Quotation-Sent', 'Confirmed', 'Under-Repair'].includes(o.status);
+                            } else if (window.customStatFilter === 'PendingDelivery') {
+                                matchesStatCard = ['Quality-Check', 'Ready-For-Delivery', 'Delivery-In-Progress'].includes(o.status);
+                            } else if (window.customStatFilter === 'Complete') {
+                                matchesStatCard = ['Completed', 'Delivered'].includes(o.status);
+                            }
+                        }
+                    }
+                    
+                    return matchesSearch && matchesStatCard;
                 });
                 
                 matched.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
