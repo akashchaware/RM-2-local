@@ -180,6 +180,20 @@
             -ms-overflow-style: none;
             scrollbar-width: none;
         }
+
+        /* ─── Infinite Marquee Ticker ─── */
+        @keyframes marquee {
+            0% { transform: translateX(0%); }
+            100% { transform: translateX(-50%); }
+        }
+        .animate-marquee {
+            display: flex;
+            width: max-content;
+            animation: marquee 30s linear infinite;
+        }
+        .animate-marquee:hover {
+            animation-play-state: paused;
+        }
     </style>
 </head>
 <body class="pt-16 md:pt-20">
@@ -397,6 +411,37 @@
                             <span onclick="setHomeSlide(1)" class="home-slide-dot w-1.5 h-1.5 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
                             <span onclick="setHomeSlide(2)" class="home-slide-dot w-1.5 h-1.5 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
                             <span onclick="setHomeSlide(3)" class="home-slide-dot w-1.5 h-1.5 rounded-full bg-white/40 cursor-pointer transition-all duration-300"></span>
+                        </div>
+                    </div>
+
+                    <!-- Real Smartphone Brand Logos Infinite Scrolling Marquee Strip (Requirement 6) -->
+                    <div class="max-w-2xl mx-auto my-6 overflow-hidden relative rounded-xl border border-white/5 bg-slate-950/40 py-3">
+                        <div class="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-[#0A0F1D] to-transparent z-10 pointer-events-none"></div>
+                        <div class="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[#0A0F1D] to-transparent z-10 pointer-events-none"></div>
+                        <div class="animate-marquee flex gap-12 items-center">
+                            <!-- Logos Set 1 -->
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-brands fa-apple text-sm text-white"></i> Apple</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-extrabold tracking-wider select-none">SAMSUNG</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-solid fa-mobile-screen text-amber-500 text-[10px]"></i> Xiaomi Redmi</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-solid fa-bolt text-yellow-400 text-[10px]"></i> Realme</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><span class="italic text-blue-400 font-black">vivo</span></div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><span class="text-emerald-400 font-black tracking-wide">OPPO</span></div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><span class="text-sky-400 font-black tracking-widest">NOKIA</span></div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-solid fa-plus text-red-500 text-[10px]"></i> OnePlus</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-brands fa-google text-teal text-[10px]"></i> Google Pixel</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-solid fa-mobile text-blue-500 text-[10px]"></i> Motorola</div>
+                            
+                            <!-- Logos Set 2 (Duplicate for loop) -->
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-brands fa-apple text-sm text-white"></i> Apple</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-extrabold tracking-wider select-none">SAMSUNG</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-solid fa-mobile-screen text-amber-500 text-[10px]"></i> Xiaomi Redmi</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-solid fa-bolt text-yellow-400 text-[10px]"></i> Realme</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><span class="italic text-blue-400 font-black">vivo</span></div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><span class="text-emerald-400 font-black tracking-wide">OPPO</span></div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><span class="text-sky-400 font-black tracking-widest">NOKIA</span></div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-solid fa-plus text-red-500 text-[10px]"></i> OnePlus</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-brands fa-google text-teal text-[10px]"></i> Google Pixel</div>
+                            <div class="flex items-center gap-1.5 text-xs text-gray-400 font-bold select-none"><i class="fa-solid fa-mobile text-blue-500 text-[10px]"></i> Motorola</div>
                         </div>
                     </div>
 

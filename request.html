@@ -300,6 +300,13 @@
                         <input type="text" id="reqAddressLine" placeholder="Flat, Street, Wardha area" required>
                     </div>
                     <div>
+                        <label>Area Pincode / Zip Code</label>
+                        <input type="text" id="reqPincode" placeholder="e.g. 442001" pattern="[0-9]{6}" title="Please enter a valid 6-digit PIN code" class="w-full" required>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
                         <label>City Hub</label>
                         <select id="reqCity" required>
                             <option value="Wardha">Wardha Hub (Fully active)</option>
@@ -307,11 +314,21 @@
                             <option value="Amravati" disabled>Amravati Hub (Coming soon)</option>
                         </select>
                     </div>
+                    <div>
+                        <label>GPS Location coordinates</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="reqGpsCoords" placeholder="e.g. 20.7453, 78.6022" class="flex-1" readonly>
+                            <button type="button" onclick="fetchGPSLocation()" class="btn-primary py-2 px-3 rounded-lg min-h-0 text-xs flex items-center gap-1 bg-[#0f8b8d] hover:bg-teal transition shrink-0" style="height: 42px;">
+                                <i class="fa-solid fa-location-crosshairs"></i> Get GPS
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
-                    <label>Upload Device Condition Photo (Optional)</label>
-                    <input type="file" id="reqPhoto" accept="image/*" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-teal-500/10 file:text-teal-400 hover:file:bg-teal-500/20">
+                    <label>Upload Device Condition Photos (Optional - Add Multiple Images)</label>
+                    <input type="file" id="reqPhoto" accept="image/*" class="text-xs file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:bg-teal-500/10 file:text-teal-400 hover:file:bg-teal-500/20" multiple onchange="previewImages(event)">
+                    <div id="imagePreviewContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-3 mt-3"></div>
                 </div>
 
                 <button type="submit" class="btn-teal w-full mt-4"><i class="fa-regular fa-paper-plane mr-2"></i> Submit Repair Request</button>
