@@ -662,6 +662,21 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                         `;
                     })()}
 
+                    <!-- Customer Submitted Issue Description -->
+                    ${(() => {
+                        const parsedNotes = parseOrderNotesAndOffers(o.notes);
+                        const desc = parsedNotes.customerDescription || parsedNotes.notes || o.notes;
+                        if (!desc) return '';
+                        return `
+                            <div class="mt-3 p-3.5 bg-teal-500/5 border border-teal-500/10 rounded-xl text-xs text-left">
+                                <p class="text-[9px] text-teal-400 font-extrabold uppercase tracking-wider mb-1 flex items-center gap-1.5 font-display">
+                                    <i class="fa-solid fa-clipboard-question"></i> Customer Submitted Issue Description
+                                </p>
+                                <p class="text-xs text-gray-200 leading-relaxed italic">"${desc}"</p>
+                            </div>
+                        `;
+                    })()}
+
                     <!-- Multi-Image Gallery Support with Full-Screen Lightbox -->
                     ${(() => {
                         const imgUrls = (o.photo_url || '').split(',').filter(Boolean);
@@ -705,6 +720,53 @@ function buildSingleOrderCardHtml(o, isAdmin, isCoordinator, isTechnician, isRep
                     ${otpNoticeHtml}
                     ${workflowHtml}
                     <div id="inline-form-container-${o.id}"></div>
+
+                    <!-- Secure Staff WhatsApp Connect -->
+                    ${(() => {
+                        if (isGuestMode || !(isCoordinator || isTechnician || isAdmin)) return '';
+                        if (!o.customer_phone) return '';
+                        
+                        const rawPhone = o.customer_phone || '';
+                        let cleanPhone = rawPhone.replace(/\D/g, '');
+                        if (cleanPhone.length === 10) {
+                            cleanPhone = '91' + cleanPhone;
+                        } else if (cleanPhone.length === 12 && cleanPhone.startsWith('91')) {
+                            // Already has country code
+                        } else if (cleanPhone.length > 0 && !cleanPhone.startsWith('91')) {
+                            cleanPhone = '91' + cleanPhone;
+                        }
+                        
+                        const pickupMsg = `Hello *${o.customer_name}*, this is *${currentUser?.name || 'your Doorstep Specialist'}* from RepairMaster. We are arranging to pick up your *${deviceName}* (Ref: *${o.order_number}*). Could you please confirm your preferred pickup schedule and provide your exact door/address coordinates? Thank you!`;
+                        const deliveryMsg = `Hello *${o.customer_name}*, this is *${currentUser?.name || 'your Doorstep Specialist'}* from RepairMaster. Great news! Your *${deviceName}* (Ref: *${o.order_number}*) is fully repaired and passed all rigorous bench diagnostics. We are ready for doorstep delivery. Please confirm your available timing and keep your Handover Code (*${o.pickup_otp || 'XXXX'}*) ready. Thank you!`;
+                        const diagMsg = `Hello *${o.customer_name}*, this is the Service Coordinator from RepairMaster. Laboratory physical diagnostics for your *${deviceName}* (Ref: *${o.order_number}*) are complete. A detailed component checklist and spare-parts estimate has been published to your dashboard. Please log in to approve, or reply here for custom inquiries! Thank you!`;
+                        
+                        const pickupLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(pickupMsg)}`;
+                        const deliveryLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(deliveryMsg)}`;
+                        const diagLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(diagMsg)}`;
+                        const directLink = `https://wa.me/${cleanPhone}?text=${encodeURIComponent("Hello " + o.customer_name + ", this is RepairMaster regarding your smartphone repair.")}`;
+                        
+                        return `
+                            <div class="mt-4 pt-3.5 border-t border-slate-900/60 text-left">
+                                <p class="text-[9px] font-extrabold uppercase tracking-wider text-tealAccent mb-2 flex items-center gap-1.5 font-display">
+                                    <i class="fa-brands fa-whatsapp text-emerald-400 text-sm"></i> Secure Customer WhatsApp Contact Dispatcher
+                                </p>
+                                <div class="flex flex-wrap gap-1.5">
+                                    <a href="${pickupLink}" target="_blank" class="inline-flex items-center gap-1 bg-[#14b8a6]/10 border border-[#14b8a6]/25 hover:bg-emerald-600 hover:text-slate-950 px-2.5 py-1 rounded text-[9.5px] font-bold text-tealAccent transition shadow-sm">
+                                        🗓️ Ask Pickup & Address
+                                    </a>
+                                    <a href="${deliveryLink}" target="_blank" class="inline-flex items-center gap-1 bg-[#14b8a6]/10 border border-[#14b8a6]/25 hover:bg-emerald-600 hover:text-slate-950 px-2.5 py-1 rounded text-[9.5px] font-bold text-tealAccent transition shadow-sm">
+                                        📦 Ask Delivery & Handover Code
+                                    </a>
+                                    <a href="${diagLink}" target="_blank" class="inline-flex items-center gap-1 bg-[#14b8a6]/10 border border-[#14b8a6]/25 hover:bg-emerald-600 hover:text-slate-950 px-2.5 py-1 rounded text-[9.5px] font-bold text-tealAccent transition shadow-sm">
+                                        🔬 Send Diagnosis & Quote Alert
+                                    </a>
+                                    <a href="${directLink}" target="_blank" class="inline-flex items-center gap-1 bg-slate-900 border border-slate-800 hover:bg-slate-800 px-2.5 py-1 rounded text-[9.5px] font-bold text-white transition shadow-sm">
+                                        💬 Direct Chat
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    })()}
                 </div>
                 <div class="flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-start gap-3 border-t border-slate-800/60 pt-4 lg:border-t-0 lg:pt-0 shrink-0">
                     ${isTechnician ? '' : `
@@ -1422,7 +1484,7 @@ async function submitRequest(e) {
             total_price: totalEstimateVal,
             discount_applied: 0,
             status: 'Pending',
-            notes: notes || null,
+            notes: serializeOrderNotesAndOffers('', [], '', 0, 'percent', notes, ''),
             created_at: new Date().toISOString()
         };
 
@@ -1736,7 +1798,8 @@ async function submitAssignDelivery(orderId) {
 function showDiagnosisForm(orderId) {
     const order = (window.allFetchedOrders || []).find(o => String(o.id) === String(orderId));
     const currentDiag = order ? (order.diagnosis_notes || '') : '';
-    const currentNotes = order ? (order.notes || '') : '';
+    const parsedNotes = parseOrderNotesAndOffers(order ? order.notes : '');
+    const currentNotes = parsedNotes.adviceToCoordinator || parsedNotes.notes || (order ? order.notes : '');
     const currentPartsTotal = order ? (order.parts_total || 0) : 0;
     const currentTotalPrice = order ? (order.total_price || 0) : 0;
 
@@ -1927,10 +1990,22 @@ async function submitRedesignedDiagnosis(orderId) {
     const activeRole = localStorage.getItem('activeRole') || 'customer';
     const isRepairMaster = activeRole === 'repairmaster';
 
+    const order = (window.allFetchedOrders || []).find(o => String(o.id) === String(orderId));
+    const parsed = parseOrderNotesAndOffers(order ? order.notes : '');
+    const updatedNotes = serializeOrderNotesAndOffers(
+        parsed.notes,
+        parsed.selectedOfferIds,
+        parsed.customOfferName,
+        parsed.customOfferDiscount,
+        parsed.customOfferType,
+        parsed.customerDescription,
+        adviseVal
+    );
+
     try {
         const updateData = {
             diagnosis_notes: notesVal,
-            notes: adviseVal
+            notes: updatedNotes
         };
         if (isRepairMaster) {
             updateData.status = 'Diagnosis-Completed';
@@ -1945,7 +2020,7 @@ async function submitRedesignedDiagnosis(orderId) {
             const idx = localOrders.findIndex(o => String(o.id) === String(orderId));
             if (idx !== -1) {
                 localOrders[idx].diagnosis_notes = notesVal;
-                localOrders[idx].notes = adviseVal;
+                localOrders[idx].notes = updatedNotes;
                 if (isRepairMaster) {
                     localOrders[idx].status = 'Diagnosis-Completed';
                 } else {
@@ -2021,10 +2096,11 @@ function parseOrderNotesAndOffers(orderNotes) {
     let customOfferName = '';
     let customOfferDiscount = 0;
     let customOfferType = 'percent';
+    let customerDescription = '';
+    let adviceToCoordinator = '';
 
     if (notes.startsWith('__OFFERS_DATA__:')) {
         try {
-            const parts = notes.split('__NOTES_BODYBody__:'); // Check fallback or standard separator
             const separator = notes.includes('__NOTES_BODY__:') ? '__NOTES_BODY__:' : '__NOTES_BODYBody__:';
             const splitted = notes.split(separator);
             const jsonDataStr = splitted[0].replace('__OFFERS_DATA__:', '').trim();
@@ -2033,20 +2109,26 @@ function parseOrderNotesAndOffers(orderNotes) {
             customOfferName = data.customOfferName || '';
             customOfferDiscount = parseFloat(data.customOfferDiscount) || 0;
             customOfferType = data.customOfferType || 'percent';
+            customerDescription = data.customerDescription || '';
+            adviceToCoordinator = data.adviceToCoordinator || '';
             notes = splitted[1] || '';
         } catch (e) {
             console.error("Error parsing offers data from notes:", e);
         }
+    } else {
+        customerDescription = notes;
     }
-    return { notes, selectedOfferIds, customOfferName, customOfferDiscount, customOfferType };
+    return { notes, selectedOfferIds, customOfferName, customOfferDiscount, customOfferType, customerDescription, adviceToCoordinator };
 }
 
-function serializeOrderNotesAndOffers(notesBody, selectedOfferIds, customOfferName, customOfferDiscount, customOfferType) {
+function serializeOrderNotesAndOffers(notesBody, selectedOfferIds, customOfferName, customOfferDiscount, customOfferType, customerDescription = '', adviceToCoordinator = '') {
     const data = {
         selectedOfferIds: selectedOfferIds || [],
         customOfferName: customOfferName || '',
         customOfferDiscount: parseFloat(customOfferDiscount) || 0,
-        customOfferType: customOfferType || 'percent'
+        customOfferType: customOfferType || 'percent',
+        customerDescription: customerDescription || '',
+        adviceToCoordinator: adviceToCoordinator || ''
     };
     return `__OFFERS_DATA__:${JSON.stringify(data)}__NOTES_BODY__:${notesBody || ''}`;
 }
@@ -2567,12 +2649,16 @@ async function submitFinalizedQuotation(orderId) {
         
         // Read comments/notes
         const notesBodyText = document.getElementById(`quote-notes-${orderId}`)?.value || '';
+        const order = (window.allFetchedOrders || []).find(o => String(o.id) === String(orderId));
+        const parsed = parseOrderNotesAndOffers(order ? order.notes : '');
         const finalizedNotes = serializeOrderNotesAndOffers(
             notesBodyText,
             selectedOfferIds,
             customOfferName,
             customOfferDiscount,
-            customOfferType
+            customOfferType,
+            parsed.customerDescription,
+            parsed.adviceToCoordinator
         );
         
         // Serialize parts list back
@@ -7915,6 +8001,10 @@ async function viewOrderDetails(orderId, alertId = null) {
     const techName = tech ? tech.name : (order.technician_id || 'Not Assigned');
     const masterName = master ? master.name : (order.repairmaster_id || 'Not Assigned');
 
+    const detailParsed = parseOrderNotesAndOffers(order.notes);
+    const detailCustDesc = detailParsed.customerDescription || detailParsed.notes || order.notes || 'No description submitted.';
+    const detailAdvice = detailParsed.adviceToCoordinator || 'No advice submitted.';
+
     // Mark alert as read
     if (alertId) {
         if (alertId.startsWith('dyn-pending-') || alertId.startsWith('dyn-diag-') || alertId.startsWith('dyn-pickup-') || alertId.startsWith('dyn-delivery-')) {
@@ -7991,7 +8081,7 @@ async function viewOrderDetails(orderId, alertId = null) {
                     <p class="text-[11px] text-gray-300">RepairMaster has completed diagnosis. Please review recommended parts pricing, adjust if needed, and dispatch quotation to the customer.</p>
                     <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-1.5 text-xs text-gray-300">
                         <p>📋 <strong>Bench Notes:</strong> ${order.diagnosis_notes || 'N/A'}</p>
-                        <p>💬 <strong>Advice to Coordinator:</strong> ${order.notes || 'N/A'}</p>
+                        <p>💬 <strong>Advice to Coordinator:</strong> ${detailAdvice || 'N/A'}</p>
                         <p>💰 <strong>Recommended Total:</strong> <span class="text-teal font-extrabold">₹${(order.total_price || 0).toLocaleString('en-IN')}</span></p>
                     </div>
                     <button onclick="showQuotationForm('${order.id}'); closeOrderDetailModal();" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition">✏️ Adjust Pricing &amp; Send Quotation</button>
@@ -8162,7 +8252,7 @@ async function viewOrderDetails(orderId, alertId = null) {
                 <p class="text-xs font-bold text-white uppercase tracking-wider mb-2 font-display"><i class="fa-solid fa-stethoscope text-teal mr-1"></i> Diagnostic Summary</p>
                 <div class="space-y-1.5">
                     <p>🔬 <strong>Diagnosis Notes:</strong> ${order.diagnosis_notes || 'Pending technician diagnosis.'}</p>
-                    <p>📝 <strong>Fault Description:</strong> ${order.additional_notes || 'N/A'}</p>
+                    <p>📝 <strong>Customer Issue Description:</strong> <span class="italic text-teal-300">"${detailCustDesc}"</span></p>
                     <p>🛠️ <strong>Assigned Tech:</strong> <span class="text-teal-300 font-semibold">${techName}</span></p>
                     <p>🧪 <strong>Assigned Master:</strong> <span class="text-teal-300 font-semibold">${masterName}</span></p>
                 </div>
